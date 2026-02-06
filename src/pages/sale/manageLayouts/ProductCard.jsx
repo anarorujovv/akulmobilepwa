@@ -1,0 +1,106 @@
+import { StyleSheet, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import ManageCard from '../../../shared/ui/ManageCard'
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import Button from '../../../shared/ui/Button';
+import useTheme from '../../../shared/theme/useTheme';
+import { formatPrice } from '../../../services/formatPrice';
+import ListItem from '../../../shared/ui/list/ListItem';
+import { Pressable } from '@react-native-material/core';
+import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
+import permission_ver from '../../../services/permissionVerification';
+
+const ProductCard = ({ document, setDocument }) => {
+
+    const theme = useTheme();
+    const permissions = useGlobalStore(state => state.permissions);
+
+    const styles = StyleSheet.create({
+        header: {
+            width: '100%',
+            padding: 15,
+            gap: 10,
+            flexDirection: 'row',
+            alignItems: 'center'
+        }
+    })
+
+    return (
+        <ManageCard>
+            <View style={styles.header}>
+                <Ionicons size={23} color={theme.grey} name='basket' />
+                <Text style={{
+                    color: theme.grey
+                }}>Məhsul</Text>
+            </View>
+            <View style={{ width: '100%', alignItems: 'center', gap: 5 }}>
+
+                {
+                    document.Positions.map((item, index) => (
+                        <ListItem
+                            index={index + 1}
+                            onLongPress={() => {
+                                prompt('Məhsulu silməyə əminsiniz?', () => {
+                                    let data = { ...document };
+                                    data.Positions.splice(index, 1);
+                                    setDocument({ ...data, ...(pricingUtils(data.Positions)) });
+                                })
+                            }}
+                            firstText={item.Name} centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`} endText={formatPrice(item.StockQuantity)} priceText={formatPrice(item.Quantity * item.Price)} />
+                    ))
+
+                }
+                <View style={{
+                    flexDirection: 'row',
+                    gap: 10,
+                    justifyContent: 'center',
+                    marginBottom: 30,
+                    marginTop: 10
+                }}>
+                    <Button
+                        onClick={() => {
+                        }}
+                        width={'70%'}
+                    >
+                        Məhsul əlavə et
+                    </Button>
+                </View>
+                <>
+                    {
+                        permission_ver(permissions, 'mobilediscount', 'C') && (
+                            <>
+                                <View style={{
+                                    width: '70%',
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between'
+                                }}>
+                                    <Text style={{ fontSize: 14, color: theme.grey }}>Ümumi alış məbləği</Text>
+                                    <Text style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.BasicAmount)} ₼</Text>
+                                </View>
+                                <View style={{
+                                    width: '70%',
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between'
+                                }}>
+                                    <Text style={{ fontSize: 14, color: theme.grey }}>Endirim</Text>
+                                    <Text style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.Discount)}%</Text>
+                                </View>
+                            </>
+                        )
+                    }
+                    <Pressable
+                        style={{
+                            width: '70%',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between'
+                        }}>
+                        <Text style={{ fontSize: 16, color: theme.black }}>Yekun məbləğ</Text>
+                        <Text style={{ fontSize: 16, color: theme.black }}>{formatPrice(document.Amount)} ₼</Text>
+                    </Pressable>
+                </>
+            </View>
+        </ManageCard>
+    )
+}
+
+export default ProductCard
