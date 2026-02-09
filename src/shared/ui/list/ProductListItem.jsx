@@ -1,11 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React, { useEffect } from 'react'
-import useTheme from '../../theme/useTheme'
-import SimpleLineneIcon from 'react-native-vector-icons/SimpleLineIcons'
-import Avatar from '../Avatar'
+import React from 'react';
+import useTheme from '../../theme/useTheme';
+import { FaCube, FaShoppingBasket } from 'react-icons/fa';
+import Avatar from '../Avatar';
 import { formatPrice } from '../../../services/formatPrice';
-import { Pressable } from '@react-native-material/core';
-import FontAwesome from 'react-native-vector-icons/FontAwesome'
 
 /**
  * index prop'u eklendi.
@@ -14,34 +11,47 @@ const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, m
 
   const theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
     itemContainer: {
-      flex: 1,
-      minHeight: 65,
       width: '100%',
+      minHeight: 65,
       backgroundColor: isActive ? theme.whiteGrey : theme.bg,
+      cursor: 'pointer',
+      boxSizing: 'border-box'
     },
     itemChildContainer: {
-      flex: 1,
-      minHeight: 65,
       width: '100%',
-      flexDirection: 'row'
+      minHeight: 65,
+      display: 'flex',
+      flexDirection: 'row',
+      marginTop: marginTop,
+      marginBottom: marginBottom,
+      position: 'relative'
     },
     left: {
       width: '18%',
-      height: '100%',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center'
     },
     center: {
       width: '57%',
+      display: 'flex',
+      flexDirection: 'column',
       justifyContent: 'space-evenly',
       alignItems: 'flex-start'
     },
     header: {
       color: theme.black,
+      margin: 0
+    },
+    subHeader: {
+      margin: 0,
+      fontSize: 13,
+      color: "grey"
     },
     footerTextContainer: {
+      display: 'flex',
       flexDirection: 'row',
       gap: 10,
       justifyContent: 'center',
@@ -50,13 +60,15 @@ const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, m
     iconContainer: {
       width: 15,
       height: 15,
-      borderRadius: 100,
+      borderRadius: '50%',
+      display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      backgroundColor: formatPrice(product.StockBalance) < 0 ? theme.red : theme.green
     },
     right: {
       width: '15%',
-      height: '100%',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'flex-end'
     },
@@ -66,19 +78,20 @@ const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, m
       top: 5,
       backgroundColor: theme.bg,
       borderRadius: 8,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
+      padding: '2px 6px',
       zIndex: 2,
       minWidth: 22,
+      display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
     },
     indexText: {
       color: theme.black,
       fontWeight: 'bold',
       fontSize: 12
     }
-  });
+  };
 
   const getImageUrl = () => {
     if (product.Pic) {
@@ -86,74 +99,76 @@ const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, m
         return product.Pic;
       }
     }
-    
+
     // Eğer ürünün Images dizisi varsa, ilk resmi kullan
     if (product.Images && product.Images.length > 0) {
       const image = product.Images[0];
       return `${image.Path || image.path}${image.UniqName || image.uniqname}.${image.Ext || image.ext}`;
     }
-    
+
     return null;
   };
 
   return (
-    <Pressable onLongPress={onLongPress} onPress={onPress} style={styles.itemContainer}>
-      <View style={[styles.itemChildContainer, {
-        marginTop: marginTop,
-        marginBottom: marginBottom
-      }]}>
+    <div
+      onClick={onPress}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (onLongPress) onLongPress();
+      }}
+      style={styles.itemContainer}
+    >
+      <div style={styles.itemChildContainer}>
         {/* Index gösterimi */}
-        <View style={styles.indexContainer}>
-          <Text style={styles.indexText}>{index || 'not'}</Text>
-        </View>
-        <View style={styles.left}>
-          <Avatar 
-            txt={product.Name} 
+        <div style={styles.indexContainer}>
+          <span style={styles.indexText}>{index || 'not'}</span>
+        </div>
+        <div style={styles.left}>
+          <Avatar
+            txt={product.Name}
             size={35}
             imageUrl={getImageUrl()}
           />
-        </View>
-        <View style={styles.center}>
-          <Text style={styles.header}>{product.Name}</Text>
-          <Text style={[styles.header,{fontSize:13,color:"grey"}]}>{product.BarCode}</Text>
-          <View style={styles.footerTextContainer}>
+        </div>
+        <div style={styles.center}>
+          <h4 style={styles.header}>{product.Name}</h4>
+          <span style={styles.subHeader}>{product.BarCode}</span>
+          <div style={styles.footerTextContainer}>
             <>
-              <View style={[styles.iconContainer, {
-                backgroundColor: formatPrice(product.StockBalance) < 0 ? theme.red : theme.green
-              }]}>
+              <div style={styles.iconContainer}>
                 {
                   iconCube ?
-                    <FontAwesome name='cube' size={8} color={theme.stable.white} />
+                    <FaCube size={8} color={theme.stable.white} />
                     :
-                    <SimpleLineneIcon size={8} name='basket' color={theme.stable.white} />
+                    <FaShoppingBasket size={8} color={theme.stable.white} />
                 }
-              </View>
+              </div>
 
-              <Text>{formatPrice(product.StockBalance ? product.StockBalance : 0)}</Text>
+              <span>{formatPrice(product.StockBalance ? product.StockBalance : 0)}</span>
             </>
-          </View>
+          </div>
 
-        </View>
+        </div>
         {
           priceType != undefined &&
-          priceType != 9998 || 0 &&
+            priceType != 9998 || 0 &&
             product.SelectedTypePrice != undefined ?
-            <View style={styles.right}>
-              <Text style={{
+            <div style={styles.right}>
+              <span style={{
                 color: theme.black
-              }}>{type == 1 ? formatPrice(product.SelectedTypePrice) : formatPrice(product.SelectedTypePrice)}₼</Text>
-            </View>
+              }}>{type == 1 ? formatPrice(product.SelectedTypePrice) : formatPrice(product.SelectedTypePrice)}₼</span>
+            </div>
             :
-            <View style={styles.right}>
-              <Text style={{
+            <div style={styles.right}>
+              <span style={{
                 color: theme.black
-              }}>{type == 1 ? formatPrice(product.BuyPrice) : formatPrice(product.Price)}₼</Text>
-            </View>
+              }}>{type == 1 ? formatPrice(product.BuyPrice) : formatPrice(product.Price)}₼</span>
+            </div>
         }
 
-      </View>
-    </Pressable>
-  )
-}
+      </div>
+    </div>
+  );
+};
 
-export default ProductListItem
+export default ProductListItem;

@@ -1,78 +1,59 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
-import useTheme from '../theme/useTheme'
+import React from 'react';
+import useTheme from '../theme/useTheme';
 
-const MyModal = ({ modalVisible, setModalVisible, width, height,
-  center, position,
-  ...props }) => {
-  let theme = useTheme();
+const MyModal = ({
+  modalVisible,
+  setModalVisible,
+  width,
+  height,
+  center,
+  position,
+  children
+}) => {
+  const theme = useTheme();
 
-  const styles = StyleSheet.create({
-    centeredView: {
-      flex: 1,
-      backgroundColor:'rgba(0,0,0,0.2)'
+  if (!modalVisible) return null;
+
+  const styles = {
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: center ? 'center' : 'flex-start',
+      alignItems: center ? 'center' : 'flex-start',
+      zIndex: 1000
     },
-    modalView: {
-      position: 'absolute',
+    modal: {
+      position: position ? 'absolute' : 'relative',
       backgroundColor: theme.stable.white,
       borderRadius: 5,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-    button: {
-      borderRadius: 20,
-      padding: 10,
-      elevation: 2,
-    },
-    buttonOpen: {
-      backgroundColor: theme.pink,
-    },
-    buttonClose: {
-      backgroundColor: theme.primary,
-      textStyle: {
-        color: theme.stable.white,
-        fontWeight: 'bold',
-        textAlign: 'center',
-      },
-      modalText: {
-        marginBottom: 15,
-        textAlign: 'center',
-        color: theme.black,
-      },
+      boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+      width: width || 'auto',
+      height: height || 'auto',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      ...position
     }
-  });
+  };
 
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => {
-        setModalVisible(!modalVisible);
-      }}>
-      <TouchableOpacity
-        onPress={() => {
-          setModalVisible(false);
-        }}
-        activeOpacity={1}
-        style={[styles.centeredView, center != undefined ? { justifyContent: 'center', alignItems: 'center' } : ""]}>
-        <TouchableOpacity onPress={() => { }}
-          activeOpacity={1}
-          style={[styles.modalView, {
-            width,
-            height,
-          }, position != undefined ? { ...position } : ""]}>
-        {
-          props.children
-        }
-      </TouchableOpacity>
-    </TouchableOpacity>
-    </Modal >
-  )
-}
+    <div
+      style={styles.overlay}
+      onClick={() => setModalVisible(false)}
+    >
+      <div
+        style={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
-export default MyModal
-
+export default MyModal;

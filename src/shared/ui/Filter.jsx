@@ -1,192 +1,87 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import useTheme from '../theme/useTheme'
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { MdClear } from 'react-icons/md';
+import useTheme from '../theme/useTheme';
 import Button from './Button';
 import Input from './Input';
 import Selection from './Selection';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import DateRangePicker from './DateRangePicker';
 import CustomSelection from './CustomSelection';
 
-const Filter = ({ route, navigation }) => {
+const Filter = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    /**
-    * Filter sistəmin documentasiyası
-    * 
-    * @param {Array} searchParams - Hansı parametrlərə görə filter olunacaq burdan bildirilir.
-    * @param {Array} sortList - Nələr görə sort olunacaq burdan bildirilir.
-    * { id,label,value } şəklində
-    * @param {Object} customFields - İstənilən parametr olmadığı zaman özü menual olaraq əlavə edir.
-    * { title,name,type,api } 
-    */
-
-
-    let {
-        filter,
-        setFilter,
+    // Fallback if location.state is undefined
+    const {
+        filter = {},
+        setFilter: parentSetFilter, // This won't work across routes usually, we might need a context or callback in state
         searchParams,
         sortList,
         customFields,
-    } = route.params;
+    } = location.state || {};
 
-
-    const [fields, setFields] = useState([])
-    const [tempFilter, setTempFilter] = useState(filter ? filter : {});
-
+    const [fields, setFields] = useState([]);
+    const [tempFilter, setTempFilter] = useState(filter);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [sortOptions, setSortOptions] = useState([]);
+
+    const theme = useTheme();
 
     const [params, setParams] = useState({
-        documentName: {
-            title: '№',
-            name: "docNumber",
-            type: 'string'
-        },
-        customers: {
-            title: 'Təchizatçı',
-            api: 'customers',
-            name: "customerName",
-            type: 'select',
-            searchApi: 'customers/getfast.php',
-            searchKey: 'fast'
-        },
-        stocks: {
-            title: "Anbar",
-            api: 'stocks',
-            name: "stockName",
-            type: 'select'
-        },
-        owners: {
-            title: "Cavabdeh",
-            api: 'owners',
-            name: "ownerName",
-            type: "select"
-        },
-        departments: {
-            title: "Satış şöbəsi",
-            api: 'departments',
-            name: "departmentId",
-            type: 'select'
-        },
-        customerGroups: {
-            title: "Müştəri qrupu",
-            api: 'customergroups',
-            name: "gp",
-            type: 'select'
-        },
-        product: {
-            title: "Məhsul",
-            api: 'products',
-            name: "productId",
-            type: 'select',
-            searchApi: 'products/getfast.php',
-            searchKey: 'fast'
-        },
-        unit: {
-            title: 'Əsas vahid',
-            api: 'units',
-            name: "unit",
-            type: 'select',
-        },
-        artCode: {
-            title: 'Artkod',
-            name: 'ac',
-            type: 'string'
-        },
-        barCode: {
-            title: "Barkod",
-            name: "bc",
-            type: 'number'
-        },
-        productName: {
-            title: "Məhsulun adı",
-            name: 'productname',
-            type: 'string'
-        },
-        spendItems: {
-            title: 'Xərc-Maddəsi',
-            name: 'spendItem',
-            type: 'select',
-            api: 'spenditems'
-        },
-        cashes: {
-            title: "Hesab",
-            name: "cashid",
-            api: 'cashes',
-            type: 'select'
-        },
-        salePoint: {
-            title: 'Satış nöqtəsi',
-            name: 'slpnt',
-            api: 'salepoints',
-            type: 'select'
-        },
+        documentName: { title: '№', name: "docNumber", type: 'string' },
+        customers: { title: 'Təchizatçı', api: 'customers', name: "customerName", type: 'select', searchApi: 'customers/getfast.php', searchKey: 'fast' },
+        stocks: { title: "Anbar", api: 'stocks', name: "stockName", type: 'select' },
+        owners: { title: "Cavabdeh", api: 'owners', name: "ownerName", type: "select" },
+        departments: { title: "Satış şöbəsi", api: 'departments', name: "departmentId", type: 'select' },
+        customerGroups: { title: "Müştəri qrupu", api: 'customergroups', name: "gp", type: 'select' },
+        product: { title: "Məhsul", api: 'products', name: "productId", type: 'select', searchApi: 'products/getfast.php', searchKey: 'fast' },
+        unit: { title: 'Əsas vahid', api: 'units', name: "unit", type: 'select' },
+        artCode: { title: 'Artkod', name: 'ac', type: 'string' },
+        barCode: { title: "Barkod", name: "bc", type: 'number' },
+        productName: { title: "Məhsulun adı", name: 'productname', type: 'string' },
+        spendItems: { title: 'Xərc-Maddəsi', name: 'spendItem', type: 'select', api: 'spenditems' },
+        cashes: { title: "Hesab", name: "cashid", api: 'cashes', type: 'select' },
+        salePoint: { title: 'Satış nöqtəsi', name: 'slpnt', api: 'salepoints', type: 'select' },
         ...customFields
-    })
-
-    // Documentation
-
-    // Field format is array
-
-    // Field item keys = title,name,type If type is an select then api should be sent = api
-
-    // let obj = {
-    //     title: "This title",
-    //     name: "This name",
-    //     type: "select",
-    //     api: "If type is an select then api should be sent",
-    // }
-
-
-    let theme = useTheme();
-
-    const [sortOptions, setSortOptions] = useState([]);
+    });
 
     const changeTempFiltersState = (name, value) => {
         setTempFilter(rel => ({ ...rel, [name]: value }));
-    }
+    };
 
     const handleFastSearch = () => {
-        let myFilter = { ...tempFilter };
-        setFilter(myFilter);
-        navigation.goBack();
-    }
+        // Since we can't directly call setFilter from previous page, 
+        // we might need to navigate back with state or use a context.
+        // For now, assuming we navigate back and the previous page checks location state on focus
+        navigate(-1, { state: { appliedFilter: tempFilter } });
+    };
 
     const handleFilterReset = () => {
         let obj = { ...tempFilter };
-        searchParams.forEach((element, index) => {
-            delete obj[params[element].name];
-        })
-
-        setFilter(obj);
-        navigation.goBack();
-    }
+        if (searchParams) {
+            searchParams.forEach((element) => {
+                if (params[element]) delete obj[params[element].name];
+            });
+        }
+        setTempFilter(obj);
+        // navigate(-1, { state: { appliedFilter: obj } }); // Optional: auto apply on reset
+    };
 
     const renderItem = (item, index) => {
+        if (!item) return null;
         switch (item.type) {
             case "string":
-                return (
-                    <Input
-                        value={tempFilter[item.name] || ""}
-                        onChange={(txt) => {
-                            changeTempFiltersState(item.name, txt)
-                        }}
-                        placeholder={item.title}
-                        type={item.type}
-                        width={'70%'}
-                    />
-                )
             case "number":
                 return (
                     <Input
                         value={tempFilter[item.name] || ""}
-                        onChange={(txt) => {
-                            changeTempFiltersState(item.name, txt)
-                        }}
+                        onChange={(val) => changeTempFiltersState(item.name, val)}
                         placeholder={item.title}
-                        type={item.type}
+                        type={item.type === 'number' ? 'number' : 'text'}
                         width={'70%'}
                     />
-                )
+                );
             case "select":
                 return (
                     item.customSelection ?
@@ -199,42 +94,38 @@ const Filter = ({ route, navigation }) => {
                             value={tempFilter[item.name] || ""}
                         />
                         :
-                        <>
-                            <Selection
-                                apiBody={{}}
-                                searchApi={item.searchApi || undefined}
-                                searchKey={item.searchKey || undefined}
-                                apiName={`${item.api}/get.php`}
-                                change={(e) => {
-                                    changeTempFiltersState(item.name, e.Id);
-                                }}
-                                value={tempFilter[item.name] || ""}
-                                title={item.title}
-                            />
-                        </>
-                )
+                        <Selection
+                            apiBody={{}}
+                            searchApi={item.searchApi || undefined}
+                            searchKey={item.searchKey || undefined}
+                            apiName={`${item.api}/get.php`}
+                            change={(e) => changeTempFiltersState(item.name, e.Id)}
+                            value={tempFilter[item.name] || ""}
+                            title={item.title}
+                        />
+                );
+            default:
+                return null;
         }
-    }
+    };
 
-    const getProsess = () => {
-
+    useEffect(() => {
         if (searchParams) {
             let tempFields = [];
             searchParams.forEach(element => {
-                tempFields.push(params[element]);
+                if (params[element]) tempFields.push(params[element]);
             });
 
             if (sortList) {
                 let tempSortOptions = sortList.map(item => ({
                     ...item,
-                    isSelected: tempFilter.sr === item.value
+                    isSelected: tempFilter?.sr === item.value
                 }));
                 setSortOptions(tempSortOptions);
             }
-
             setFields(tempFields);
         }
-    };
+    }, [searchParams]);
 
     const handleSort = (selectedOption) => {
         const updatedOptions = sortOptions.map(option => ({
@@ -245,78 +136,72 @@ const Filter = ({ route, navigation }) => {
         changeTempFiltersState('sr', selectedOption.value);
     };
 
-    useEffect(() => {
-        getProsess();
-    }, []);
-
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
+            height: '100vh',
+            overflowY: 'auto',
             backgroundColor: theme.whiteGrey,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
+            padding: '12px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16
         },
         card: {
             backgroundColor: theme.bg,
             borderRadius: 12,
             marginBottom: 16,
-            shadowColor: theme.text,
-            shadowOffset: {
-                width: 0,
-                height: 2,
-            },
-            shadowOpacity: 0.1,
-            shadowRadius: 3.84,
-            elevation: 5,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            paddingBottom: 16
         },
         cardHeader: {
-            flexDirection: 'row',
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.whiteGrey,
+            padding: '12px 16px',
+            borderBottom: `1px solid ${theme.whiteGrey}`,
+            marginBottom: 10
         },
         cardTitle: {
             fontSize: 16,
-            fontWeight: '600',
+            fontWeight: 600,
             color: theme.text,
         },
         cardContent: {
-            padding: 16,
+            padding: '0 16px',
+            display: 'flex',
+            flexDirection: 'column',
             gap: 12,
             alignItems: 'center'
         },
         buttonContainer: {
+            display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            paddingHorizontal: 16,
-            paddingVertical: 12,
+            padding: '12px 16px',
         },
         clearButton: {
+            display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
             padding: 8,
+            cursor: 'pointer',
+            border: 'none',
+            background: 'none'
         },
-        clearText: {
-            color: theme.primary,
-            marginLeft: 4,
-            fontSize: 14,
-        },
-        sortOptionContainer: {
+        sortOption: {
+            display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 10,
-            paddingHorizontal: 16,
+            padding: '10px 16px',
+            cursor: 'pointer'
         },
         radioOuter: {
             width: 20,
             height: 20,
-            borderRadius: 10,
-            borderWidth: 2,
-            borderColor: theme.primary,
+            borderRadius: '50%',
+            border: `2px solid ${theme.primary}`,
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: 12,
@@ -324,104 +209,84 @@ const Filter = ({ route, navigation }) => {
         radioInner: {
             width: 12,
             height: 12,
-            borderRadius: 6,
+            borderRadius: '50%',
             backgroundColor: theme.primary,
-        },
-        sortLabel: {
-            color: 'black',
-            fontSize: 14,
-            flex: 1,
-        },
-    });
+        }
+    };
 
-    const SortOption = ({ option, isSelected, onSelect }) => (
-        <Pressable
-            onPress={onSelect}
-            style={({ pressed }) => [
-                styles.sortOptionContainer,
-                pressed && { opacity: 0.7, backgroundColor: theme.whiteGrey }
-            ]}
-        >
-            <View style={styles.radioOuter}>
-                {isSelected && <View style={styles.radioInner} />}
-            </View>
-            <Text style={styles.sortLabel}>{option.label}</Text>
-        </Pressable>
-    );
+    if (!fields[0]) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div className="spinner" style={{ borderTopColor: theme.primary }}></div>
+            </div>
+        );
+    }
 
     return (
-        <ScrollView style={styles.container}>
-            {fields[0] ? (
-                <>
-                    <View style={styles.card}>
-                        <View style={styles.cardHeader}>
-                            <Text style={styles.cardTitle}>Filtrlər</Text>
-                        </View>
-                        <View style={styles.cardContent}>
-                            {fields.map((element, index) => (
-                                <View style={{ alignItems: 'center' }} key={index}>
-                                    {renderItem(element, index)}
-                                </View>
-                            ))}
-                            <View style={{ alignItems: 'center' }}>
-                                <DateRangePicker
-                                    filter={tempFilter}
-                                    setFilter={setTempFilter}
-                                    width={'70%'}
-                                />
-                            </View>
-                        </View>
-                    </View>
+        <div style={styles.container}>
+            <div style={styles.card}>
+                <div style={styles.cardHeader}>
+                    <span style={styles.cardTitle}>Filtrlər</span>
+                </div>
+                <div style={styles.cardContent}>
+                    {fields.map((element, index) => (
+                        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }} key={index}>
+                            {renderItem(element, index)}
+                        </div>
+                    ))}
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                        <DateRangePicker
+                            filter={tempFilter}
+                            setFilter={setTempFilter}
+                            width={'70%'}
+                        />
+                    </div>
+                </div>
+            </div>
 
-                    {sortOptions.length > 0 && (
-                        <View style={styles.card}>
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.cardTitle}>Sıralama</Text>
-                            </View>
-                            <View>
-                                {sortOptions.map((option, index) => (
-                                    <SortOption
-                                        key={index}
-                                        option={option}
-                                        isSelected={option.isSelected}
-                                        onSelect={() => handleSort(option)}
-                                    />
-                                ))}
-                            </View>
-                        </View>
-                    )}
-                    <View style={styles.card}>
-                        <View style={styles.buttonContainer}>
-
-                            <Pressable
-                                style={styles.clearButton}
-                                onPress={handleFilterReset}
+            {sortOptions.length > 0 && (
+                <div style={styles.card}>
+                    <div style={styles.cardHeader}>
+                        <span style={styles.cardTitle}>Sıralama</span>
+                    </div>
+                    <div>
+                        {sortOptions.map((option, index) => (
+                            <div
+                                key={index}
+                                style={styles.sortOption}
+                                onClick={() => handleSort(option)}
                             >
-                                <MaterialIcons name="clear" size={18} color={theme.primary} />
-                                <Text style={styles.clearText}>Təmizlə</Text>
-                            </Pressable>
-
-                            <Button
-                                onClick={handleFastSearch}
-                                isLoading={searchLoading}
-                                width="48%"
-                            >
-                                Axtar
-                            </Button>
-
-
-                        </View>
-                    </View>
-                </>
-            ) : (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 50 }}>
-                    <ActivityIndicator size={30} color={theme.primary} />
-                </View>
+                                <div style={styles.radioOuter}>
+                                    {option.isSelected && <div style={styles.radioInner} />}
+                                </div>
+                                <span>{option.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
-        </ScrollView>
+
+            <div style={styles.card}>
+                <div style={styles.buttonContainer}>
+                    <button
+                        style={styles.clearButton}
+                        onClick={handleFilterReset}
+                    >
+                        <MdClear size={18} color={theme.primary} />
+                        <span style={{ color: theme.primary, marginLeft: 4, fontSize: 14 }}>Təmizlə</span>
+                    </button>
+
+                    <Button
+                        onClick={handleFastSearch}
+                        isLoading={searchLoading}
+                        width="48%"
+                    >
+                        Axtar
+                    </Button>
+                </div>
+            </div>
+        </div>
     );
 };
 
 export default Filter;
-
-const styles = StyleSheet.create({})

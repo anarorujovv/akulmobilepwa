@@ -1,21 +1,18 @@
 import axios from "axios";
 import ErrorMessage from "../shared/ui/RepllyMessage/ErrorMessage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import NetInfo from "@react-native-community/netinfo";
-import RNRestart from 'react-native-restart';
+import AsyncStorage from "./AsyncStorageWrapper";
 
 const api = async (link, data) => {
     let publicMode = await AsyncStorage.getItem('publicMode');
     let customApiUrl = await AsyncStorage.getItem('apiCustomUrl');
     let answer = null;
 
-    const networkState = await NetInfo.fetch();
-
-    if (!networkState.isConnected) {
+    // Web'de navigator.onLine ile internet bağlantısını kontrol ediyoruz
+    if (!navigator.onLine) {
         ErrorMessage("İnternet bağlantınızı kontrol edin");
         return null;
     }
-    
+
     try {
         let apiUrl = customApiUrl || `https://api.akul.az/1.0/${publicMode}/controllers/`;
 
@@ -35,11 +32,12 @@ const api = async (link, data) => {
             } else if (response.data.Headers.ResponseStatus == "104") {
                 ErrorMessage("Sessiya vaxtı keçdi");
                 await AsyncStorage.removeItem('token');
-                RNRestart.restart();
+                // React Native'deki RNRestart yerine window.location.reload() kullanıyoruz
+                window.location.reload();
             } else {
                 throw response.data.Body;
             }
-        })
+        });
 
     } catch (err) {
         if (axios.isAxiosError(err)) {
@@ -56,6 +54,6 @@ const api = async (link, data) => {
     }
 
     return answer;
-}
+};
 
 export default api;

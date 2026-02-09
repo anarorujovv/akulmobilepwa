@@ -1,18 +1,18 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, FlatList } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import Input from '../shared/ui/Input'
-import Button from '../shared/ui/Button'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import AntDesign from 'react-native-vector-icons/AntDesign'
-import axios from 'axios'
-import useTheme from '../shared/theme/useTheme'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Input from '../shared/ui/Input';
+import Button from '../shared/ui/Button';
+import { IoLockOpenOutline, IoPersonCircleOutline, IoTrash, IoClose, IoCheckboxOutline, IoSquareOutline } from 'react-icons/io5';
+import { AiOutlineCloud } from 'react-icons/ai';
+import axios from 'axios';
+import useTheme from '../shared/theme/useTheme';
 import ErrorMessage from './../shared/ui/RepllyMessage/ErrorMessage';
 import SuccessMessage from './../shared/ui/RepllyMessage/SuccessMessage';
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import RNRestart from 'react-native-restart';
+import AsyncStorage from './../services/AsyncStorageWrapper';
 import api from './../services/api';
 
 const Login = () => {
+  const navigate = useNavigate();
 
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -46,12 +46,10 @@ const Login = () => {
   const handleSelectApiServer = async (server) => {
     try {
       if (server === 'Azerbaycan') {
-        // Azerbaycan server seçildiğinde, özel URL'i kaldır
         await AsyncStorage.removeItem('apiCustomUrl');
         setCurrentApiServer('Azerbaycan');
         SuccessMessage('Azerbaycan serveri seçildi.');
       } else if (server === 'Rusiya') {
-        // Rus server seçildiğinde, özel URL'i kaydet
         await AsyncStorage.setItem('apiCustomUrl', 'http://84.201.140.231/proxy/1.0/online/controllers/');
         setCurrentApiServer('Rusiya');
         SuccessMessage('Rusiya serveri seçildi.');
@@ -107,16 +105,12 @@ const Login = () => {
   };
 
   const fetchingAuthApi = async (loginParam = login, passwordParam = password) => {
+    setIsLoading(true);
 
-    setIsLoading(true)
-
-    // Mevcut özel API URL'ini korumak için
     const existingApiUrl = await AsyncStorage.getItem('apiCustomUrl');
-
-    // Login için kullanılacak URL'i belirle
     const loginUrl = existingApiUrl
-      ? `http://84.201.140.231/proxy/1.0/online/login/send.php` // Rus server için özel URL yapısı
-      : 'https://api.akul.az/1.0/online/login/send.php'; // Varsayılan Azerbaycan server URL'i
+      ? `http://84.201.140.231/proxy/1.0/online/login/send.php`
+      : 'https://api.akul.az/1.0/online/login/send.php';
 
     try {
       await axios.post(loginUrl, {
@@ -177,108 +171,259 @@ const Login = () => {
             }
           }).catch(err => {
             ErrorMessage(err);
-          })
-          RNRestart.Restart();
+          });
+
+          // React Native'deki RNRestart yerine window.location.reload() kullanıyoruz
+          window.location.reload();
         } else {
           ErrorMessage(response.data.Body);
         }
       }).catch((err) => {
-        ErrorMessage(err);
-      })
+        ErrorMessage(err.message || 'Bağlantı xətası');
+      });
       setIsLoading(false);
     } catch (error) {
       console.log(error);
       ErrorMessage('API çağrısı sırasında bir hata oluştu');
+      setIsLoading(false);
     }
-  }
+  };
 
-  const renderSavedUserModal = () => (
-    <Modal
-      visible={showUserModal}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={() => setShowUserModal(false)}
-    >
-      <View style={styles.modalContainer}>
-        <View style={[styles.modalContent, { backgroundColor: theme.stable.white }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.stable.black }]}>Qeydiyyatlı istifadəçilər</Text>
-            <TouchableOpacity
-              onPress={() => setShowUserModal(false)}
-              style={styles.closeButton}
-            >
-              <Ionicons name="close" size={24} color={theme.stable.black} />
-            </TouchableOpacity>
-          </View>
+  const styles = {
+    container: {
+      flex: 1,
+      padding: 10,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.stable.white,
+      minHeight: '100vh'
+    },
+    titleContainer: {
+      marginBottom: 30,
+    },
+    titleText: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: theme.stable.black
+    },
+    optionsRow: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '90%',
+      maxWidth: 400
+    },
+    rememberMeContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer',
+      background: 'none',
+      border: 'none',
+      padding: 0
+    },
+    rememberMeText: {
+      marginLeft: 8,
+      color: theme.stable.black
+    },
+    serverSelectButton: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: '5px 10px',
+      borderRadius: 5,
+      backgroundColor: '#f0f0f0',
+      border: 'none',
+      cursor: 'pointer'
+    },
+    serverSelectText: {
+      marginLeft: 8,
+      color: theme.stable.black
+    },
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      padding: 20
+    },
+    modalContent: {
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '80%',
+      borderRadius: 15,
+      backgroundColor: theme.stable.white,
+      overflow: 'hidden',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+    },
+    apiModalContent: {
+      width: '80%',
+      maxWidth: 350,
+      padding: 20,
+      borderRadius: 10,
+      backgroundColor: theme.stable.white,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+    },
+    serverButton: {
+      width: '100%',
+      padding: 15,
+      borderRadius: 5,
+      margin: '10px 0',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#ffffff',
+      fontSize: 16,
+      textAlign: 'center'
+    },
+    modalHeader: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      borderBottom: '1px solid #C8C8C8'
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.stable.black
+    },
+    closeButton: {
+      padding: 5,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer'
+    },
+    userList: {
+      maxHeight: 300,
+      overflowY: 'auto'
+    },
+    userItem: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 15,
+      borderBottom: `1px solid ${theme.input.grey}`,
+      cursor: 'pointer'
+    },
+    userItemContent: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center'
+    },
+    userName: {
+      fontSize: 16,
+      marginLeft: 10,
+      color: theme.stable.black
+    },
+    emptyContainer: {
+      padding: 30,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    emptyText: {
+      marginTop: 10,
+      fontSize: 16,
+      textAlign: 'center',
+      color: theme.stable.black
+    },
+    deleteButton: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: 5
+    }
+  };
+
+  const renderSavedUserModal = () => {
+    if (!showUserModal) return null;
+
+    return (
+      <div style={styles.modalOverlay} onClick={() => setShowUserModal(false)}>
+        <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+          <div style={styles.modalHeader}>
+            <span style={styles.modalTitle}>Qeydiyyatlı istifadəçilər</span>
+            <button onClick={() => setShowUserModal(false)} style={styles.closeButton}>
+              <IoClose size={24} color={theme.stable.black} />
+            </button>
+          </div>
 
           {savedUsers.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="person-outline" size={50} color={theme.stable.black} />
-              <Text style={[styles.emptyText, { color: theme.stable.black }]}>Qeydiyyatlı istifadəçi tapılmadı</Text>
-            </View>
+            <div style={styles.emptyContainer}>
+              <IoPersonCircleOutline size={50} color={theme.stable.black} />
+              <span style={styles.emptyText}>Qeydiyyatlı istifadəçi tapılmadı</span>
+            </div>
           ) : (
-            <FlatList
-              data={savedUsers}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => selectSavedUser(item)} style={[styles.userItem, { borderBottomColor: theme.input.grey }]}>
-                  <View style={styles.userItemContent}>
-                    <View >
-                      <Ionicons name="person-circle-outline" size={24} color={theme.stable.black} />
-                    </View>
-                    <Text style={[styles.userName, { color: theme.stable.black }]}>{item.login}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => deleteSavedUser(item)}>
-                    <Ionicons name="trash" size={24} color={theme.stable.black} />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              )}
-              style={styles.userList}
-            />
+            <div style={styles.userList}>
+              {savedUsers.map((item, index) => (
+                <div key={index} style={styles.userItem} onClick={() => selectSavedUser(item)}>
+                  <div style={styles.userItemContent}>
+                    <IoPersonCircleOutline size={24} color={theme.stable.black} />
+                    <span style={styles.userName}>{item.login}</span>
+                  </div>
+                  <button style={styles.deleteButton} onClick={(e) => { e.stopPropagation(); deleteSavedUser(item); }}>
+                    <IoTrash size={24} color={theme.stable.black} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
-        </View>
-      </View>
-    </Modal>
-  );
+        </div>
+      </div>
+    );
+  };
 
-  const renderApiServerModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={apiServerModalVisible}
-      onRequestClose={() => {
-        setApiServerModalVisible(false);
-      }}>
-      <View style={styles.modalContainer}>
-        <View style={[styles.apiModalContent, { backgroundColor: theme.stable.white }]}>
-          <Text style={{ fontSize: 18, marginBottom: 20, color: theme.stable.black }}>Server seçin:</Text>
-          <TouchableOpacity
-            style={[styles.serverButton, currentApiServer === 'Azerbaycan' ? { backgroundColor: theme.pink } : { backgroundColor: theme.primary }]}
-            onPress={() => {
-              handleSelectApiServer('Azerbaycan');
-            }}>
-            <Text style={styles.serverButtonText}>Azerbaycan Server</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.serverButton, currentApiServer === 'Rusiya' ? { backgroundColor: theme.pink } : { backgroundColor: theme.primary }]}
-            onPress={() => {
-              handleSelectApiServer('Rusiya');
-            }}>
-            <Text style={styles.serverButtonText}>Rusiya Server</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
+  const renderApiServerModal = () => {
+    if (!apiServerModalVisible) return null;
+
+    return (
+      <div style={styles.modalOverlay} onClick={() => setApiServerModalVisible(false)}>
+        <div style={styles.apiModalContent} onClick={e => e.stopPropagation()}>
+          <span style={{ fontSize: 18, marginBottom: 20, color: theme.stable.black }}>Server seçin:</span>
+          <button
+            style={{
+              ...styles.serverButton,
+              backgroundColor: currentApiServer === 'Azerbaycan' ? theme.pink : theme.primary
+            }}
+            onClick={() => handleSelectApiServer('Azerbaycan')}
+          >
+            Azerbaycan Server
+          </button>
+          <button
+            style={{
+              ...styles.serverButton,
+              backgroundColor: currentApiServer === 'Rusiya' ? theme.pink : theme.primary
+            }}
+            onClick={() => handleSelectApiServer('Rusiya')}
+          >
+            Rusiya Server
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <View style={{ flex: 1, padding: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.stable.white }}>
+    <div style={styles.container}>
       {renderSavedUserModal()}
       {renderApiServerModal()}
 
-      <View style={styles.titleContainer}>
-        <Text style={[styles.titleText, { color: theme.stable.black }]}>BeinAZ</Text>
-      </View>
+      <div style={styles.titleContainer}>
+        <span style={styles.titleText}>BeinAZ</span>
+      </div>
 
       <Input
         width={'90%'}
@@ -289,7 +434,7 @@ const Login = () => {
         placeholder={'Login'}
       />
 
-      <View style={{ margin: 5 }} />
+      <div style={{ margin: 5 }} />
 
       <Input
         password={true}
@@ -301,156 +446,42 @@ const Login = () => {
         placeholder={'Şifrə'}
       />
 
-      <View style={{ margin: 10 }} />
+      <div style={{ margin: 10 }} />
 
-      <View style={styles.optionsRow}>
-        <TouchableOpacity
+      <div style={styles.optionsRow}>
+        <button
           style={styles.rememberMeContainer}
-          onPress={() => setRememberMe(!rememberMe)}
+          onClick={() => setRememberMe(!rememberMe)}
         >
-          <Ionicons
-            name={rememberMe ? 'checkbox' : 'square-outline'}
-            size={24}
-            color={theme.stable.black}
-          />
-          <Text style={[styles.rememberMeText, { color: theme.stable.black }]}>Xatırla</Text>
-        </TouchableOpacity>
+          {rememberMe ? (
+            <IoCheckboxOutline size={24} color={theme.stable.black} />
+          ) : (
+            <IoSquareOutline size={24} color={theme.stable.black} />
+          )}
+          <span style={styles.rememberMeText}>Xatırla</span>
+        </button>
 
-        <TouchableOpacity
+        <button
           style={styles.serverSelectButton}
-          onPress={() => setApiServerModalVisible(true)}
+          onClick={() => setApiServerModalVisible(true)}
         >
-          <AntDesign name="cloud" size={20} color={theme.stable.black} />
-          <Text style={[styles.serverSelectText, { color: theme.stable.black }]}>{currentApiServer}</Text>
-        </TouchableOpacity>
-      </View>
+          <AiOutlineCloud size={20} color={theme.stable.black} />
+          <span style={styles.serverSelectText}>{currentApiServer}</span>
+        </button>
+      </div>
 
-      <View style={{ margin: 10 }} />
+      <div style={{ margin: 10 }} />
 
       <Button
-        icon={<Ionicons size={15} name='lock-open-outline' />}
+        icon={<IoLockOpenOutline size={15} color="white" />}
         width={'70%'}
         onClick={() => {
-          fetchingAuthApi(login, password)
+          fetchingAuthApi(login, password);
         }}
         isLoading={isLoading}
       >Daxil ol</Button>
-    </View>
-  )
-}
+    </div>
+  );
+};
 
 export default Login;
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    marginBottom: 30,
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-  },
-  rememberMeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rememberMeText: {
-    marginLeft: 8,
-  },
-  serverSelectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 5,
-    backgroundColor: '#f0f0f0',
-  },
-  serverSelectText: {
-    marginLeft: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    maxHeight: '80%',
-    borderRadius: 15,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  apiModalContent: {
-    width: '80%',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: 'rgba(0,0,0,0.3)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  serverButton: {
-    width: '100%',
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 10,
-    alignItems: 'center',
-  },
-  serverButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#C8C8C8',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    padding: 5,
-  },
-  userList: {
-    maxHeight: 300,
-  },
-  userItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#C8C8C8',
-  },
-  userItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  userName: {
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  emptyContainer: {
-    padding: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    marginTop: 10,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-});

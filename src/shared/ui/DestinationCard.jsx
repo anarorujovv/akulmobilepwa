@@ -1,36 +1,47 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import ManageCard from './ManageCard'
-import useTheme from '../theme/useTheme'
-import Entypo from 'react-native-vector-icons/Entypo'
-import Input from './Input'
-import Selection from './Selection'
+import React from 'react';
+import { IoInformationCircle } from 'react-icons/io5';
+import ManageCard from './ManageCard';
+import useTheme from '../theme/useTheme';
+import Input from './Input';
+import Selection from './Selection';
 
 const DestinationCard = ({ changeInput, changeSelection, document, setDocument, isAllDisabled }) => {
 
     const theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         header: {
             width: '100%',
             padding: 15,
             gap: 10,
+            display: 'flex',
             flexDirection: 'row',
+            alignItems: 'center',
+            boxSizing: 'border-box'
+        },
+        text: {
+            color: theme.grey
+        },
+        content: {
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center'
+        },
+        spacer: {
+            marginTop: 10
         }
-    })
+    };
 
     return (
         <>
             <ManageCard>
-                <View style={styles.header}>
-                    <Entypo size={23} color={theme.grey} name='info-with-circle' />
-                    <Text style={{
-                        color: theme.grey
-                    }}>Təyinat</Text>
-                </View>
+                <div style={styles.header}>
+                    <IoInformationCircle size={23} color={theme.grey} />
+                    <span style={styles.text}>Təyinat</span>
+                </div>
 
-                <View style={{ width: '100%', alignItems: 'center' }}>
+                <div style={styles.content}>
                     <Selection
                         disabled={isAllDisabled}
                         apiName={'owners/get.php'}
@@ -41,7 +52,7 @@ const DestinationCard = ({ changeInput, changeSelection, document, setDocument, 
                         value={document.OwnerId}
                         title={'Cavabdeh'}
                     />
-                    <View style={{ marginTop: 10 }} />
+                    <div style={styles.spacer} />
                     <Selection
                         disabled={isAllDisabled}
                         apiName={'departments/get.php'}
@@ -55,7 +66,7 @@ const DestinationCard = ({ changeInput, changeSelection, document, setDocument, 
                     {
                         document.Description != null &&
                         <>
-                            <View style={{ marginTop: 10 }} />
+                            <div style={styles.spacer} />
                             <Input
                                 value={document.Description}
                                 disabled={isAllDisabled}
@@ -64,17 +75,17 @@ const DestinationCard = ({ changeInput, changeSelection, document, setDocument, 
                                     changeInput('Description', e);
                                 }}
                                 placeholder={'Açıqlama'}
-                                type={'stirng'}
+                                type={'string'}
                                 width={'70%'}
                             />
                         </>
                     }
-                </View>
+                </div>
 
             </ManageCard>
         </>
-    )
-}
+    );
+};
 
-export default DestinationCard
+export default DestinationCard;
 

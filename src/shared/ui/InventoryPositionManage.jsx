@@ -1,16 +1,14 @@
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import useTheme from '../theme/useTheme';
 import ManageHeader from './ManageHeader';
 import Input from './Input';
 import { formatPrice } from '../../services/formatPrice';
 import Button from './Button';
-import AntDesign from 'react-native-vector-icons/AntDesign'
+import { AiOutlineMinusSquare, AiOutlinePlusSquare } from 'react-icons/ai';
 import pricingUtils from '../../services/pricingUtils';
 import applyDiscount from './../../services/report/applyDiscount';
-import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import PricesModal from './modals/PricesModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
 import api from '../../services/api';
 import ListItem from './list/ListItem';
@@ -20,11 +18,9 @@ import useGlobalStore from '../data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
 import playSound from '../../services/playSound';
 
-let height = Dimensions.get('window').height;
-
 const InventoryPositionManage = ({ route, navigation }) => {
 
-  let { product, state, setState, units, type, setUnits } = route.params;
+  let { product, state, setState, units, type, setUnits } = route?.params || {};
 
   let [data, setData] = useState({});
   let [priceModal, setPriceModal] = useState(false);
@@ -33,8 +29,67 @@ const InventoryPositionManage = ({ route, navigation }) => {
   const permissions = useGlobalStore(state => state.permissions);
 
   let theme = useTheme();
-  const loadInitalData = async (
-  ) => {
+
+  const styles = {
+    container: {
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'column',
+      backgroundColor: theme.bg,
+      height: '100vh',
+      overflow: 'hidden'
+    },
+    contentContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: 20,
+      height: 'calc(100vh - 55px)', // Header yüksekliğini çıkar
+      overflowY: 'auto'
+    },
+    row: {
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      justifyContent: 'space-between',
+      marginBottom: 10
+    },
+    text: {
+      color: theme.black,
+      margin: 0
+    },
+    margin20: {
+      margin: 20
+    },
+    margin10: {
+      margin: 10
+    },
+    quantityControl: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      alignItems: 'center'
+    },
+    loadingCenter: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      width: '100%'
+    },
+    diffContainer: {
+      flexDirection: 'row',
+      gap: 5,
+      justifyContent: "center",
+      alignItems: 'center',
+      display: 'flex'
+    }
+  };
+
+  const loadInitalData = async () => {
+    if (!product) return;
+
     let info = { ...product };
 
     if (!info.Id) {
@@ -69,7 +124,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
     let obj = {
       moment: document.Moment,
       stockid: document.StockId,
-      token: await AsyncStorage.getItem('token'),
+      token: await AsyncStorageWrapper.getItem('token'),
       productids: [info.ProductId]
     }
     await api('stockbalancebyid/get.php', obj)
@@ -112,7 +167,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
     }
 
     setState({ ...propsState, ...(pricingUtils(propsState.Positions)) });
-    playSound('bc');
+    // playSound('bc');
     navigation.goBack();
   }
 
@@ -158,7 +213,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
     let info = { ...data };
     let index = [...units[product.ProductId]].findIndex(rel => rel.Id == value);
     let unit = units[product.ProductId][index];
-    setUnits
+    // setUnits // Bu satır orijinal kodda yarım kalmış gibi, kaldırdım.
     info.UnitId = unit.Id;
     info.UnitName = unit.Name;
     info.UnitTitle = unit.Title;
@@ -176,7 +231,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
       products: [
         data.ProductId
       ],
-      token: await AsyncStorage.getItem('token')
+      token: await AsyncStorageWrapper.getItem('token')
     }
 
     await api('products/getproductsrate.php', obj).then(res => {
@@ -196,16 +251,17 @@ const InventoryPositionManage = ({ route, navigation }) => {
     loadInitalData();
   }, [product])
 
+  if (!product && Object.keys(data).length === 0) {
+    return <div style={styles.loadingCenter}>Məlumat tapılmadı</div>
+  }
+
   return (
     Object.keys(data).length == 0 ?
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size={40} color={theme.primary} />
-      </View>
+      <div style={styles.loadingCenter}>
+        <div className="spinner"></div>
+      </div>
       :
-      <View style={{
-        flex: 1,
-        backgroundColor: theme.bg,
-      }}>
+      <div style={styles.container}>
         <PositionManageHeader
           handleSave={handleSave}
           loading={false}
@@ -213,44 +269,32 @@ const InventoryPositionManage = ({ route, navigation }) => {
           updateText={'Təsdiqlə'}
           createText={'Təsdiqlə'}
         />
-        <View style={{
-          justifyContent: 'space-between',
-          padding: 20,
-          height: '95%',
-        }}>
+        <div style={styles.contentContainer}>
 
-          <View>
+          <div>
             <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
-            <View style={{
+            <div style={{
               width: '100%',
-              height: 100,
               marginTop: 20
             }}>
-              <View>
+              <div>
 
-                <View style={{
-                  flexDirection: 'row',
-                  width: '100%',
-                  justifyContent: 'space-between'
-                }}>
-                  <Text style={{ color: theme.black }}>Fərq</Text>
-                  <View style={{
-                    flexDirection: 'row', gap: 5,
-                    justifyContent: "center", alignItems: 'center'
-                  }}>
-                    <Text>{formatPrice(data.Difference)}</Text>
-                  </View>
-                </View>
+                <div style={styles.row}>
+                  <span style={styles.text}>Fərq</span>
+                  <div style={styles.diffContainer}>
+                    <span>{formatPrice(data.Difference)}</span>
+                  </div>
+                </div>
 
                 {/* cost price */}
 
                 {
                   permission_ver(permissions, 'profit', 'D') &&
                     data.CostPrice ?
-                    <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-                      <Text style={{ color: theme.black }}>Mayası</Text>
-                      <Text style={{ color: theme.black }}>{formatPrice(data.CostPrice)}</Text>
-                    </View>
+                    <div style={styles.row}>
+                      <span style={styles.text}>Mayası</span>
+                      <span style={styles.text}>{formatPrice(data.CostPrice)}</span>
+                    </div>
                     :
                     ""
                 }
@@ -259,21 +303,21 @@ const InventoryPositionManage = ({ route, navigation }) => {
 
                 {
                   data.MinPrice ?
-                    <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-                      <Text style={{ color: theme.black }}>Min.Qiymət</Text>
-                      <Text style={{ color: theme.black }}>{formatPrice(data.MinPrice)}</Text>
-                    </View>
+                    <div style={styles.row}>
+                      <span style={styles.text}>Min.Qiymət</span>
+                      <span style={styles.text}>{formatPrice(data.MinPrice)}</span>
+                    </div>
                     :
                     ""
                 }
 
-              </View>
-            </View>
+              </div>
+            </div>
 
 
-          </View>
+          </div>
 
-          <View>
+          <div>
 
             {
               units ?
@@ -288,7 +332,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
                     valueName={'Id'}
                   />
 
-                  <View style={{ margin: 10 }} />
+                  <div style={styles.margin10} />
                 </>
                 :
                 ""
@@ -304,9 +348,10 @@ const InventoryPositionManage = ({ route, navigation }) => {
               }}
             />
 
-            <View style={{ margin: 20 }} />
+            <div style={styles.margin20} />
 
-            <View style={{
+            <div style={{
+              display: 'flex',
               flexDirection: 'row',
               justifyContent: 'space-between',
               width: '100%'
@@ -334,19 +379,14 @@ const InventoryPositionManage = ({ route, navigation }) => {
                   handleChangePrice(String(e))
                 }}
               />
-            </View>
+            </div>
 
-            <View style={{ margin: 20 }} />
+            <div style={styles.margin20} />
 
-            <View style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              width: '100%',
-              alignItems: 'center'
-            }}>
+            <div style={styles.quantityControl}>
               <Button disabled={data.Quantity == 1} onClick={() => {
                 handleChangeQuantity(Number(data.Quantity) - 1);
-              }} width={'30%'} icon={<AntDesign size={35} name='minussquareo' />} />
+              }} width={'30%'} icon={<AiOutlineMinusSquare size={35} />} />
               <Input
                 txPosition={'center'}
                 placeholder={'Faktiki qalıq'}
@@ -360,11 +400,11 @@ const InventoryPositionManage = ({ route, navigation }) => {
 
               <Button onClick={() => {
                 handleChangeQuantity(Number(data.Quantity) + 1);
-              }} width={'30%'} icon={<AntDesign size={35} name='plussquareo' />} />
-            </View>
-          </View>
+              }} width={'30%'} icon={<AiOutlinePlusSquare size={35} />} />
+            </div>
+          </div>
 
-        </View>
+        </div>
 
         {
           type == 0 ?
@@ -372,10 +412,8 @@ const InventoryPositionManage = ({ route, navigation }) => {
             :
             ""
         }
-      </View>
+      </div>
   )
 }
 
-export default InventoryPositionManage
-
-const styles = StyleSheet.create({})
+export default InventoryPositionManage;

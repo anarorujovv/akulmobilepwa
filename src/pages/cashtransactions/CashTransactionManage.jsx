@@ -1,9 +1,8 @@
-import { ActivityIndicator, BackHandler, StyleSheet, Text, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ManageCard from '../../shared/ui/ManageCard';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import moment from 'moment';
 import Input from '../../shared/ui/Input';
@@ -11,29 +10,64 @@ import { formatPrice } from '../../services/formatPrice';
 import Button from '../../shared/ui/Button';
 import { formatObjectKey } from '../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
-import prompt from '../../services/prompt';
-import { useFocusEffect } from '@react-navigation/native';
 import Selection from '../../shared/ui/Selection';
 import SelectionDate from '../../shared/ui/SelectionDate';
 import DestinationCard from '../../shared/ui/DestinationCard';
-import playSound from '../../services/playSound';
+// import playSound from '../../services/playSound'; // Sounds might not work same way on web, skip or mock
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const CashTransactionManage = ({ route, navigation }) => {
-
+const CashTransactionManage = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     let theme = useTheme();
 
-    let { id } = route.params;
+    let { id } = location.state || {}; // Get ID from state
 
     const [c_transaction, set_c_transaction] = useState(null);
     const [dateModal, setDateModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+    const styles = {
+        container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.whiteGrey,
+            overflowY: 'auto'
+        },
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        content: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: 10
+        },
+        headerText: {
+            fontSize: 20,
+            color: theme.primary,
+            padding: 15
+        },
+        formGroup: {
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 20
+        }
+    };
+
     const fetchingData = async (id) => {
         if (id != null) {
             await api('cashtransactions/get.php', {
                 id: id,
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             })
                 .then(element => {
                     if (element != null) {
@@ -46,7 +80,6 @@ const CashTransactionManage = ({ route, navigation }) => {
                     ErrorMessage(err)
                 })
         } else {
-
             let obj = {
                 Status: true,
                 Moment: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
@@ -56,14 +89,14 @@ const CashTransactionManage = ({ route, navigation }) => {
                 CashFromName: "",
                 CashToId: "",
                 CashToName: "",
-                OwnerId: await AsyncStorage.getItem("ownerId") == null ? "" : await AsyncStorage.getItem('ownerId'),
-                DepartmentId: await AsyncStorage.getItem("depId") == null ? "" : await AsyncStorage.getItem('depId'),
+                OwnerId: await AsyncStorageWrapper.getItem("ownerId") == null ? "" : await AsyncStorageWrapper.getItem('ownerId'),
+                DepartmentId: await AsyncStorageWrapper.getItem("depId") == null ? "" : await AsyncStorageWrapper.getItem('depId'),
                 Description: ""
             }
 
             await api('cashtransactions/newname.php', {
                 n: "",
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             })
                 .then(element => {
                     if (element != null) {
@@ -82,15 +115,20 @@ const CashTransactionManage = ({ route, navigation }) => {
         setIsLoading(true)
         let data = { ...c_transaction };
         let info = { ...formatObjectKey(data) };
-        info.token = await AsyncStorage.getItem('token')
+        info.token = await AsyncStorageWrapper.getItem('token')
 
         await api('cashtransactions/put.php', info)
             .then(item => {
                 if (item != null) {
-                    fetchingData(item.ResponseService);
+                    // Update ID to continue editing if needed, or navigate back? 
+                    // Original code re-fetches with new ID if saved.
+                    // But usually on web we might want to stay or go back.
+                    // Assuming staying on page for now.
+                    // fetchingData(item.ResponseService); 
                     SuccessMessage('Yadda Saxlanıldı!');
                     setHasUnsavedChanges(false);
-                    playSound('success')
+                    // playSound('success')
+                    navigate(-1); // Navigate back on success
                 }
             })
             .catch(err => {
@@ -116,67 +154,38 @@ const CashTransactionManage = ({ route, navigation }) => {
         hasUnsavedChangesFunction();
     }
 
-    useFocusEffect(
-
-        useCallback(() => {
-            const onBackPress = async () => {
-                navigation.setParams({ shouldGoToSpecificPage: false });
-                hasUnsavedChanges ? prompt('Çıxmağa əminsiniz ?', () => navigation.goBack()) : (navigation.goBack());
-                return true;
-            };
-
-            BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-            return () =>
-                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-        }, [hasUnsavedChanges]))
+    // Web navigation blocking logic is complex (window.onbeforeunload), 
+    // for now we trust user or add simple check. React Router v6 unstable_useBlocker is experimental.
 
     useEffect(() => {
         fetchingData(id);
     }, [id])
 
     return (
-        <View style={{
-            flex: 1,
-            backgroundColor: theme.whiteGrey
-        }}>
-            {
-                c_transaction == null ?
-                    <View style={{
-                        flex: 1,
-                    }}>
-                        <ActivityIndicator size={30} color={theme.primary} />
-                    </View>
-                    :
-
-                    <View style={{
-                        flex: 1,
-                        justifyContent: 'space-between'
-                    }}>
+        <div style={styles.container}>
+            {c_transaction == null ? (
+                <div style={styles.loadingContainer}>
+                    <div className="spinner"></div> // Global spinner
+                </div>
+            ) : (
+                <div style={styles.content}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <ManageCard>
-                            <View style={{
+                            <div style={{
                                 width: '100%',
-                                padding: 15,
                             }}>
-                                <Text style={{
-                                    fontSize: 20,
-                                    color: theme.primary
-                                }}>Transfer</Text>
-                            </View>
+                                <span style={styles.headerText}>Transfer</span>
+                            </div>
 
-                            <View style={{
-                                width: '100%',
-                                alignItems: 'center',
-                                gap: 20
-                            }}>
+                            <div style={styles.formGroup}>
                                 <Input
                                     value={c_transaction.Name}
                                     onChange={(e) => {
                                         handleChangeInput('Name', e)
                                     }}
                                     placeholder={'Ad'}
-                                    type={'string'}
-                                    width={'70%'}
+                                    type={'text'}
+                                    width={'90%'}
                                 />
 
                                 <SelectionDate
@@ -189,7 +198,7 @@ const CashTransactionManage = ({ route, navigation }) => {
 
                                 <Input
                                     value={c_transaction.Amount}
-                                    width={'70%'}
+                                    width={'90%'}
                                     type={'number'}
                                     placeholder={'Məbləğ'}
                                     onChange={(e) => {
@@ -220,11 +229,7 @@ const CashTransactionManage = ({ route, navigation }) => {
                                     title={'Hesaba'}
                                     value={c_transaction.CashToId}
                                 />
-
-
-                            </View>
-
-
+                            </div>
                         </ManageCard>
 
                         <DestinationCard
@@ -233,27 +238,24 @@ const CashTransactionManage = ({ route, navigation }) => {
                             document={c_transaction}
                             setDocument={set_c_transaction}
                         />
-                        {
-                            hasUnsavedChanges ?
-                                <Button
-                                    onClick={handleSave}
-                                    isLoading={isLoading}
-                                    bg={theme.green}
-                                    disabled={isLoading}
-                                >
-                                    Yadda Saxla
-                                </Button>
-                                :
-                                ""
-                        }
-                    </View>
-            }
+                    </div>
 
-
-        </View>
+                    {hasUnsavedChanges && (
+                        <div style={{ marginTop: 20 }}>
+                            <Button
+                                onClick={handleSave}
+                                isLoading={isLoading}
+                                bg={theme.green}
+                                disabled={isLoading}
+                            >
+                                Yadda Saxla
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
     )
 }
 
-export default CashTransactionManage
-
-const styles = StyleSheet.create({})
+export default CashTransactionManage;

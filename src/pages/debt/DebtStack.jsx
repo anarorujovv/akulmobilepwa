@@ -1,27 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import DebtList from './DebtList';
 import DebtManageProvider from './DebtManageProvider';
-import Filter from '../../shared/ui/Filter';
 
-const DemandStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
+const DebtStack = () => {
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation: 'fade'
-            }}
-        >
-            <Stack.Screen name="debt-list" component={DebtList} />
-            <Stack.Screen name="debt-manage" component={DebtManageProvider} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<DebtList />} />
+            <Route path="/debt-manage" element={<DebtManageProvider />} />
+        </Routes>
+    );
+};
 
-export default DemandStack
-
-const styles = StyleSheet.create({})
+export default DebtStack;

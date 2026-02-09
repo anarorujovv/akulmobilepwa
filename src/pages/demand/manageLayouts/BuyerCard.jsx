@@ -1,40 +1,47 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React, { useContext, useState } from 'react'
-import ManageCard from '../../../shared/ui/ManageCard'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import useTheme from '../../../shared/theme/useTheme'
-import api from '../../../services/api'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage'
-import { formatPrice } from '../../../services/formatPrice'
-import applyDiscount from '../../../services/report/applyDiscount'
-import pricingUtils from '../../../services/pricingUtils'
-import { DemandGlobalContext } from '../../../shared/data/DemandGlobalState'
+import React, { useContext } from 'react';
+import ManageCard from '../../../shared/ui/ManageCard';
+import { IoPerson } from 'react-icons/io5'; // Using react-icons for IonIcons replacement
+import useTheme from '../../../shared/theme/useTheme';
+import api from '../../../services/api';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
+import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage';
+import { formatPrice } from '../../../services/formatPrice';
+import applyDiscount from '../../../services/report/applyDiscount';
+import pricingUtils from '../../../services/pricingUtils';
+import { DemandGlobalContext } from '../../../shared/data/DemandGlobalState';
 import Selection from './../../../shared/ui/Selection';
-import mergeProductQuantities from '../../../services/mergeProductQuantities'
-import useGlobalStore from '../../../shared/data/zustand/useGlobalStore'
+import mergeProductQuantities from '../../../services/mergeProductQuantities';
+import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
 
 const BuyerCard = ({ changeSelection }) => {
 
-    const { document, setDocument } = useContext(DemandGlobalContext)
+    const { document, setDocument } = useContext(DemandGlobalContext);
     const local = useGlobalStore(state => state.local);
     const theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         header: {
             width: '100%',
             padding: 15,
             gap: 10,
-            flexDirection: 'row'
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center'
+        },
+        container: {
+            gap: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
         }
-    })
+    };
 
     const fetchingCustomerData = async (item) => {
         let info = { ...document };
 
         let obj = {
             id: item.Id,
-            token: await AsyncStorage.getItem("token")
+            token: await AsyncStorageWrapper.getItem("token")
         }
         await api("customers/getdata.php", obj)
             .then(async element => {
@@ -51,7 +58,7 @@ const BuyerCard = ({ changeSelection }) => {
                         let obj = {
                             pricetype: customer.CustomerData.PriceTypeId,
                             products: positions.map(item => item.ProductId),
-                            token: await AsyncStorage.getItem('token')
+                            token: await AsyncStorageWrapper.getItem('token')
                         }
                         await api('/products/getproductsrate.php', obj).then(element => {
                             if (element != null) {
@@ -98,59 +105,54 @@ const BuyerCard = ({ changeSelection }) => {
     }
 
     return (
-        <>
-            <ManageCard>
-                <View style={styles.header}>
-                    <Ionicons size={20} color={theme.grey} name='person' />
-                    <Text style={{
-                        color: theme.grey
-                    }}>Qarşı-Tərəf</Text>
-                </View>
+        <ManageCard>
+            <div style={styles.header}>
+                <IoPerson size={20} color={theme.grey} />
+                <span style={{
+                    color: theme.grey
+                }}>Qarşı-Tərəf</span>
+            </div>
 
-                <View style={{
-                    gap: 15,
-                    alignItems: 'center'
+            <div style={styles.container}>
 
-                }}>
+                <Selection
+                    isRequired={true}
+                    apiBody={{}}
+                    apiName={'customers/getfast.php'}
+                    searchApi={'customers/getfast.php'}
+                    change={fetchingCustomerData}
+                    searchKey={'fast'}
+                    title={'Qarşı-Tərəf'}
+                    value={document.CustomerId}
+                    defaultValue={document.CustomerName}
+                    bottomText={local.demands.demand.customerDebt ? document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0' : ""}
+                    bottomTitle={'Qarşı-tərəf'}
+                />
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        width: '70%',
+                        justifyContent: 'space-between'
+                    }}
+                >
+                    <span style={{ fontSize: 12, color: theme.orange }}>{'Müştəri endirimi'}</span>
+                    <span style={{ fontSize: 12, color: theme.black }}>{document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.CustomerData.Discount) : '0'} %</span>
+                </div>
 
-                    <Selection
-                        isRequired={true}
-                        apiBody={{}}
-                        apiName={'customers/getfast.php'}
-                        searchApi={'customers/getfast.php'}
-                        change={fetchingCustomerData}
-                        searchKey={'fast'}
-                        title={'Qarşı-Tərəf'}
-                        value={document.CustomerId}
-                        defaultValue={document.CustomerName}
-                        bottomText={local.demands.demand.customerDebt ? document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0' : ""}
-                        bottomTitle={'Qarşı-tərəf'}
-                    />
-                    <View
-                        style={{
-                            flexDirection: 'row',
-                            width: '70%',
-                            justifyContent: 'space-between'
-                        }}
-                    >
-                        <Text style={{ fontSize: 12, color: theme.orange }}>{'Müştəri endirimi'}</Text>
-                        <Text style={{ fontSize: 12, color: theme.black }}>{document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.CustomerData.Discount) : '0'} %</Text>
-                    </View>
+                <Selection
+                    isRequired={true}
+                    apiBody={{}}
+                    apiName={'stocks/get.php'}
+                    change={fetchingStockData}
+                    title={"Anbar"}
+                    value={document.StockId}
+                    defaultValue={document.StockName}
+                />
 
-                    <Selection
-                        isRequired={true}
-                        apiBody={{}}
-                        apiName={'stocks/get.php'}
-                        change={fetchingStockData}
-                        title={"Anbar"}
-                        value={document.StockId}
-                        defaultValue={document.StockName}
-                    />
-
-                </View>
-            </ManageCard >
-        </>
+            </div>
+        </ManageCard >
     )
 }
 
-export default BuyerCard
+export default BuyerCard;

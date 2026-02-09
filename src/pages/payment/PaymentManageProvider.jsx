@@ -1,18 +1,13 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { PaymentGlobalProvider } from '../../shared/data/PaymentGlobalState'
-import PaymentManage from './PaymentManage'
+import React from 'react';
+import { PaymentGlobalProvider } from '../../shared/data/PaymentGlobalState';
+import PaymentManage from './PaymentManage';
 
-const PaymentManageProvider = ({route,navigation}) => {
-
+const PaymentManageProvider = () => {
   return (
     <PaymentGlobalProvider>
-      <PaymentManage route={route} navigation={navigation}/>
+      <PaymentManage />
     </PaymentGlobalProvider>
-  )
+  );
+};
 
-}
-
-export default PaymentManageProvider
-
-const styles = StyleSheet.create({})
+export default PaymentManageProvider;

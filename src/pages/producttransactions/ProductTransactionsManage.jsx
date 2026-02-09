@@ -1,21 +1,21 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React from 'react';
+import useTheme from '../../shared/theme/useTheme';
 
 const ProductTransactionsManage = () => {
-
   let theme = useTheme();
 
   return (
-    <View style={{
-      flex:1,
-      backgroundColor:theme.whiteGrey
+    <div style={{
+      flex: 1,
+      backgroundColor: theme.whiteGrey,
+      height: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     }}>
-      <Text>ProductTransactionsManage</Text>
-    </View>
+      <span>ProductTransactionsManage</span>
+    </div>
   )
 }
 
-export default ProductTransactionsManage
-
-const styles = StyleSheet.create({})
+export default ProductTransactionsManage;

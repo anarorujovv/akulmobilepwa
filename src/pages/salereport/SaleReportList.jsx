@@ -1,9 +1,8 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useState, useCallback } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useState, useCallback, useEffect } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
@@ -13,10 +12,11 @@ import { formatPrice } from '../../services/formatPrice';
 import ListItem from '../../shared/ui/list/ListItem';
 import Line from '../../shared/ui/Line';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
-import { useFocusEffect } from '@react-navigation/native';
 import getDateByIndex from '../../services/report/getDateByIndex';
+import { useNavigate } from 'react-router-dom';
 
-const SaleReportList = ({ route, navigation }) => {
+const SaleReportList = () => {
+  const navigate = useNavigate();
   let theme = useTheme();
   let permissions = useGlobalStore(state => state.permissions);
 
@@ -38,36 +38,43 @@ const SaleReportList = ({ route, navigation }) => {
     ...getDateByIndex(4)
   })
 
-
-
   const [documents, setDocuments] = useState([]);
   const [documentsInfo, setDocumentsInfo] = useState(null);
   const [itemSize, setItemSize] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
-      flex: 1,
-      backgroundColor: theme.bg
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.bg,
+      overflow: 'hidden'
     },
-    deleteButton: {
-      backgroundColor: theme.red,
+    listContainer: {
+      flex: 1,
+      overflowY: 'auto',
+      paddingBottom: 80
+    },
+    loadingContainer: {
+      width: '100%',
+      height: 20,
       justifyContent: 'center',
       alignItems: 'center',
-      width: 100,
-      height: '100%',
+      display: 'flex'
     },
-    deleteText: {
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: 16
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      display: 'flex',
+      paddingTop: 50
     }
-  })
+  }
 
   const fetchingDocumentData = async () => {
     setIsRefreshing(true);
-    let obj = { ...filter, token: await AsyncStorage.getItem('token') }
+    let obj = { ...filter, token: await AsyncStorageWrapper.getItem('token') }
     obj.pg = obj.pg - 1;
     try {
       const element = await api('salereports/get.php', obj);
@@ -103,19 +110,17 @@ const SaleReportList = ({ route, navigation }) => {
     )
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocuments(null);
-      let time = setTimeout(() => {
-        fetchingDocumentData();
-      }, 300);
+  useEffect(() => {
+    setDocuments(null);
+    let time = setTimeout(() => {
+      fetchingDocumentData();
+    }, 300);
 
-      return () => clearTimeout(time);
-    }, [filter])
-  )
+    return () => clearTimeout(time);
+  }, [filter]);
 
-  const renderItem = ({ item, index }) => (
-    <>
+  const renderItem = (item, index) => (
+    <div key={item.ProductId || index}>
       <ListItem
         firstText={item.ProductName}
         priceText={formatPrice(item.SumPrice)}
@@ -124,20 +129,18 @@ const SaleReportList = ({ route, navigation }) => {
         notIcon={true}
         onPress={() => {
           if (permission_ver(permissions, 'salereports', 'R')) {
-            navigation.navigate('sale-report-manage', { id: item.ProductId, name: item.ProductName });
+            navigate('/salereport/sale-report-manage', { state: { id: item.ProductId, name: item.ProductName } });
           } else {
             ErrorMessage('İcazəniz yoxdur!');
           }
         }}
         index={index + 1}
       />
-    </>
+    </div>
   );
 
-
-
   return (
-    <View style={styles.container}>
+    <div style={styles.container}>
       <ListPagesHeader
         header={"Mənfəət"}
         isSearch={true}
@@ -146,34 +149,36 @@ const SaleReportList = ({ route, navigation }) => {
         filterSearchKey={'docNumber'}
         isFilter={true}
         processFilterClick={() => {
-          navigation.navigate('filter', {
-            filter: filter,
-            setFilter: setFilter,
-            searchParams: [
-              'product',
-              'groups',
-              'customers',
-              'stocks',
-              'salePoint',
-              'customerGroups'
-            ],
-            customFields: {
-              groups: {
-                title: "Qrup",
-                name: 'gp',
-                api: 'productfolders',
-                type: 'select'
+          navigate('/filter', {
+            state: {
+              filter: filter,
+              // setFilter: setFilter,
+              searchParams: [
+                'product',
+                'groups',
+                'customers',
+                'stocks',
+                'salePoint',
+                'customerGroups'
+              ],
+              customFields: {
+                groups: {
+                  title: "Qrup",
+                  name: 'gp',
+                  api: 'productfolders',
+                  type: 'select'
+                },
+                product: {
+                  title: "Məhsul",
+                  api: 'products',
+                  name: "productName",
+                  type: 'select',
+                  searchApi: 'products/getfast.php',
+                  searchKey: 'fast'
+                },
               },
-              product: {
-                title: "Məhsul",
-                api: 'products',
-                name: "productName",
-                type: 'select',
-                searchApi: 'products/getfast.php',
-                searchKey: 'fast'
-              },
-            },
-            isDate: true
+              isDate: true
+            }
           })
         }}
       />
@@ -219,55 +224,36 @@ const SaleReportList = ({ route, navigation }) => {
           ]}
         />
       ) : (
-        <View style={{
-          width: '100%',
-          height: 20,
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <ActivityIndicator size={15} color={theme.primary} />
+        <div style={styles.loadingContainer}>
+          <div className="spinner" style={{ width: 15, height: 15 }}></div>
           <Line width={'100%'} />
-        </View>
+        </div>
       )}
 
-      {documents == null ? (
-        <View style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <ActivityIndicator size={30} color={theme.primary} />
-        </View>
-      ) : (
-        <>
-          <FlatList
-            data={documents}
-            renderItem={renderItem}
-            refreshing={isRefreshing}
-            ListEmptyComponent={() => (
-              <View style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                paddingTop: 50
-              }}>
-                {documents === null ? (
-                  <ActivityIndicator size={30} color={theme.primary} />
-                ) : (
-                  <Text style={{ color: theme.text }}>List boşdur</Text>
-                )}
-              </View>
+      <div style={styles.listContainer}>
+        {documents == null ? (
+          <div style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            display: 'flex'
+          }}>
+            <div className="spinner"></div> // Web spinner
+          </div>
+        ) : (
+          <>
+            {documents.length === 0 ? (
+              <div style={styles.emptyContainer}>
+                <span style={{ color: theme.text }}>List boşdur</span>
+              </div>
+            ) : (
+              documents.map((item, index) => renderItem(item, index))
             )}
-            onRefresh={() => {
-              let filterData = { ...filter };
-              filterData.agrigate = 1;
-              setFilter(filterData);
-            }}
-            ListFooterComponent={RenderFooter}
-          />
-        </>
-      )}
-    </View>
+            <RenderFooter />
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

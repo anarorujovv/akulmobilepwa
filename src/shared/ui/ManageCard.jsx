@@ -1,27 +1,27 @@
-import { StyleSheet, Text, View } from 'react-native'
-import useTheme from '../theme/useTheme'
+import React from 'react';
+import useTheme from '../theme/useTheme';
 
 const ManageCard = ({ customPadding, ...props }) => {
 
   const theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
       width: '100%',
-      elevation: 2,
-      shadowColor: theme.black,
+      boxShadow: `0 2px 4px ${theme.black}33`, // 33 for some transparency approximation
       backgroundColor: theme.bg,
       paddingBottom: 50,
+      boxSizing: 'border-box',
       ...customPadding,
     },
-  })
+  };
 
   return (
-    <View style={[styles.container]}>
+    <div style={styles.container}>
       {props.children}
-    </View>
-  )
-}
+    </div>
+  );
+};
 
-export default ManageCard
+export default ManageCard;
 

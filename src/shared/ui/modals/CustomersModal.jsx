@@ -1,13 +1,11 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import MyModal from './../MyModal';
 import SearchHeader from './../SearchHeader';
 import api from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
 import Line from '../Line';
-import { ActivityIndicator, Pressable } from '@react-native-material/core';
 import Input from '../Input';
 import { formatPrice } from '../../../services/formatPrice';
 
@@ -29,7 +27,7 @@ const CustomersModal = ({
 
     const fetchingCustomers = async () => {
         await api('customers/get.php', {
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             sr: "Name",
             lm: 40
         }).then((element) => {
@@ -52,7 +50,7 @@ const CustomersModal = ({
     const fetchingCustomerDebt = async (id) => {
         await api('customers/getdata.php', {
             id: id,
-            token: await AsyncStorage.getItem('token')
+            token: await AsyncStorageWrapper.getItem('token')
         })
             .then(element => {
                 if (element != null) {
@@ -67,7 +65,7 @@ const CustomersModal = ({
     const fetchingFastCustomers = async () => {
         await api("customers/getfast.php", {
             fast: search,
-            token: await AsyncStorage.getItem("token")
+            token: await AsyncStorageWrapper.getItem("token")
         }).then(async element => {
             if (element != null) {
                 if (element.List[0]) {
@@ -89,41 +87,53 @@ const CustomersModal = ({
         setModalVisible(false);
     }
 
-    const renderItem = ({ item, index }) => {
+    const renderItem = (item, index) => {
 
         return (
-            <>
-                <Pressable onPress={() => {
+            <div key={item.Id || index} style={{ width: '100%' }}>
+                <div onClick={() => {
                     handleSelectCustomer(item);
                     if (returnChanged) {
                         returnChanged();
                     }
-                }} pressEffectColor={theme.input.grey} style={{
-                    width: '100%',
-                    height: 55,
-                    paddingLeft: 20,
-                    justifyContent: 'center',
-                }}>
-                    <Text style={{
+                }}
+                    style={{
+                        width: '100%',
+                        height: 55,
+                        paddingLeft: 20,
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                        backgroundColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                    <span style={{
                         color: theme.black,
                         fontSize: 13
-                    }}>{item.Name}</Text>
-                </Pressable>
+                    }}>{item.Name}</span>
+                </div>
                 <Line width={'90%'} />
-            </>
+            </div>
         )
     }
     useEffect(() => {
         if (!modalVisible) {
-            setSearch(null);
+            setSearch("");
         }
     }, [modalVisible])
 
     useEffect(() => {
         let time;
-        if (search != null) {
+        if (search != null) { // search null initial state, but fetchingCustomers runs initially if search logic allows. Actually fetchingCustomers called in else block.
+            // Initial load logic seems a bit mixed in original code.
+            // Original: search is "" initially? No "const [search, setSearch] = useState("");"
+            // But logic: if (search != null) ...
+            // Let's keep it close to original.
             setCustomers([])
-            if (search != "") {
+            if (search !== "") {
                 time = setTimeout(() => {
                     fetchingFastCustomers();
                 }, 400);
@@ -134,15 +144,38 @@ const CustomersModal = ({
         return () => clearTimeout(time);
     }, [search])
 
+    const styles = {
+        trigger: {
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            cursor: isDisable ? 'default' : 'pointer'
+        },
+        debtRow: {
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%', // width prop was passed but handled via style here
+            justifyContent: 'space-between'
+        },
+        noDataContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        listContainer: {
+            width: '100%',
+            height: '100%',
+            overflowY: 'auto'
+        }
+    }
+
     return (
         <>
-            <Pressable
-                style={{
-                    width: '100%',
-                    alignItems: 'center'
-                }}
-                disabled={isDisable}
-                onPress={() => {
+            <div
+                style={styles.trigger}
+                onClick={() => {
                     if (!isDisable) {
                         setModalVisible(true);
                     }
@@ -158,27 +191,25 @@ const CustomersModal = ({
                 {
                     isDebtPermission ?
                         customerDebt != null ?
-                            <View
+                            <div
                                 style={{
-                                    flexDirection: 'row',
-                                    width: width,
-                                    justifyContent: 'space-between'
+                                    ...styles.debtRow,
+                                    width: width // override or ensure width
                                 }}
                             >
-                                <Text style={{ fontSize: 12, color: theme.orange }}>Qalıq borc</Text>
-                                <Text style={{ fontSize: 12, color: customerDebt >= 0 ? theme.black : theme.orange }}>{customerDebt} ₼</Text>
-                            </View>
+                                <span style={{ fontSize: 12, color: theme.orange }}>Qalıq borc</span>
+                                <span style={{ fontSize: 12, color: customerDebt >= 0 ? theme.black : theme.orange }}>{customerDebt} ₼</span>
+                            </div>
                             :
                             ""
                         :
                         ""
                 }
-            </Pressable>
+            </div>
             <MyModal
                 modalVisible={modalVisible}
                 setModalVisible={setModalVisible}
                 width={'100%'}
-                height={"100%"}
             >
                 <SearchHeader
                     placeholder={'Müştəri axtarışı...'}
@@ -193,39 +224,27 @@ const CustomersModal = ({
 
                 {
                     customers == null ?
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                            <Text style={{
+                        <div style={styles.noDataContainer}>
+                            <span style={{
                                 fontSize: 16,
                                 color: theme.primary
-                            }}>Məlumat tapılmadı...</Text>
-                        </View>
+                            }}>Məlumat tapılmadı...</span>
+                        </div>
                         :
-                        <View style={{
-                            width: '100%',
-                            height: '100%'
-                        }}>
+                        <div style={styles.listContainer}>
                             {
                                 customers[0] ?
-                                    <FlatList
-                                        data={customers}
-                                        renderItem={renderItem}
-                                    />
+                                    customers.map((item, index) => renderItem(item, index))
                                     :
-                                    <View style={{
-                                        flex: 1,
-                                        justifyContent: 'center',
-                                        alignItems: 'center'
-                                    }}>
-                                        <ActivityIndicator size={40} color={theme.primary} />
-                                    </View>
+                                    <div style={styles.noDataContainer}>
+                                        <div className="spinner"></div>
+                                    </div>
                             }
-                        </View>
+                        </div>
                 }
             </MyModal>
         </>
     )
 }
 
-export default CustomersModal
-
-const styles = StyleSheet.create({})
+export default CustomersModal;

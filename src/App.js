@@ -1,45 +1,78 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Login from './security/Login';
-import { ToastProvider } from 'react-native-toast-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from './services/AsyncStorageWrapper';
 import MainStack from './routers/stacks/MainStack';
-import { NavigationContainer } from '@react-navigation/native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StatusBar } from 'react-native';
 import useTheme from './shared/theme/useTheme';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const App = () => {
   const [token, setToken] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   let theme = useTheme();
 
   const fetchingToken = async () => {
-    let token = await AsyncStorage.getItem('token');
-    setToken(token);
+    let storedToken = await AsyncStorage.getItem('token');
+    setToken(storedToken);
+    setIsLoading(false);
   };
 
   useEffect(() => {
     fetchingToken();
   }, []);
 
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: theme.bg
+      }}>
+        <div className="spinner" style={{
+          width: 40,
+          height: 40,
+          border: `3px solid ${theme.input.grey}`,
+          borderTop: `3px solid ${theme.primary}`,
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
+    );
+  }
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <SafeAreaView
-          style={{ flex: 0, backgroundColor: theme.primary }}
-          edges={['top']} />
-        <SafeAreaView
-          style={{ flex: 1, backgroundColor: theme.bg }}
-          edges={['left', 'right', 'bottom']}>
-          <StatusBar backgroundColor={theme.primary} barStyle="light-content" />
-          <ToastProvider>
-            <NavigationContainer>
-              {token == '' ? '' : token === null ? <Login /> : <MainStack />}
-            </NavigationContainer>
-          </ToastProvider>
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      backgroundColor: theme.bg
+    }}>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      <BrowserRouter>
+        {token === null ? (
+          <Login />
+        ) : token === '' ? (
+          <Login />
+        ) : (
+          <MainStack />
+        )}
+      </BrowserRouter>
+    </div>
   );
 };
 

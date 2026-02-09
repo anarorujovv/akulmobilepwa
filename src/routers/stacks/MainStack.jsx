@@ -1,6 +1,5 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Home from './../../pages/Home';
 import ProductStack from '../../pages/product/ProductStack';
 import SupplyStack from './../../pages/supply/SupplyStack';
@@ -37,83 +36,68 @@ import LossStack from '../../pages/loss/LossStack';
 import ExpeditorStack from '../../pages/expeditor/ExpeditorStack';
 import CatalogStack from '../../pages/catalog/CatalogStack';
 
-const Stack = createNativeStackNavigator();
-
 const MainStack = () => {
   return (
-    <Stack.Navigator screenOptions={{
-      headerShown: false,
-      animation: 'fade'
-    }}>
-
-      <Stack.Screen name='home' component={Home} />
+    <Routes>
+      <Route path='/' element={<Home />} />
+      <Route path='/home' element={<Home />} />
 
       {/* Göstəricilər */}
-
-      <Stack.Screen name='dashboard' component={Dashboard} />
-      <Stack.Screen name='catalog' component={CatalogStack} />
+      <Route path='/dashboard' element={<Dashboard />} />
+      <Route path='/catalog/*' element={<CatalogStack />} />
 
       {/* Məhsullar */}
-
-      <Stack.Screen name='sub_product' component={ProductStack} />
-      <Stack.Screen name='inventory' component={InventoryStack} />
-      <Stack.Screen name='stockbalance' component={StockBalanceStack} />
-      <Stack.Screen name='loss' component={LossStack} />
-      <Stack.Screen name='enter' component={EnterStack} />
-      <Stack.Screen name='move' component={MoveStack} />
+      <Route path='/sub_product/*' element={<ProductStack />} />
+      <Route path='/inventory/*' element={<InventoryStack />} />
+      <Route path='/stockbalance/*' element={<StockBalanceStack />} />
+      <Route path='/loss/*' element={<LossStack />} />
+      <Route path='/enter/*' element={<EnterStack />} />
+      <Route path='/move/*' element={<MoveStack />} />
 
       {/* Alışlar */}
-
-      <Stack.Screen name='supply' component={SupplyStack} />
-      <Stack.Screen name='supplyreturns' component={SupplyReturnStack} />
+      <Route path='/supply/*' element={<SupplyStack />} />
+      <Route path='/supplyreturns/*' element={<SupplyReturnStack />} />
 
       {/* Satışlar */}
-
-
-      <Stack.Screen name='demand' component={DemandStack} />
-      <Stack.Screen name='demandreturns' component={DemandReturnStack} />
+      <Route path='/demand/*' element={<DemandStack />} />
+      <Route path='/demandreturns/*' element={<DemandReturnStack />} />
 
       {/* Tərəf-müqabilləri */}
-
-      <Stack.Screen name='customer' component={CustomerStack} />
+      <Route path='/customer/*' element={<CustomerStack />} />
 
       {/* Maliyyə */}
-      <Stack.Screen name='page_payments' component={PaymentStack} />
-      <Stack.Screen name='settlements' component={DebtStack} />
-      <Stack.Screen name='cashtransactions' component={CashTransactionStack} />
+      <Route path='/page_payments/*' element={<PaymentStack />} />
+      <Route path='/settlements/*' element={<DebtStack />} />
+      <Route path='/cashtransactions/*' element={<CashTransactionStack />} />
 
       {/* Distributorlar */}
-      <Stack.Screen name='expeditor' component={ExpeditorStack} />
+      <Route path='/expeditor/*' element={<ExpeditorStack />} />
 
-      {/*  */}
-      <Stack.Screen name='shifts' component={ShiftStack} />
-      <Stack.Screen name='sale' component={SaleStack} />
-      <Stack.Screen name='returns' component={ReturnStack} />
-      <Stack.Screen name='credittransaction' component={CreditTransactionStack} />
-      <Stack.Screen name='cashins' component={CashInList} />
-      <Stack.Screen name='cashouts' component={CashOutList} />
-
+      {/* Pərakəndə */}
+      <Route path='/shifts/*' element={<ShiftStack />} />
+      <Route path='/sale/*' element={<SaleStack />} />
+      <Route path='/returns/*' element={<ReturnStack />} />
+      <Route path='/credittransaction/*' element={<CreditTransactionStack />} />
+      <Route path='/cashins' element={<CashInList />} />
+      <Route path='/cashouts' element={<CashOutList />} />
 
       {/* Hesabatlar */}
-      <Stack.Screen name='salereports' component={SaleReportStack} />
-      <Stack.Screen name='profit' component={Profit} />
-      <Stack.Screen name='dailyreports' component={DailyProfits} />
-      <Stack.Screen name='comprehensive' component={Comprehensive} />
-      <Stack.Screen name='producttransactions' component={ProductTransactionsStack} />
-      <Stack.Screen name='cashes' component={CasheStack} />
-      <Stack.Screen name='customerorders' component={CustomerOrderStack} />
+      <Route path='/salereports/*' element={<SaleReportStack />} />
+      <Route path='/profit' element={<Profit />} />
+      <Route path='/dailyreports' element={<DailyProfits />} />
+      <Route path='/comprehensive' element={<Comprehensive />} />
+      <Route path='/producttransactions/*' element={<ProductTransactionsStack />} />
+      <Route path='/cashes/*' element={<CasheStack />} />
+      <Route path='/customerorders/*' element={<CustomerOrderStack />} />
 
-      {/*  Profile */}
-      <Stack.Screen name='profile' component={Profile} />
-      <Stack.Screen name='settings' component={SettingStack} />
+      {/* Profile */}
+      <Route path='/profile' element={<Profile />} />
+      <Route path='/settings/*' element={<SettingStack />} />
 
-      <Stack.Screen name='print-and-share' component={PrintAndShare} />
-      <Stack.Screen name='filter' component={Filter} />
+      <Route path='/print-and-share' element={<PrintAndShare />} />
+      <Route path='/filter' element={<Filter />} />
+    </Routes>
+  );
+};
 
-    </Stack.Navigator>
-  )
-}
-
-export default MainStack
-
-const styles = StyleSheet.create({})
+export default MainStack;

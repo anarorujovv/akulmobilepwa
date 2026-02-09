@@ -1,9 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { LossGlobalProvider } from '../../shared/data/LossGlobalState'
-import LossManage from './LossManage'
+import React from 'react';
+import { LossGlobalProvider } from '../../shared/data/LossGlobalState';
+import LossManage from './LossManage';
 
-const LossManageProvider = ({route,navigation}) => {
+const LossManageProvider = ({ route, navigation }) => {
   return (
     <LossGlobalProvider>
       <LossManage route={route} navigation={navigation} />
@@ -11,6 +10,4 @@ const LossManageProvider = ({route,navigation}) => {
   )
 }
 
-export default LossManageProvider
-
-const styles = StyleSheet.create({})
+export default LossManageProvider;

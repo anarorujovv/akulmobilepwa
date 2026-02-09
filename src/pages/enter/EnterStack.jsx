@@ -1,36 +1,21 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import DocumentProductList from './../../shared/ui/DocumentProductList';
-import PositionManage from './../../shared/ui/PositionManage';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import EnterList from './EnterList';
 import EnterManageProvider from './EnterManageProvider';
+import DocumentProductList from './../../shared/ui/DocumentProductList';
+import PositionManage from './../../shared/ui/PositionManage';
 import ProductScanner from '../product/ProductScanner';
 
-
 const EnterStack = () => {
-
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation: 'fade'
-            }}
-        >
-            <Stack.Screen name="enter-list" component={EnterList} />
-            <Stack.Screen name="enter-manage" component={EnterManageProvider} />
-            <Stack.Screen name='product-position' component={PositionManage} />
-            <Stack.Screen name='product-list' component={DocumentProductList} />
-            <Stack.Screen name='product-scanner' component={ProductScanner} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<EnterList />} />
+            <Route path="/enter-manage" element={<EnterManageProvider />} />
+            <Route path="/product-position" element={<PositionManage />} />
+            <Route path="/product-list" element={<DocumentProductList />} />
+            <Route path="/product-scanner" element={<ProductScanner />} />
+        </Routes>
+    );
+};
 
-
-
-export default EnterStack
-
-const styles = StyleSheet.create({})
+export default EnterStack;

@@ -1,20 +1,19 @@
-import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import MyPagination from '../../shared/ui/MyPagination';
 import FabButton from '../../shared/ui/FabButton';
 import ListItem from '../../shared/ui/list/ListItem';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigate } from 'react-router-dom';
 
-const CustomerList = ({ route, navigation }) => {
-
+const CustomerList = () => {
+    const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
-    const [itemSize, setItemSize] = useState(0)
-    const [isRefreshing, setIsRefreshing] = useState(false)
+    const [itemSize, setItemSize] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [filter, setFilter] = useState({
         dr: 0,
         sr: "GroupName",
@@ -23,37 +22,58 @@ const CustomerList = ({ route, navigation }) => {
         lm: 20,
         ar: 0,
         fast: ""
-    })
+    });
 
     let theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
+        },
+        listContainer: {
             flex: 1,
-            backgroundColor: theme.bg
+            overflowY: 'auto',
+            paddingBottom: 80 // Space for FabButton
+        },
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        emptyContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingTop: 50
         }
-    })
+    };
 
     const fetchingCustomers = async () => {
-        setIsRefreshing(true)
-        let obj = { ...filter, token: await AsyncStorage.getItem('token') }
+        setIsRefreshing(true);
+        let obj = { ...filter, token: await AsyncStorageWrapper.getItem('token') };
         obj.pg = obj.pg - 1;
         await api('customers/get.php', obj)
             .then(element => {
                 if (element != null) {
-                    setItemSize(element.Count)
-                    setCustomers([...element.List])
+                    setItemSize(element.Count);
+                    setCustomers([...element.List]);
                 }
             }).catch(err => {
-                ErrorMessage(err)
+                ErrorMessage(err);
             }).finally(() => {
-                setIsRefreshing(false)
-            })
-    }
+                setIsRefreshing(false);
+            });
+    };
 
     const fetchingFastCustomers = async () => {
-        setIsRefreshing(true)
-        let obj = { ...filter, token: await AsyncStorage.getItem("token") }
+        setIsRefreshing(true);
+        let obj = { ...filter, token: await AsyncStorageWrapper.getItem("token") };
         obj.pg = obj.pg - 1;
 
         await api(
@@ -64,48 +84,45 @@ const CustomerList = ({ route, navigation }) => {
                 setCustomers([...element.List]);
             }
         }).catch((err) => {
-            ErrorMessage(err)
+            ErrorMessage(err);
         }).finally(() => {
-            setIsRefreshing(false)
-        })
-    }
+            setIsRefreshing(false);
+        });
+    };
 
+    useEffect(() => {
+        setCustomers([]); // Clear list on filter change
+        let time;
+        if (filter.fast == "") {
+            fetchingCustomers();
+        } else {
+            time = setTimeout(() => {
+                fetchingFastCustomers();
+            }, 400);
+        }
 
-    useFocusEffect(
-        useCallback(() => {
-            setCustomers(null);
-            let time;
-            if (filter.fast == "") {
-                fetchingCustomers();
-            } else {
-                time = setTimeout(() => {
-                    fetchingFastCustomers();
-                }, 400);
-            }
+        return () => clearTimeout(time);
+    }, [filter]);
 
-            return () => clearTimeout(time);
-        }, [filter])
-    )
-
-    const renderItem = ({ item, index }) => (
-        <>
+    const renderItem = (item, index) => (
+        <div key={item.Id}>
             <ListItem
                 index={index + 1}
                 onPress={() => {
-                    navigation.navigate("customer-manage", {
-                        id: item.Id
-                    })
+                    navigate("/customer/customer-manage", {
+                        state: { id: item.Id }
+                    });
                 }}
                 firstText={item.Phone}
                 centerText={item.Name}
                 endText={item.Card}
                 notIcon={true}
             />
-        </>
-    )
+        </div>
+    );
 
     return (
-        <View style={styles.container}>
+        <div style={styles.container}>
             <ListPagesHeader
                 header={"Tərəf-müqabilləri"}
                 filter={filter}
@@ -114,53 +131,41 @@ const CustomerList = ({ route, navigation }) => {
                 filterSearchKey={'fast'}
             />
             {customers == null ? (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size={40} color={theme.primary} />
-                </View>
+                <div style={styles.loadingContainer}>
+                    <div className="spinner"></div> // Assuming global spinner class
+                </div>
             ) : (
-                <FlatList
-                    data={customers}
-                    renderItem={renderItem}
-                    keyExtractor={item => item.Id.toString()}
-                    refreshing={isRefreshing}
-                    ListEmptyComponent={() => (
-                        <View style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            paddingTop: 50
-                        }}>
-                            {customers === null ? (
-                                <ActivityIndicator size={30} color={theme.primary} />
-                            ) : (
-                                <Text style={{ color: theme.text }}>List boşdur</Text>
-                            )}
-                        </View>
+                <div style={styles.listContainer}>
+                    {customers.length === 0 ? (
+                        <div style={styles.emptyContainer}>
+                            <span style={{ color: theme.text }}>List boşdur</span>
+                        </div>
+                    ) : (
+                        <>
+                            {customers.map((item, index) => renderItem(item, index))}
+                            <MyPagination
+                                itemSize={itemSize}
+                                page={filter.pg}
+                                setPage={(e) => {
+                                    setCustomers([]);
+                                    setFilter(rel => ({ ...rel, pg: e }));
+                                }}
+                                pageSize={20}
+                            />
+                        </>
                     )}
-                    onRefresh={fetchingCustomers}
-                    ListFooterComponent={
-                        <MyPagination
-                            itemSize={itemSize}
-                            page={filter.pg}
-                            setPage={(e) => {
-                                setCustomers([])
-                                setFilter(rel => ({ ...rel, pg: e }))
-                            }}
-                            pageSize={20}
-                        />
-                    }
-                />
+                </div>
             )}
 
             <FabButton
                 onPress={() => {
-                    navigation.navigate("customer-manage", {
-                        id: null
-                    })
+                    navigate("/customer/customer-manage", {
+                        state: { id: null }
+                    });
                 }}
             />
-        </View>
-    )
-}
+        </div>
+    );
+};
 
-export default CustomerList
+export default CustomerList;

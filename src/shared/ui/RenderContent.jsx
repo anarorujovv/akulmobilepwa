@@ -1,48 +1,49 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import useTheme from '../theme/useTheme'
-
-
+import React from 'react';
+import useTheme from '../theme/useTheme';
 
 const RenderContent = ({ data, ...props }) => {
     let theme = useTheme();
+
+    const styles = {
+        centerContainer: {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            width: '100%',
+            padding: 20
+        },
+        textPrimary: {
+            color: theme.primary,
+            fontSize: 16
+        },
+        textError: {
+            color: theme.red,
+            fontSize: 16
+        }
+    };
+
     return (
         typeof data == 'string' ?
             data == "loading" ?
-                <View style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}>
-                    <ActivityIndicator size={40} color={theme.primary} />
-                </View>
+                <div style={styles.centerContainer}>
+                    <div className="spinner"></div>
+                </div>
                 :
                 data == "empty" ?
-                    <View style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
-                        <Text style={{
-                            color:theme.primary
-                        }}>Məlumat tapılmadı!</Text>
-                    </View>
+                    <div style={styles.centerContainer}>
+                        <span style={styles.textPrimary}>Məlumat tapılmadı!</span>
+                    </div>
                     :
                     data == 'error' ?
-                        <View style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                        }}>
-                            <Text style={{
-                                color:theme.red
-                            }}>Problem var!</Text>
-                        </View>
+                        <div style={styles.centerContainer}>
+                            <span style={styles.textError}>Problem var!</span>
+                        </div>
                         :
                         ''
             :
-            { ...props.children }
-    )
-}
+            <>{props.children}</>
+    );
+};
 
-export default RenderContent
+export default RenderContent;

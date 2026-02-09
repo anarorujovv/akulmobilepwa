@@ -1,9 +1,9 @@
-import { Text, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import ManageCard from './../../../shared/ui/ManageCard';
 import Input from '../../../shared/ui/Input';
 import useTheme from '../../../shared/theme/useTheme';
 import SelectionDate from '../../../shared/ui/SelectionDate';
+
 const MainCard = ({ document }) => {
 
     let theme = useTheme();
@@ -13,19 +13,25 @@ const MainCard = ({ document }) => {
 
     return (
         <ManageCard>
-            <View style={{
+            <div style={{
                 width: '100%',
                 padding: 15,
+                boxSizing: 'border-box'
             }}>
-                <Text style={{
+                <span style={{
                     fontSize: 20,
-                    color: theme.primary
-                }}>Satış</Text>
-            </View>
-            <View style={{
+                    color: theme.primary,
+                    fontWeight: 'bold',
+                    display: 'block'
+                }}>Satış</span>
+            </div>
+            <div style={{
                 marginTop: 20,
                 gap: 20,
-                alignItems: 'center'
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                paddingBottom: 20
             }}>
                 <Input
                     disabled={true}
@@ -37,16 +43,16 @@ const MainCard = ({ document }) => {
 
                 <SelectionDate
                     disabled={true}
-                    change={() => {}}
+                    change={() => { }}
                     document={document}
-                    setDocument={() => {}}
+                    setDocument={() => { }}
                     modalVisible={momentModal}
                     setModalVisible={setMomentModal}
                 />
-            </View>
+            </div>
 
         </ManageCard>
     )
 }
 
-export default MainCard
+export default MainCard;

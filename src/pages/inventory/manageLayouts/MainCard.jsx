@@ -1,5 +1,4 @@
-import { Text, View } from 'react-native'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from 'react';
 import ManageCard from './../../../shared/ui/ManageCard';
 import Input from '../../../shared/ui/Input';
 import { InventoryGlobalContext } from '../../../shared/data/InventoryGlobalState';
@@ -10,13 +9,13 @@ import Selection from '../../../shared/ui/Selection';
 import Button from '../../../shared/ui/Button';
 import MyModal from '../../../shared/ui/MyModal';
 import CustomSelection from '../../../shared/ui/CustomSelection';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import api from '../../../services/api';
 import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage';
 import { formatPrice } from '../../../services/formatPrice';
 import SuccessMessage from '../../../shared/ui/RepllyMessage/SuccessMessage';
 
-const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
+const MainCard = ({ changeInput, changeSelection, setHasUnsavedCahnges }) => {
 
   let theme = useTheme();
 
@@ -44,9 +43,9 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
   const fetchStockBalance = async () => {
     setIsLoading(true);
     try {
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorageWrapper.getItem('token');
       const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-      
+
       const data = {
         stockName: document.StockId,
         moment: currentDate,
@@ -54,24 +53,24 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
         zeros: stockBalanceType,
         token: token
       };
-      
+
       const result = await api('stockbalance/get.php', data);
-      
+
       if (result) {
         const newPositions = [...document.Positions];
         let newUnits = {};
-        
+
         if (result.PositionUnits) {
           Object.keys(result.PositionUnits).forEach(productId => {
             newUnits[productId] = result.PositionUnits[productId];
           });
         }
-        
+
         if (result.List && result.List.length > 0) {
           result.List.forEach(product => {
             const existingIndex = newPositions.findIndex(pos => pos.ProductId === product.ProductId);
             const quantity = Math.abs(Number(product.Quantity || 0));
-            
+
             const newProduct = {
               ProductId: product.ProductId,
               Name: product.ProductName,
@@ -94,7 +93,7 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
               IsWeight: product.IsWeight || 0,
               IsParty: product.IsParty || 0
             };
-            
+
             if (existingIndex !== -1) {
               newPositions[existingIndex] = newProduct;
             } else {
@@ -102,7 +101,7 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
             }
           });
         }
-        
+
         setUnits(prevUnits => {
           const oldUnits = Array.isArray(prevUnits) ? {} : (prevUnits || {});
           return {
@@ -110,7 +109,7 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
             ...newUnits
           };
         });
-        
+
         setDocument(prev => {
           return {
             ...prev,
@@ -118,7 +117,7 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
             hasUnsavedChanges: true
           };
         });
-        
+
         setStockBalanceModal(false);
 
         setHasUnsavedCahnges(true);
@@ -133,16 +132,16 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
   const handleImplement = async () => {
     setIsImplementLoading(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      
+      const token = await AsyncStorageWrapper.getItem('token');
+
       const data = {
         id: document.Id,
         missing: false,
         token: token
       };
-      
+
       const result = await api('inventories/implement.php', data);
-      
+
       if (result && result.ResponseStatus === "0") {
         SuccessMessage("Əməliyyat uğurla tamamlandı");
         setDocument(prev => ({
@@ -161,39 +160,44 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
   return (
     <ManageCard>
 
-      <View style={{
+      <div style={{
         width: '100%',
         padding: 15,
+        display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        boxSizing: 'border-box'
       }}>
-        <Text style={{
+        <span style={{
           fontSize: 20,
-          color: theme.primary
-        }}>İnventarizasiya</Text>
-        
+          color: theme.primary,
+          fontWeight: 'bold'
+        }}>İnventarizasiya</span>
+
         {document && document.Id && (
-          <Button 
-            onClick={handleImplement} 
-            width={'40%'} 
+          <Button
+            onClick={handleImplement}
+            width={'40%'}
             bg={theme.primary}
             isLoading={isImplementLoading}
           >
             Təstiqlə
           </Button>
         )}
-      </View>
+      </div>
 
-      <View style={{
+      <div style={{
         marginTop: 20,
         gap: 20,
+        display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center'
       }}>
 
         <Input
           placeholder={'Ad'}
-          type={'string'}
+          type={'text'}
           width={'70%'}
           value={document.Name}
           onChange={(e) => {
@@ -221,28 +225,28 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
         />
 
         {document.StockId && document.StockId !== '' && (
-          <Button 
-            onClick={() => setStockBalanceModal(true)} 
-            width={'70%'} 
+          <Button
+            onClick={() => setStockBalanceModal(true)}
+            width={'70%'}
             bg={theme.primary}
           >
             Anbar qalığı
           </Button>
         )}
-      </View>
+      </div>
 
       <MyModal
         modalVisible={stockBalanceModal}
         setModalVisible={setStockBalanceModal}
         width="90%"
-        height="30%"
+        height="auto" // Changed from 30% to auto to fit content
         center
       >
-        <View style={{ padding: 15, flex: 1 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary, textAlign: 'center', marginBottom: 20 }}>
+        <div style={{ padding: 15, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary, textAlign: 'center', marginBottom: 20, display: 'block' }}>
             Anbar qalığı
-          </Text>
-          <View style={{ marginVertical: 15 }}>
+          </span>
+          <div style={{ margin: '15px 0' }}>
             <CustomSelection
               options={stockBalanceOptions}
               value={stockBalanceType}
@@ -250,9 +254,9 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
               title="Filtrlə"
               placeholder="Filtrlə"
             />
-          </View>
-          
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
             <Button
               onClick={() => setStockBalanceModal(false)}
               width={'48%'}
@@ -267,11 +271,11 @@ const MainCard = ({ changeInput, changeSelection,setHasUnsavedCahnges }) => {
             >
               Endir
             </Button>
-          </View>
-        </View>
+          </div>
+        </div>
       </MyModal>
     </ManageCard>
   )
 }
 
-export default MainCard
+export default MainCard;

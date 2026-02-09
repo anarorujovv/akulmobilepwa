@@ -1,46 +1,45 @@
-import { StyleSheet, Text, View, CheckBox, Switch } from 'react-native'
-import React, { useContext, useState } from 'react'
-import { ProductGlobalContext } from '../../../shared/data/ProductGlobalState'
+import React, { useContext } from 'react';
+import { ProductGlobalContext } from '../../../shared/data/ProductGlobalState';
 import Input from './../../../shared/ui/Input';
 import useTheme from '../../../shared/theme/useTheme';
 import IconButton from '../../../shared/ui/IconButton';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { IoSync, IoScan } from 'react-icons/io5';
 import api from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage';
 import Selection from './../../../shared/ui/Selection';
+import { useNavigate } from 'react-router-dom';
 
-const BasicCard = ({ navigation, id, changeInput, changeSelection }) => {
+const BasicCard = ({ id, changeInput, changeSelection }) => {
+  const navigate = useNavigate();
 
   const { product, setProduct } = useContext(ProductGlobalContext);
   const theme = useTheme();
 
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
       width: '100%',
-      elevation: 2,
-      shadowColor: theme.black,
       backgroundColor: theme.bg,
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
-      paddingBottom: 25
-    },
-    imageContainer: {
-      height: 200,
-      justifyContent: 'center',
-      alignItems: 'center'
+      paddingBottom: 25,
+      boxShadow: `0 2px 4px ${theme.black}20` // Approximate elevation
     },
     bottomContainer: {
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       width: '100%',
       gap: 10
     }
-  })
+  }
 
   const handleBarcodeGenerate = async () => {
     await api('barcode/get.php', {
       w: 0,
-      token: await AsyncStorage.getItem('token')
+      token: await AsyncStorageWrapper.getItem('token')
     }).then(element => {
       if (element != null) {
         setProduct(rel => ({ ...rel, ['BarCode']: String(element) }));
@@ -51,32 +50,37 @@ const BasicCard = ({ navigation, id, changeInput, changeSelection }) => {
   }
 
   const handleScanner = async () => {
-    navigation.navigate('product-scanner', {
-      setData: (e) => {
-        setProduct(rel => ({ ...rel, BarCode: e }));
+    navigate('/product/product-scanner', {
+      state: {
+        setData: (e) => {
+          setProduct(rel => ({ ...rel, BarCode: e }));
+        }
       }
     });
   }
 
 
   return (
-    <View style={styles.container}>
-      <View style={{
+    <div style={styles.container}>
+      <div style={{
         width: '100%',
         padding: 15,
+        boxSizing: 'border-box'
       }}>
-        <Text style={{
+        <span style={{
           fontSize: 20,
-          color: theme.primary
-        }}>Məhsul Və Xidmətlər</Text>
-      </View>
-      <View style={styles.bottomContainer}>
+          color: theme.primary,
+          fontWeight: 'bold',
+          display: 'block'
+        }}>Məhsul Və Xidmətlər</span>
+      </div>
+      <div style={styles.bottomContainer}>
 
         <Input value={product.Name} isRequired={true} onChange={(e) => {
           changeInput('Name', e);
         }} placeholder={'Məhsulun adı'} width={'70%'} />
 
-        <View style={{
+        <div style={{
           width: '70%',
           display: 'flex',
           flexDirection: "column",
@@ -84,23 +88,25 @@ const BasicCard = ({ navigation, id, changeInput, changeSelection }) => {
         }}>
           <Input disabled={product.IsWeight == 1} onChange={(e) => {
             changeInput('BarCode', e);
-          }} type={'number'} value={product.BarCode} placeholder={'Barkod'} width={'75%'}
+          }} type={'number'} value={product.BarCode} placeholder={'Barkod'} width={'100%'}
             rightIcon={
-              <View style={{
+              <div style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: 20
+                gap: 10,
+                alignItems: 'center',
+                paddingRight: 10
               }}>
                 <IconButton size={25} disabled={product.IsWeight == 1 ? true : false} onPress={handleBarcodeGenerate}>
-                  <Ionicons name='sync' size={25} color={product.IsWeight == 1 ? theme.grey : theme.black} />
+                  <IoSync size={24} color={product.IsWeight == 1 ? theme.grey : theme.black} />
                 </IconButton>
                 <IconButton size={25} disabled={product.IsWeight == 1 ? true : false} onPress={handleScanner}>
-                  <Ionicons name='scan' size={25} color={product.IsWeight == 1 ? theme.grey : theme.black} />
+                  <IoScan size={24} color={product.IsWeight == 1 ? theme.grey : theme.black} />
                 </IconButton>
-              </View>
+              </div>
             }
           />
-        </View>
+        </div>
 
         <Input value={product.ArtCode} onChange={(e) => {
           changeInput('ArtCode', e);
@@ -108,7 +114,7 @@ const BasicCard = ({ navigation, id, changeInput, changeSelection }) => {
 
         <Input value={product.Quantity} onChange={(e) => {
           changeInput('Quantity', e);
-        }} placeholder={'İlkin qalıq'} width={'70%'} />
+        }} placeholder={'İlkin qalıq'} type={'number'} width={'70%'} />
 
         <Selection
           apiName={'customers/getfast.php'}
@@ -137,13 +143,10 @@ const BasicCard = ({ navigation, id, changeInput, changeSelection }) => {
           }}
         />
 
+      </div>
 
-
-
-      </View>
-
-    </View>
+    </div>
   )
 }
 
-export default BasicCard
+export default BasicCard;

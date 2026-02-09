@@ -1,29 +1,17 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import CasheList from './CasheList';
 import CasheManage from './CasheManage';
 import CasheCreate from './CasheCreate';
 
-
-const DemandStack = () => {
-
-  const Stack = createNativeStackNavigator();
-
+const CasheStack = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animation: 'fade'
-      }}
-    >
-      <Stack.Screen name="cashe-list" component={CasheList} />
-      <Stack.Screen name="cashe-manage" component={CasheManage} />
-      <Stack.Screen name="cashe-create" component={CasheCreate} />
-    </Stack.Navigator>
-  )
-}
+    <Routes>
+      <Route path="/" element={<CasheList />} />
+      <Route path="/cashe-manage" element={<CasheManage />} />
+      <Route path="/cashe-create" element={<CasheCreate />} />
+    </Routes>
+  );
+};
 
-export default DemandStack
-
-const styles = StyleSheet.create({})
+export default CasheStack;

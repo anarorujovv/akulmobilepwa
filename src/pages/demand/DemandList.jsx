@@ -1,9 +1,8 @@
-import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native'
-import React, { useState, useCallback } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useState, useCallback, useEffect } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
@@ -12,13 +11,13 @@ import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
-import prompt from '../../services/prompt';
 import ListItem from '../../shared/ui/list/ListItem';
 import Line from '../../shared/ui/Line';
-import { useFocusEffect } from '@react-navigation/native';
 import translatePayed from './../../services/report/translatePayed';
+import { useNavigate } from 'react-router-dom';
 
-const DemandList = ({ navigation }) => {
+const DemandList = () => {
+    const navigate = useNavigate();
     let theme = useTheme();
 
     let permissions = useGlobalStore(state => state.permissions);
@@ -39,28 +38,37 @@ const DemandList = ({ navigation }) => {
     const [itemSize, setItemSize] = useState(0)
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
             backgroundColor: theme.bg,
+            overflow: 'hidden'
         },
-        deleteButton: {
-            backgroundColor: theme.red,
+        loadingContainer: {
+            flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            width: 100,
-            height: '100%',
+            display: 'flex'
         },
-        deleteText: {
-            color: theme.stable.white,
-            fontWeight: 'bold',
-            fontSize: 16,
+        listContainer: {
+            flex: 1,
+            overflowY: 'auto',
+            paddingBottom: 80
         },
-    });
+        emptyContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            display: 'flex',
+            paddingTop: 50
+        }
+    };
 
     const fetchingDocumentData = useCallback(async () => {
         setIsRefreshing(true);
-        let obj = { ...filter, token: await AsyncStorage.getItem('token') }
+        let obj = { ...filter, token: await AsyncStorageWrapper.getItem('token') }
         obj.pg = obj.pg - 1;
 
         try {
@@ -82,7 +90,7 @@ const DemandList = ({ navigation }) => {
     const handleDelete = async (id) => {
         if (permission_ver(permissions, 'demand', 'D')) {
             await api('demands/del.php?id=' + id, {
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             }).then(element => {
                 if (element != null) {
                     setDocuments([]);
@@ -116,14 +124,14 @@ const DemandList = ({ navigation }) => {
         )
     }
 
-    const renderItem = ({ item, index }) => (
-        <>
+    const renderItem = (item, index) => (
+        <div key={item.Id}>
             <ListItem
                 index={index + 1}
                 onLongPress={() => {
-                    prompt('Satışı silməyə əminsiniz?', () => {
+                    if (window.confirm('Satışı silməyə əminsiniz?')) {
                         handleDelete(item.Id);
-                    })
+                    }
                 }}
                 {...translatePayed(item.Payed)}
                 centerText={item.CustomerName}
@@ -134,33 +142,31 @@ const DemandList = ({ navigation }) => {
                 priceText={local.demands.demand.listPrice ? formatPrice(item.Amount) : ""}
                 onPress={() => {
                     if (permission_ver(permissions, 'demand', 'R')) {
-                        navigation.navigate('demand-manage', {
-                            id: item.Id
+                        navigate('/demand/demand-manage', {
+                            state: { id: item.Id }
                         })
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
                 }}
             />
-        </>
+        </div>
     );
 
 
-    useFocusEffect(
-        useCallback(() => {
-            setDocuments(null);
+    useEffect(() => {
+        setDocuments(null);
 
-            let time = setTimeout(() => {
-                fetchingDocumentData();
-            }, 300);
+        let time = setTimeout(() => {
+            fetchingDocumentData();
+        }, 300);
 
-            return () => clearTimeout(time);
+        return () => clearTimeout(time);
 
-        }, [filter])
-    )
+    }, [filter]);
 
     return (
-        <View style={styles.container}>
+        <div style={styles.container}>
 
             <ListPagesHeader
                 isSearch={true}
@@ -170,55 +176,57 @@ const DemandList = ({ navigation }) => {
                 filterSearchKey={'docNumber'}
                 isFilter={true}
                 processFilterClick={() => {
-                    navigation.navigate('filter', {
-                        filter: filter,
-                        setFilter: setFilter,
-                        searchParams: [
-                            'product',
-                            'customers',
-                            'stocks',
-                            'owners',
-                            'documentName'
-                        ],
-                        sortList: [
-                            {
-                                id: '1',
-                                label: 'Tarix',
-                                value: "Moment"
-                            },
-                            {
-                                id: '2',
-                                label: 'Anbar',
-                                value: 'StockName'
-                            },
-                            {
-                                id: '3',
-                                label: "Məbləğə görə",
-                                value: 'Amount'
-                            },
-                            {
-                                id: '4',
-                                label: 'Status',
-                                value: "Mark"
+                    navigate('/filter', {
+                        state: {
+                            filter: filter,
+                            // setFilter: setFilter,
+                            searchParams: [
+                                'product',
+                                'customers',
+                                'stocks',
+                                'owners',
+                                'documentName'
+                            ],
+                            sortList: [
+                                {
+                                    id: '1',
+                                    label: 'Tarix',
+                                    value: "Moment"
+                                },
+                                {
+                                    id: '2',
+                                    label: 'Anbar',
+                                    value: 'StockName'
+                                },
+                                {
+                                    id: '3',
+                                    label: "Məbləğə görə",
+                                    value: 'Amount'
+                                },
+                                {
+                                    id: '4',
+                                    label: 'Status',
+                                    value: "Mark"
+                                }
+                            ],
+                            customFields: {
+                                product: {
+                                    title: "Məhsul",
+                                    api: 'products',
+                                    name: "productName",
+                                    type: 'select',
+                                    searchApi: 'products/getfast.php',
+                                    searchKey: 'fast'
+                                },
+                                customers: {
+                                    title: 'Qarşı-Tərəf',
+                                    api: 'customers',
+                                    name: "customerName",
+                                    type: 'select',
+                                    searchApi: 'customers/getfast.php',
+                                    searchKey: 'fast'
+                                },
                             }
-                        ],
-                        customFields: {
-                            product: {
-                                title: "Məhsul",
-                                api: 'products',
-                                name: "productName",
-                                type: 'select',
-                                searchApi: 'products/getfast.php',
-                                searchKey: 'fast'
-                            },
-                            customers: {
-                                title: 'Qarşı-Tərəf',
-                                api: 'customers',
-                                name: "customerName",
-                                type: 'select',
-                                searchApi: 'customers/getfast.php',
-                                searchKey: 'fast'
-                            },
                         }
                     });
                 }}
@@ -249,77 +257,53 @@ const DemandList = ({ navigation }) => {
                             }
                         ]} />
                     ) : (
-                        <View style={{
+                        <div style={{
                             width: '100%',
                             height: 20,
+                            display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center'
                         }}>
-                            <ActivityIndicator size={15} color={theme.primary} />
+                            <div className="spinner" style={{ width: 15, height: 15 }}></div>
                             <Line width={'100%'} />
-                        </View>
+                        </div>
                     )
 
                     :
                     ""
             }
 
-            <>
+            <div style={styles.listContainer}>
                 {
                     documents == null ?
-                        <View style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                        }}>
-                            <ActivityIndicator size={30} color={theme.primary} />
-                        </View>
+                        <div style={styles.loadingContainer}>
+                            <div className="spinner"></div>
+                        </div>
                         :
-                        <FlatList
-                            data={documents}
-                            renderItem={renderItem}
-                            keyExtractor={item => item.Id.toString()}
-                            refreshing={isRefreshing}
-                            ListEmptyComponent={() => (
-                                <View style={{
-                                    flex: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    paddingTop: 50
-                                }}>
-                                    {documents === null ? (
-                                        <ActivityIndicator size={30} color={theme.primary} />
-                                    ) : (
-                                        <Text style={{ color: theme.text }}>List boşdur</Text>
-                                    )}
-                                </View>
+                        <>
+                            {documents.length === 0 ? (
+                                <div style={styles.emptyContainer}>
+                                    <span style={{ color: theme.text }}>List boşdur</span>
+                                </div>
+                            ) : (
+                                documents.map((item, index) => renderItem(item, index))
                             )}
-                            onRefresh={() => {
-                                if (selectedTime != null) {
-                                    setSelectedTime(null);
-                                    let filterData = { ...filter };
-                                    delete filterData.momb;
-                                    delete filterData.mome;
-                                    filterData.agrigate = 1;
-                                    setFilter(filterData);
-                                }
-                            }}
-                            ListFooterComponent={RenderFooter}
-                        />
+                            <RenderFooter />
+                        </>
                 }
-            </>
+            </div>
 
             <FabButton
                 onPress={() => {
                     if (permission_ver(permissions, 'demand', 'C')) {
-                        navigation.navigate('demand-manage', {
-                            id: null
+                        navigate('/demand/demand-manage', {
+                            state: { id: null }
                         })
                     }
                 }}
             />
-        </View>
+        </div>
     )
 }
 
-export default DemandList
+export default DemandList;

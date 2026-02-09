@@ -1,42 +1,61 @@
-import { ActivityIndicator, BackHandler, ScrollView, StyleSheet, View } from 'react-native'
-import React, { useCallback, useContext, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
-import api from '../../services/api'
-import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import BuyerCard from './manageLayouts/BuyerCard'
-import ProductCard from './manageLayouts/ProductCard'
-import pricingUtils from '../../services/pricingUtils'
+import api from '../../services/api';
+import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import BuyerCard from './manageLayouts/BuyerCard';
+import ProductCard from './manageLayouts/ProductCard';
+import pricingUtils from '../../services/pricingUtils';
 import { formatPrice } from '../../services/formatPrice';
 import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import { DemandReturnGlobalContext } from '../../shared/data/DemandReturnGlobalState';
 import mergeProductQuantities from '../../services/mergeProductQuantities';
 import Button from '../../shared/ui/Button';
-import prompt from '../../services/prompt';
-import { useFocusEffect } from '@react-navigation/native';
 import DestinationCard from '../../shared/ui/DestinationCard';
 import calculateUnit from '../../services/report/calculateUnit';
 import ModificationsCard from '../../shared/ui/ModificationsCard';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ReleatedDocuments from '../../shared/ui/ReleatedDocuments';
 import moment from 'moment';
-import playSound from '../../services/playSound';
+// import playSound from '../../services/playSound';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
-const DemandReturnManage = ({ route, navigation }) => {
+import { useLocation, useNavigate } from 'react-router-dom';
 
+const DemandReturnManage = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const theme = useTheme();
-    const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-            backgroundColor: theme.whiteGrey
-        }
-    })
 
-    let { id, routeByDocument, dataUnits } = route.params;
+    const styles = {
+        container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.whiteGrey,
+            overflow: 'hidden'
+        },
+        content: {
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '10px'
+        },
+        loading: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }
+    }
+
+    let { id, routeByDocument, dataUnits } = location.state || {}; // Get id from state
+
     const { document, setDocument, units, setUnits } = useContext(DemandReturnGlobalContext);
     const [loading, setLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -60,8 +79,8 @@ const DemandReturnManage = ({ route, navigation }) => {
                 Amount: 0,
                 Discount: 0,
                 BasicAmount: 0,
-                OwnerId: await AsyncStorage.getItem("ownerId") == null ? "" : await AsyncStorage.getItem('ownerId'),
-                DepartmentId: await AsyncStorage.getItem("depId") == null ? "" : await AsyncStorage.getItem('depId'),
+                OwnerId: await AsyncStorageWrapper.getItem("ownerId") == null ? "" : await AsyncStorageWrapper.getItem('ownerId'),
+                DepartmentId: await AsyncStorageWrapper.getItem("depId") == null ? "" : await AsyncStorageWrapper.getItem('depId'),
                 Description: ""
             }
 
@@ -77,7 +96,7 @@ const DemandReturnManage = ({ route, navigation }) => {
 
             await api('demandreturns/newname.php', {
                 n: "",
-                token: await AsyncStorage.getItem("token")
+                token: await AsyncStorageWrapper.getItem("token")
             }).then(element => {
                 if (element != null) {
                     obj.Name = element.ResponseService;
@@ -90,7 +109,7 @@ const DemandReturnManage = ({ route, navigation }) => {
         } else {
             let obj = {
                 id: id,
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             }
             await api('demandreturns/get.php', obj)
                 .then(async element => {
@@ -105,11 +124,11 @@ const DemandReturnManage = ({ route, navigation }) => {
                         }
 
                     }
-                    
+
                     if (documentData != null) {
                         await api('customers/getdata.php', {
                             id: documentData.CustomerId,
-                            token: await AsyncStorage.getItem('token')
+                            token: await AsyncStorageWrapper.getItem('token')
 
                         }).then(async item => {
 
@@ -157,7 +176,7 @@ const DemandReturnManage = ({ route, navigation }) => {
             if (info.name == "") {
                 await api('demandreturns/newname.php', {
                     n: "",
-                    token: await AsyncStorage.getItem("token")
+                    token: await AsyncStorageWrapper.getItem("token")
                 }).then(element => {
                     if (element != null) {
                         info.name = element.ResponseService;
@@ -167,7 +186,7 @@ const DemandReturnManage = ({ route, navigation }) => {
                 })
             }
             info.modifications = await buildModificationsPayload(info.modifications[0], 'demandreturn');
-            info.token = await AsyncStorage.getItem("token")
+            info.token = await AsyncStorageWrapper.getItem("token")
 
             let answer = await api('demandreturns/put.php', info).then(async element => {
                 if (element != null) {
@@ -175,8 +194,8 @@ const DemandReturnManage = ({ route, navigation }) => {
                     SuccessMessage("Yadda saxlanıldı.");
                     fetchingDocument(element.ResponseService);
                     setHasUnsavedChanges(false);
-                    playSound('success');
-                    
+                    // playSound('success');
+
                     return element.ResponseService;
 
                 }
@@ -211,92 +230,77 @@ const DemandReturnManage = ({ route, navigation }) => {
         fetchingDocument(id);
     }, [])
 
-    useFocusEffect(
-
-        useCallback(() => {
-            const onBackPress = async () => {
-                navigation.setParams({ shouldGoToSpecificPage: false });
-                hasUnsavedChanges ? prompt('Çıxmağa əminsiniz ?', () => navigation.goBack()) : (navigation.goBack());
-                return true;
-            };
-
-            BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-            return () =>
-                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-        }, [hasUnsavedChanges]))
 
     return (
-        <View style={styles.container}>
+        <div style={styles.container}>
             {
                 document == null ?
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <ActivityIndicator size={40} color={theme.primary} />
-                    </View>
+                    <div style={styles.loading}>
+                        <div className="spinner"></div> // Web spinner
+                    </div>
                     :
                     <>
                         <ManageHeader
-                            navigation={navigation}
+                            // navigation={navigation}
                             print={'demandreturns'}
                             document={document}
                             hasUnsavedChanges={hasUnsavedChanges}
                             onSubmit={handleSave}
                         />
 
-                        <ScrollView>
-                            <View style={{
-                                gap: 20
-                            }}>
-                                <MainCard navigation={navigation} id={id} />
-                                <BuyerCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} />
-                                <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} navigation={navigation} />
-                                <DestinationCard
-                                    changeInput={handleChangeInput}
-                                    changeSelection={handleChangeSelection}
-                                    document={document}
-                                    setDocument={setDocument}
-                                />
-                                <ModificationsCard
-                                    target={'demandreturn'}
-                                    setState={setDocument}
-                                    state={document}
-                                    hasUnsavedChanged={setHasUnsavedChanges}
-                                />
+                        <div style={styles.content}>
 
-                                {
-                                    routeByDocument ?
-                                        ""
-                                        :
-                                        <ReleatedDocuments
-                                            shouldDisable={true}
-                                            document={{ ...document, target: 'demandreturns' }}
-                                            navigation={navigation}
-                                            payment={'ins'}
-                                            selection={[]}
-                                            hasUnsavedChanged={hasUnsavedChanges}
-                                            onSubmit={handleSave}
-                                        />
-                                }
+                            <MainCard navigation={navigate} id={id} />
+                            <BuyerCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} />
+                            <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} />
+                            <DestinationCard
+                                changeInput={handleChangeInput}
+                                changeSelection={handleChangeSelection}
+                                document={document}
+                                setDocument={setDocument}
+                            />
+                            <ModificationsCard
+                                target={'demandreturn'}
+                                setState={setDocument}
+                                state={document}
+                                hasUnsavedChanged={setHasUnsavedChanges}
+                            />
 
-                            </View>
-                        </ScrollView>
+                            {
+                                routeByDocument ?
+                                    ""
+                                    :
+                                    <ReleatedDocuments
+                                        shouldDisable={true}
+                                        document={{ ...document, target: 'demandreturns' }}
+                                        // navigation={navigation}
+                                        payment={'ins'}
+                                        selection={[]}
+                                        hasUnsavedChanged={hasUnsavedChanges}
+                                        onSubmit={handleSave}
+                                    />
+                            }
+
+                        </div>
                         {
                             hasUnsavedChanges ?
-                                <Button
-                                    onClick={handleSave}
-                                    bg={theme.green}
-                                    disabled={loading}
-                                    isLoading={loading}
-                                >
-                                    Yadda Saxla
-                                </Button>
+                                <div style={{ padding: '10px' }}>
+                                    <Button
+                                        onClick={handleSave}
+                                        bg={theme.green}
+                                        disabled={loading}
+                                        isLoading={loading}
+                                    >
+                                        Yadda Saxla
+                                    </Button>
+                                </div>
                                 :
                                 ''
                         }
                     </>
             }
-        </View>
+        </div>
     )
 }
 
-export default DemandReturnManage
+export default DemandReturnManage;

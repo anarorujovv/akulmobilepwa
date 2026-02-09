@@ -1,9 +1,8 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import NoData from './../../shared/ui/NoData';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
@@ -17,11 +16,12 @@ import ListItem from '../../shared/ui/list/ListItem';
 import moment from 'moment';
 import DateRangePicker from '../../shared/ui/DateRangePicker';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
-import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const SaleReportManage = ({ route, navigation }) => {
-
-  let { id, name } = route.params;
+const SaleReportManage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  let { id, name } = location.state || {};
   let theme = useTheme();
   let permissions = useGlobalStore(state => state.permissions);
 
@@ -40,31 +40,39 @@ const SaleReportManage = ({ route, navigation }) => {
   const [itemSize, setItemSize] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
-      flex: 1,
-      backgroundColor: theme.bg
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.bg,
+      overflow: 'hidden'
     },
-    deleteButton: {
-      backgroundColor: theme.red,
+    listContainer: {
+      flex: 1,
+      overflowY: 'auto'
+    },
+    loadingContainer: {
+      width: '100%',
+      height: 20,
       justifyContent: 'center',
       alignItems: 'center',
-      width: 100,
-      height: '100%',
+      display: 'flex'
     },
-    deleteText: {
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: 16
+    fullLoading: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     }
-  })
+  }
 
   const fetchingDocumentData = async () => {
     setIsRefreshing(true);
     let obj = {
       ...filter,
       productid: id,
-      token: await AsyncStorage.getItem('token')
+      token: await AsyncStorageWrapper.getItem('token')
     }
     obj.pg = obj.pg - 1;
 
@@ -103,16 +111,6 @@ const SaleReportManage = ({ route, navigation }) => {
     )
   }
 
-  const handleSubmitDate = (firstDate, lastDate) => {
-
-    if (firstDate != null) {
-      setFilter(rel => ({ ...rel, ['momb']: moment(firstDate).format("YYYY-MM-DD 00:00:00") }))
-    }
-    if (lastDate != null) {
-      setFilter(rel => ({ ...rel, ['mome']: moment(lastDate).format('YYYY-MM-DD 23:59:59') }))
-    }
-  }
-
   useEffect(() => {
     setDocuments([]);
     let time = setTimeout(() => {
@@ -122,10 +120,8 @@ const SaleReportManage = ({ route, navigation }) => {
     return () => clearTimeout(time);
   }, [filter]);
 
-  const renderItem = ({ item, index }) => (
-
-
-    <>
+  const renderItem = (item, index) => (
+    <div key={item.Id || index}>
       <ListItem
         index={index + 1}
         firstText={translateProductStockTerm(item.Document)}
@@ -137,19 +133,17 @@ const SaleReportManage = ({ route, navigation }) => {
         endText={formatPrice(item.StockQuantity)}
         onPress={() => {
           if (permission_ver(permissions, 'salereports', 'R')) {
-            navigation.navigate('sale-report-manage', { id: item.ProductId });
+            navigate('/salereport/sale-report-manage', { state: { id: item.ProductId } }); // Recursive navigation? Check logic. Assuming intent.
           } else {
             ErrorMessage('İcazəniz yoxdur!');
           }
         }}
       />
-    </>
+    </div>
   );
 
-
-
   return (
-    <View style={styles.container}>
+    <div style={styles.container}>
 
       <ListPagesHeader
         header={"Mənfəət"}
@@ -159,16 +153,17 @@ const SaleReportManage = ({ route, navigation }) => {
         isSearch={true}
       />
 
-      <Text style={{
+      <span style={{
         color: theme.black,
         fontSize: 15,
         textAlign: 'center',
         marginTop: 10,
-        fontWeight: 'bold'
-      }}>{name}</Text>
-      <View style={{ margin: 5 }} />
+        fontWeight: 'bold',
+        display: 'block'
+      }}>{name}</span>
+      <div style={{ margin: 5 }} />
       <Line width={'90%'} />
-      <View style={{
+      <div style={{
         width: '100%',
         padding: 10
       }}>
@@ -178,7 +173,7 @@ const SaleReportManage = ({ route, navigation }) => {
           filter={filter}
           setFilter={setFilter}
         />
-      </View>
+      </div>
 
       <DocumentTimes
         filter={filter}
@@ -201,35 +196,32 @@ const SaleReportManage = ({ route, navigation }) => {
           ]}
         />
       ) : (
-        <View style={{
-          width: '100%',
-          height: 20,
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <ActivityIndicator size={15} color={theme.primary} />
+        <div style={styles.loadingContainer}>
+          <div className="spinner" style={{ width: 15, height: 15 }}></div>
           <Line width={'100%'} />
-        </View>
+        </div>
       )}
 
-      {documents.length === 0 && !isRefreshing ? (
-        <NoData />
-      ) : (
-        <>
-          <FlatList
-            data={documents}
-            renderItem={renderItem}
-            refreshing={isRefreshing}
-            onRefresh={() => {
-              let filterData = { ...filter };
-              filterData.agrigate = 1;
-              setFilter(filterData);
-            }}
-            ListFooterComponent={RenderFooter}
-          />
-        </>
-      )}
-    </View>
+
+      <div style={styles.listContainer}>
+        {documents.length === 0 && !isRefreshing && documentsInfo != null ? (
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <span style={{ color: theme.text }}>List boşdur</span>
+          </div>
+        ) : (
+          <>
+            {documents.length === 0 && isRefreshing ? (
+              <div style={styles.fullLoading}>
+                <div className="spinner"></div>
+              </div>
+            ) : (
+              documents.map((item, index) => renderItem(item, index))
+            )}
+            <RenderFooter />
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

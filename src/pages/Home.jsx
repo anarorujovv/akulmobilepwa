@@ -1,24 +1,22 @@
-import { ActivityIndicator, Linking, PanResponder, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import useTheme from '../shared/theme/useTheme'
-import { TouchableOpacity } from 'react-native';
-import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
-import { Pressable } from '@react-native-material/core';
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useTheme from '../shared/theme/useTheme';
+import { IoHome, IoDocumentText, IoEnter, IoCube, IoCash, IoMenu, IoSyncCircle } from 'react-icons/io5';
+import { AiOutlineDashboard, AiOutlineShoppingCart, AiOutlineDownload, AiOutlineUpload, AiOutlineUser, AiOutlineWallet, AiOutlineLineChart } from 'react-icons/ai';
+import { FaBoxArchive, FaTrashArrowUp, FaWarehouse, FaCartArrowDown, FaCartFlatbedSuitcase, FaCartShopping, FaUsers, FaIdBadge, FaCalculator, FaChartBar, FaCalendarDays, FaChalkboardUser, FaCashRegister, FaBoxesPacking, FaClipboardList, FaUpload as FaUpload5 } from 'react-icons/fa6';
+import { MdPayments, MdAssuredWorkload } from 'react-icons/md';
+import { BsPeopleFill, BsBank, BsCaretRightFill, BsDatabaseExclamation, BsBookHalf, BsFileEarmarkText, BsArchive, BsClockHistory, BsClockFill } from 'react-icons/bs';
+import { RiDownloadLine, RiUploadLine, RiTimerFlashLine } from 'react-icons/ri';
+import { HiShoppingBag } from 'react-icons/hi';
+import AsyncStorage from './../services/AsyncStorageWrapper';
 import useGlobalStore from './../shared/data/zustand/useGlobalStore';
 import permission_ver from './../services/permissionVerification';
 import ErrorMessage from '../shared/ui/RepllyMessage/ErrorMessage';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Entypo from 'react-native-vector-icons/Entypo';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Line from '../shared/ui/Line';
 import api from '../services/api';
 
-const Home = ({ route, navigation }) => {
+const Home = () => {
+  const navigate = useNavigate();
 
   const permissions = useGlobalStore(state => state.permissions);
   const setPermissions = useGlobalStore(state => state.setPermissions);
@@ -26,106 +24,14 @@ const Home = ({ route, navigation }) => {
   const setLocal = useGlobalStore(state => state.setLocal);
 
   const theme = useTheme();
-  const height = useSharedValue(0);
-
-  /**
-   * Stil obyekti
-   * @constant styles
-   * @type {Object}
-   * @property {Object} header - Başlıq panelinin stilleri
-   * @property {Object} headerText - Başlıq mətninin stilleri
-   * @property {Object} parentContainer - Əsas konteyner stilleri
-   * @property {Object} item - Menu elementlərinin stilleri
-   */
-
-  const styles = StyleSheet.create({
-    header: {
-      width: '100%',
-      height: 55,
-      backgroundColor: theme.primary,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingLeft: 10,
-      paddingRight: 10
-    },
-    headerText: {
-      fontSize: 18,
-      color: theme.stable.white
-    },
-    footer: {
-
-    },
-    parentContainer: {
-      width: '100%',
-      height: 85,
-      shadowColor: 'black',
-      backgroundColor: theme.bg,
-      shadowOpacity: 0.9,
-      shadowOffset: {
-        width: 0,
-        height: 10
-      },
-      flexDirection: 'row',
-      gap: 15,
-      alignItems: 'center',
-      paddingLeft: 5,
-    },
-    item: {
-      height: 70,
-      alignItems: 'center',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      gap: 5,
-    },
-    parentImage: {
-      width: 20,
-      height: 20
-    },
-    parentText: {
-      paddingTop: 2,
-      paddingBottom: 2,
-      paddingLeft: 5,
-      paddingRight: 5,
-      borderRadius: 10,
-      color: theme.stable.black,
-      fontSize: 12.5
-    },
-
-    childContainer: {
-      backgroundColor: theme.bg,
-      height: height
-    },
-    childItem: {
-      width: '100%',
-      height: 60,
-      paddingLeft: 10,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10
-    },
-    childText: {
-      fontSize: 16,
-      color: theme.black
-    }
-  })
+  const [height, setHeight] = useState(0);
 
   const [selectedId, setSelectedId] = useState(2);
+  const [childsState, setChildsState] = useState(null);
+  const [parentState, setParentState] = useState([]);
 
   let iconSize = 16;
   let iconColor = theme.black;
-
-  /**
-   * Menyu elementləri
-   * @constant childs
-   * @type {Object}
-   * @property {Array} 1 - Əsas menyu elementləri
-   * @property {Array} 2 - Anbar əməliyyatları
-   * @property {Array} 3 - Alış əməliyyatları
-   * @property {Array} 4 - Satış əməliyyatları
-   * @property {Array} 5 - İşçi və müştəri əməliyyatları
-   * @property {Array} 6 - Maliyyə əməliyyatları
-   */
 
   const childs = {
     1: [
@@ -133,69 +39,51 @@ const Home = ({ route, navigation }) => {
         title: 'Əsas',
         name: 'dashboard',
         show: true,
-        icon: <Ionicons name="home" size={iconSize} color={iconColor} />,
+        icon: <IoHome size={iconSize} color={iconColor} />,
       },
       {
         title: 'Kataloq',
         name: "catalog",
         show: true,
-        icon: <Ionicons name="document-text" size={iconSize} color={iconColor} />,
+        icon: <IoDocumentText size={iconSize} color={iconColor} />,
       },
-      // {
-      //   title: 'Sənədlər',
-      //   name: "docs",
-      //   show: true,
-      //   icon: <Ionicons name="documents" size={iconSize} color={iconColor} />,
-      // },
-      // {
-      //   title: 'Səbət',
-      //   name: "trash",
-      //   show: true,
-      //   icon: <Ionicons name="trash" size={iconSize} color={iconColor} />,
-      // },
-      // {
-      //   title: 'Audit',
-      //   name: "audit",
-      //   show: true,
-      //   icon: <MaterialCommunityIcons name="police-station" size={iconSize} color={iconColor} />,
-      // }
     ],
     2: [
       {
         title: "Məhsul və Xidmətlər",
         name: "sub_product",
         show: true,
-        icon: <FontAwesome6 name="box-archive" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaBoxArchive size={iconSize} color={iconColor} />,
       },
       {
         title: "Daxilolmalar",
         name: 'enter',
         show: true,
-        icon: <Ionicons name="enter" size={iconSize} color={iconColor} />, // Ionicons
+        icon: <IoEnter size={iconSize} color={iconColor} />,
       },
       {
         title: "Silinmələr",
         name: "loss",
         show: true,
-        icon: <FontAwesome6 name="trash-arrow-up" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaTrashArrowUp size={iconSize} color={iconColor} />,
       },
       {
         title: 'Yerdəyişmələr',
         name: "move",
         show: true,
-        icon: <Ionicons name="sync-circle" size={iconSize} color={iconColor} />, // Ionicons
+        icon: <IoSyncCircle size={iconSize} color={iconColor} />,
       },
       {
         title: 'Inventarizasiya',
         name: "inventory",
         show: true,
-        icon: <FontAwesome6 name="warehouse" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaWarehouse size={iconSize} color={iconColor} />,
       },
       {
         title: 'Anbar qalığı',
         name: "stockbalance",
         show: true,
-        icon: <Ionicons name="cube" size={iconSize} color={iconColor} />, // Ionicons
+        icon: <IoCube size={iconSize} color={iconColor} />,
       }
     ],
     3: [
@@ -203,19 +91,19 @@ const Home = ({ route, navigation }) => {
         title: 'Alışlar',
         name: "supply",
         show: true,
-        icon: <Entypo name="download" size={iconSize} color={iconColor} />, // Entypo
+        icon: <RiDownloadLine size={iconSize} color={iconColor} />,
       },
       {
         title: "Alışların iadəsi",
         name: 'supplyreturns',
         show: true,
-        icon: <Entypo name="upload" size={iconSize} color={iconColor} />, // Entypo
+        icon: <RiUploadLine size={iconSize} color={iconColor} />,
       },
       {
         title: "Sifarişlər",
         name: "purchaseorde",
         show: true,
-        icon: <FontAwesome6 name="bag-shopping" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <HiShoppingBag size={iconSize} color={iconColor} />,
       }
     ],
     4: [
@@ -223,19 +111,19 @@ const Home = ({ route, navigation }) => {
         title: "Satışlar",
         name: "demand",
         show: true,
-        icon: <FontAwesome6 name="cart-arrow-down" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaCartArrowDown size={iconSize} color={iconColor} />,
       },
       {
         title: "Satışların geriqaytarması",
         name: "demandreturns",
         show: true,
-        icon: <FontAwesome6 name="cart-flatbed-suitcase" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaCartFlatbedSuitcase size={iconSize} color={iconColor} />,
       },
       {
         title: "Sifarişlər",
         name: "customerorders",
         show: true,
-        icon: <FontAwesome6 name="cart-shopping" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaCartShopping size={iconSize} color={iconColor} />,
       }
     ],
     5: [
@@ -243,31 +131,31 @@ const Home = ({ route, navigation }) => {
         title: "Tərəf-müqabil",
         name: "customer",
         show: true,
-        icon: <FontAwesome6 name="users" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaUsers size={iconSize} color={iconColor} />,
       },
       {
         title: "Əməkdaşlar",
         name: "employees",
         show: true,
-        icon: <FontAwesome6 name="id-badge" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaIdBadge size={iconSize} color={iconColor} />,
       },
       {
         title: "İşçilik",
         name: "employeesalaries",
         show: true,
-        icon: <MaterialCommunityIcons name="account-network" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsPeopleFill size={iconSize} color={iconColor} />,
       },
       {
         title: "Əmək ödənişləri",
         name: "employeepayments",
         show: true,
-        icon: <MaterialIcons name="assured-workload" size={iconSize} color={iconColor} />, // MaterialIcons
+        icon: <MdAssuredWorkload size={iconSize} color={iconColor} />,
       },
       {
         title: "Qarşılıqlı hesabat",
         name: "employeesettlements",
         show: true,
-        icon: <FontAwesome6 name="calculator" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaCalculator size={iconSize} color={iconColor} />,
       }
     ],
     6: [
@@ -275,122 +163,115 @@ const Home = ({ route, navigation }) => {
         title: "Ödənişlər",
         name: "page_payments",
         show: true,
-        icon: <MaterialIcons name="payments" size={iconSize} color={iconColor} />, // MaterialIcons
+        icon: <MdPayments size={iconSize} color={iconColor} />,
       },
       {
         title: "Borclar",
         name: "settlements",
         show: true,
-        icon: <MaterialCommunityIcons name="account-cash" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsPeopleFill size={iconSize} color={iconColor} />,
       },
       {
         title: "Transferlər",
         name: "cashtransactions",
         show: true,
-        icon: <MaterialCommunityIcons name="bank-transfer" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsBank size={iconSize} color={iconColor} />,
       },
       {
         title: "Korrektlər",
         name: "correct",
         show: true,
-        icon: <Ionicons name="document-text" size={iconSize} color={iconColor} />, // Ionicons
+        icon: <IoDocumentText size={iconSize} color={iconColor} />,
       }
     ],
-    7:
-      [
-        {
-          title: "Distributorlar",
-          name: "expeditor",
-          show: true,
-          icon: <AntDesign name="isv" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
-        }, {
-          title: 'Anbar qalığı',
-          name: "stockbalance",
-          show: true,
-          icon: <Ionicons name="cube" size={iconSize} color={iconColor} />, // Ionicons
-        }
-      ],
-    8:
-      [
-        {
-          title: "Növbələr",
-          name: "shifts",
-          show: true,
-          icon: <MaterialCommunityIcons name="car-shift-pattern" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
-        },
-        {
-          title: "Satışlar",
-          name: "sale",
-          show: true,
-          icon: <MaterialCommunityIcons name="database-export" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
-        },
-        {
-          title: "Qaytarmalar",
-          name: "returns",
-          show: true,
-          icon: <Entypo name="back-in-time" size={iconSize} color={iconColor} />, // Entypo
-        },
-        {
-          title: "Ödənişlər",
-          name: "credittransaction",
-          show: true,
-          icon: <Ionicons name="cash" size={iconSize} color={iconColor} />, // Ionicons
-        },
-        {
-          title: "Kassa Mədaxilləri",
-          name: "cashins",
-          show: true,
-          icon: <FontAwesome6 name="cash-register" size={iconSize} color={iconColor} />, // FontAwesome6
-        },
-        {
-          title: "Kassa Məxaricləri",
-          name: 'cashouts',
-          show: true,
-          icon: <FontAwesome5 name="upload" size={iconSize} color={iconColor} />, // FontAwesome5
-        },
-        // {
-        //   title: "Satış nöqtələri",
-        //   name: "salepoints",
-        //   show: true,
-        //   icon: <FontAwesome6 name="map-location-dot" size={iconSize} color={iconColor} />, // FontAwesome6
-        // }
-      ],
+    7: [
+      {
+        title: "Distributorlar",
+        name: "expeditor",
+        show: true,
+        icon: <AiOutlineDashboard size={iconSize} color={iconColor} />,
+      },
+      {
+        title: 'Anbar qalığı',
+        name: "stockbalance",
+        show: true,
+        icon: <IoCube size={iconSize} color={iconColor} />,
+      }
+    ],
+    8: [
+      {
+        title: "Növbələr",
+        name: "shifts",
+        show: true,
+        icon: <BsClockHistory size={iconSize} color={iconColor} />,
+      },
+      {
+        title: "Satışlar",
+        name: "sale",
+        show: true,
+        icon: <BsDatabaseExclamation size={iconSize} color={iconColor} />,
+      },
+      {
+        title: "Qaytarmalar",
+        name: "returns",
+        show: true,
+        icon: <RiTimerFlashLine size={iconSize} color={iconColor} />,
+      },
+      {
+        title: "Ödənişlər",
+        name: "credittransaction",
+        show: true,
+        icon: <IoCash size={iconSize} color={iconColor} />,
+      },
+      {
+        title: "Kassa Mədaxilləri",
+        name: "cashins",
+        show: true,
+        icon: <FaCashRegister size={iconSize} color={iconColor} />,
+      },
+      {
+        title: "Kassa Məxaricləri",
+        name: 'cashouts',
+        show: true,
+        icon: <FaUpload5 size={iconSize} color={iconColor} />,
+      },
+    ],
     9: [
       {
         title: "Mənfəət",
         name: "salereports",
         show: true,
-        icon: <MaterialCommunityIcons name="desktop-mac-dashboard" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <AiOutlineDashboard size={iconSize} color={iconColor} />,
       },
       {
         title: "Mənfəət və Zərər",
         name: "profit",
         show: true,
-        icon: <FontAwesome6 name="chart-bar" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaChartBar size={iconSize} color={iconColor} />,
       },
       {
         title: "Gündəlik hesabatlar",
         name: "dailyreports",
         show: true,
-        icon: <FontAwesome6 name="calendar-days" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaCalendarDays size={iconSize} color={iconColor} />,
       },
       {
         title: "Təchizatçı hesabatı",
         name: "comprehensive",
         show: true,
-        icon: <FontAwesome6 name="chalkboard-user" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaChalkboardUser size={iconSize} color={iconColor} />,
       },
       {
         title: "Dövriyyə",
         name: "producttransactions",
         show: true,
-        icon: <MaterialCommunityIcons name="book-sync" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsBookHalf size={iconSize} color={iconColor} />,
       },
       {
         title: "Hesablar",
         name: "cashes",
         show: true,
-        icon: <MaterialCommunityIcons name="page-next" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsFileEarmarkText size={iconSize} color={iconColor} />,
       }
     ],
     10: [
@@ -398,35 +279,34 @@ const Home = ({ route, navigation }) => {
         title: "Məhsullar",
         name: 'productionproducts',
         show: true,
-        icon: <FontAwesome6 name="boxes-packing" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaBoxesPacking size={iconSize} color={iconColor} />,
       },
       {
         title: "Tərkiblər",
         name: "recipe",
         show: true,
-        icon: <FontAwesome6 name="clipboard-list" size={iconSize} color={iconColor} />, // FontAwesome6
+        icon: <FaClipboardList size={iconSize} color={iconColor} />,
       },
       {
         title: "Köhnə istehsalat",
         name: "manufactures",
         show: true,
-        icon: <MaterialCommunityIcons name="history" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsClockHistory size={iconSize} color={iconColor} />,
       },
       {
         title: "İstehsal Sifarişləri",
         name: "productionorders",
         show: true,
-        icon: <MaterialCommunityIcons name="archive-clock" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsClockFill size={iconSize} color={iconColor} />,
       },
       {
         title: "İstehsal",
         name: "productions",
         show: true,
-        icon: <MaterialCommunityIcons name="archive" size={iconSize} color={iconColor} />, // MaterialCommunityIcons
+        icon: <BsArchive size={iconSize} color={iconColor} />,
       },
     ]
-    // ... existing code ...
-  }
+  };
 
   const parent = [
     {
@@ -492,41 +372,157 @@ const Home = ({ route, navigation }) => {
       show: true,
       value: 'page_reports'
     },
-    // {
-    //   name: "İstehsalat",
-    //   id: 10,
-    //   image: "fork",
-    //   show: true,
-    //   value: 'page_productions'
-    // }
-  ]
+  ];
 
-  const [childsState, setChildsState] = useState(null);
-  const [parentState, setParentState] = useState([]);
+  const getParentIcon = (imageName, isSelected) => {
+    const color = isSelected ? theme.primary : theme.black;
+    const size = 25;
+    switch (imageName) {
+      case 'dashboard': return <AiOutlineDashboard size={size} color={color} />;
+      case 'inbox': return <FaBoxArchive size={size} color={color} />;
+      case 'download': return <AiOutlineDownload size={size} color={color} />;
+      case 'upload': return <AiOutlineUpload size={size} color={color} />;
+      case 'user': return <AiOutlineUser size={size} color={color} />;
+      case 'wallet': return <AiOutlineWallet size={size} color={color} />;
+      case 'isv': return <AiOutlineDashboard size={size} color={color} />;
+      case 'shoppingcart': return <AiOutlineShoppingCart size={size} color={color} />;
+      case 'linechart': return <AiOutlineLineChart size={size} color={color} />;
+      default: return <AiOutlineDashboard size={size} color={color} />;
+    }
+  };
+
+  const styles = {
+    container: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: theme.bg,
+      minHeight: '100vh'
+    },
+    header: {
+      width: '100%',
+      height: 55,
+      backgroundColor: theme.primary,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingLeft: 10,
+      paddingRight: 10
+    },
+    headerText: {
+      fontSize: 18,
+      color: theme.stable.white
+    },
+    parentContainer: {
+      width: '100%',
+      minHeight: 85,
+      backgroundColor: theme.bg,
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 15,
+      alignItems: 'center',
+      paddingLeft: 5,
+      overflowX: 'auto',
+      boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
+    },
+    item: {
+      minHeight: 70,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 5,
+      cursor: 'pointer',
+      padding: '5px 10px',
+      background: 'none',
+      border: 'none'
+    },
+    parentText: {
+      paddingTop: 2,
+      paddingBottom: 2,
+      paddingLeft: 5,
+      paddingRight: 5,
+      borderRadius: 10,
+      fontSize: 12.5,
+      whiteSpace: 'nowrap'
+    },
+    childContainer: {
+      backgroundColor: theme.bg,
+      flex: 1,
+      overflowY: 'auto'
+    },
+    childItem: {
+      width: '100%',
+      height: 60,
+      paddingLeft: 10,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      cursor: 'pointer',
+      background: 'none',
+      border: 'none',
+      textAlign: 'left'
+    },
+    childText: {
+      fontSize: 16,
+      color: theme.black
+    },
+    childIconContainer: {
+      width: 40,
+      height: 40,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.input.greyWhite,
+      borderRadius: 10
+    },
+    menuButton: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: 5
+    },
+    loadingContainer: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    spinner: {
+      width: 40,
+      height: 40,
+      border: `3px solid ${theme.input.grey}`,
+      borderTop: `3px solid ${theme.primary}`,
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }
+  };
 
   const permissionVerification = async () => {
     let localAsync = await AsyncStorage.getItem('local_per');
     setLocal(localAsync != null ? JSON.parse(localAsync) : null);
 
-
     await api('marks/get.php', {
       token: await AsyncStorage.getItem('token')
     }).then(element => {
       setMarks(element.List);
-    })
+    });
 
     let permissionString = await AsyncStorage.getItem("perlist");
     if (permissionString !== null) {
       let permissionData = JSON.parse(permissionString);
 
-      let c_state = childs;
-      let p_state = parent;
-      for (p = 0; p < p_state.length; p++) {
+      let c_state = { ...childs };
+      let p_state = [...parent];
+
+      for (let p = 0; p < p_state.length; p++) {
         if (!permission_ver(permissionData, p_state[p].value, 'R')) {
           p_state[p].show = false;
         }
         for (let c = 0; c < c_state[p_state[p].id].length; c++) {
-          let list = c_state[p_state[p].id];
+          let list = [...c_state[p_state[p].id]];
           if (!permission_ver(permissionData, list[c].name, 'R')) {
             list[c].show = false;
           }
@@ -535,140 +531,123 @@ const Home = ({ route, navigation }) => {
       }
 
       let selectedId_data = selectedId;
-
-      let index = p_state.findIndex(element => element.value == "page_products");
+      let index = p_state.findIndex(element => element.value === "page_products");
       if (!p_state[index].show) {
-        let firstShowIsTrue = p_state.findIndex(element => element.show == true);
-
-
+        let firstShowIsTrue = p_state.findIndex(element => element.show === true);
         setSelectedId(p_state[firstShowIsTrue].id);
         selectedId_data = p_state[firstShowIsTrue].id;
       }
 
       if (c_state[selectedId_data][0]) {
         let c_state_length = 0;
-        for (let index = 0; index < c_state[selectedId_data].length; index++) {
-          if (c_state[selectedId_data][index].show) {
-            c_state_length += 1
+        for (let i = 0; i < c_state[selectedId_data].length; i++) {
+          if (c_state[selectedId_data][i].show) {
+            c_state_length += 1;
           }
         }
-        height.value = withSpring(c_state_length * 61)
+        setHeight(c_state_length * 61);
       }
 
       setChildsState(c_state);
       setParentState(p_state);
-
       setPermissions(permissionData);
     }
-  }
+  };
 
   useEffect(() => {
-    height.value = withSpring(childs[selectedId].length * 61);
+    setHeight(childs[selectedId].length * 61);
     permissionVerification();
-  }, [])
+  }, []);
+
+  const handleChildClick = (element) => {
+    if (permission_ver(permissions, element.name, 'R')) {
+      navigate(`/${element.name}`);
+    } else {
+      ErrorMessage("Sizin bu səhifəyə girməyinizə icazə yoxudr!");
+    }
+  };
+
+  const handleParentClick = (element) => {
+    setSelectedId(element.id);
+    if (childsState[element.id][0]) {
+      let c_state_length = 0;
+      for (let i = 0; i < childsState[element.id].length; i++) {
+        if (childsState[element.id][i].show) {
+          c_state_length += 1;
+        }
+      }
+      setHeight(c_state_length * 61);
+    }
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.bg, justifyContent: 'space-between' }}>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        {parentState.length > 0 ? (
+          <span style={styles.headerText}>
+            {parentState[parentState.findIndex(rel => rel.id === selectedId)]?.name}
+          </span>
+        ) : (
+          <span style={styles.headerText}></span>
+        )}
+        <button style={styles.menuButton} onClick={() => navigate('/profile')}>
+          <IoMenu size={25} color={theme.stable.white} />
+        </button>
+      </div>
 
-      <>
-        <View style={styles.header}>
-          {
-            parentState.length > 0 ?
-              <Text style={styles.headerText}>{parentState[parentState.findIndex(rel => rel.id == selectedId)].name}</Text>
-              :
-              ""
-          }
-          <TouchableOpacity onPress={() => {
-            navigation.navigate('profile');
-          }}>
-            <Ionicons name='menu' size={25} color={theme.stable.white} />
-          </TouchableOpacity>
-        </View>
-        {
-          parentState.length > 0 ?
+      {parentState.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+          <div style={{ ...styles.childContainer, height: height }}>
+            {childsState[selectedId].map((element, index) => {
+              return (
+                element.show ? (
+                  <div key={element.name}>
+                    <button
+                      onClick={() => handleChildClick(element)}
+                      style={styles.childItem}
+                    >
+                      <div style={styles.childIconContainer}>
+                        {element.icon}
+                      </div>
+                      <span style={styles.childText}>{element.title}</span>
+                    </button>
+                    <Line width={'95%'} />
+                  </div>
+                ) : null
+              );
+            })}
+          </div>
 
-            <View style={styles.footer}>
-              <Animated.View style={styles.childContainer}>
-                {
-                  childsState[selectedId].map((element, index) => {
-                    return (
-                      element.show ?
-                        <View key={element.name}>
-                          <Pressable onPress={() => {
-                            if (permission_ver(permissions, element.name, 'R')) {
-                              navigation.navigate(element.name, {
-                                name: element.name
-                              })
-                            } else {
-                              ErrorMessage("Sizin bu səhifəyə girməyinizə icazə yoxudr!")
-                            }
-                          }} key={index + 1} style={styles.childItem}>
-                            <View style={{
-                              width: 40,
-                              height: 40,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              backgroundColor: theme.input.greyWhite,
-                              borderRadius: 10,
-                            }}>
-                              {element.icon}
-                            </View>
-                            <Text style={styles.childText}>{element.title}</Text>
-                          </Pressable>
-                          <Line width={'95%'} />
-                        </View>
-                        :
-                        ''
-                    )
-                  })
-                }
-              </Animated.View>
+          <div style={styles.parentContainer}>
+            {parentState.map((element) => {
+              return (
+                element.show ? (
+                  <button
+                    key={element.id}
+                    onClick={() => handleParentClick(element)}
+                    style={styles.item}
+                  >
+                    {getParentIcon(element.image, element.id === selectedId)}
+                    <span style={{
+                      ...styles.parentText,
+                      backgroundColor: element.id === selectedId ? theme.primary : theme.whiteGrey,
+                      color: element.id === selectedId ? theme.bg : theme.stable.black
+                    }}>
+                      {element.name}
+                    </span>
+                  </button>
+                ) : null
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner} />
+        </div>
+      )}
+    </div>
+  );
+};
 
-              <ScrollView horizontal >
-                <View style={styles.parentContainer}>
-
-                  {
-                    parentState.map((element, index) => {
-                      return (
-                        element.show ?
-                          <TouchableOpacity onPress={() => {
-                            setSelectedId(element.id);
-
-                            if (childsState[element.id][0]) {
-                              let c_state_length = 0;
-                              for (let index = 0; index < childsState[element.id].length; index++) {
-                                if (childsState[element.id][index].show) {
-                                  c_state_length += 1
-                                }
-                              }
-                              height.value = withSpring(c_state_length * 61)
-                            }
-                          }} key={element.id} style={styles.item}>
-                            <AntDesign name={element.image} size={25} color={element.id == selectedId ? theme.primary : theme.black} />
-                            <Text style={[styles.parentText, {
-                              backgroundColor: element.id == selectedId ? theme.primary : theme.whiteGrey,
-                              color: element.id == selectedId ? theme.bg : theme.stable.black
-                            }]}>{element.name}</Text>
-                          </TouchableOpacity>
-
-                          :
-                          ''
-                      )
-                    })
-                  }
-                </View>
-              </ScrollView>
-
-            </View>
-            :
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size={40} color={theme.primary} />
-            </View>
-        }
-      </>
-
-    </View>
-  )
-}
-
-export default Home
+export default Home;

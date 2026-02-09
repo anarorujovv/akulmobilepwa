@@ -1,14 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React from 'react';
 
 const ExpeditorManage = () => {
   return (
-    <View>
-      <Text>ExpeditorManage</Text>
-    </View>
-  )
-}
+    <div>
+      <span>ExpeditorManage</span>
+    </div>
+  );
+};
 
-export default ExpeditorManage
-
-const styles = StyleSheet.create({})
+export default ExpeditorManage;

@@ -1,44 +1,49 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React, { useContext } from 'react'
-import ManageCard from '../../../shared/ui/ManageCard'
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
-import Input from '../../../shared/ui/Input'
-import useTheme from '../../../shared/theme/useTheme'
-import { PaymentGlobalContext } from '../../../shared/data/PaymentGlobalState'
+import React, { useContext } from 'react';
+import ManageCard from '../../../shared/ui/ManageCard';
+import { MdInsertDriveFile } from 'react-icons/md';
+import Input from '../../../shared/ui/Input';
+import { PaymentGlobalContext } from '../../../shared/data/PaymentGlobalState';
 
-const DocumentCard = ({ cost,changeInput }) => {
+const DocumentCard = ({ cost, changeInput }) => {
+  const { document } = useContext(PaymentGlobalContext);
 
-  const { document, setDocument } = useContext(PaymentGlobalContext);
-
-
-  const styles = StyleSheet.create({
+  const styles = {
     header: {
+      display: 'flex',
       flexDirection: 'row',
       gap: 10,
       width: '100%',
       padding: 15,
+      alignItems: 'center'
     },
-  })
+    content: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }
+  };
 
   return (
     <ManageCard>
+      <div style={styles.header}>
+        <MdInsertDriveFile size={20} />
+        <span>Digər</span>
+      </div>
 
-      <View style={styles.header}>
-        <MaterialIcons name='insert-drive-file' size={20} />
-        <Text>Digər</Text>
-      </View>
-
-      <View style={{
-        width:'100%',
-        alignItems:'center'
-      }}>
-        <Input value={document.Description} placeholder={'Açıqlama'} onChange={(e) => {
-          changeInput('Description',e)
-
-        }} type={'string'} width={'70%'} />
-      </View>
+      <div style={styles.content}>
+        <Input
+          value={document.Description}
+          placeholder={'Açıqlama'}
+          onChange={(e) => {
+            changeInput('Description', e);
+          }}
+          type={'string'}
+          width={'70%'}
+        />
+      </div>
     </ManageCard>
-  )
-}
+  );
+};
 
-export default DocumentCard
+export default DocumentCard;

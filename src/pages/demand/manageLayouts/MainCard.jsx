@@ -1,17 +1,16 @@
-import { Text, View } from 'react-native'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from 'react';
 import ManageCard from './../../../shared/ui/ManageCard';
 import Input from '../../../shared/ui/Input';
 import { DemandGlobalContext } from '../../../shared/data/DemandGlobalState';
 import useTheme from '../../../shared/theme/useTheme';
 import SelectionDate from '../../../shared/ui/SelectionDate';
 import CustomSelection from '../../../shared/ui/CustomSelection';
-import paymethdemo from './../../../../paymethdem';
+import paymethdemo from '../../../paymethdem';
 import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
+
 const MainCard = ({ changeInput, changeSelection }) => {
 
   const local = useGlobalStore(state => state.local);
-
   let theme = useTheme();
 
   const { document, setDocument } = useContext(DemandGlobalContext);
@@ -20,23 +19,27 @@ const MainCard = ({ changeInput, changeSelection }) => {
 
   return (
     <ManageCard>
-      <View style={{
+      <div style={{
         width: '100%',
         padding: 15,
+        boxSizing: 'border-box'
       }}>
-        <Text style={{
+        <span style={{
           fontSize: 20,
-          color: theme.primary
-        }}>Satış</Text>
-      </View>
-      <View style={{
+          color: theme.primary,
+          display: 'block'
+        }}>Satış</span>
+      </div>
+      <div style={{
         marginTop: 20,
         gap: 20,
+        display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center'
       }}>
         <Input
           placeholder={'Ad'}
-          type={'string'}
+          type={'text'} // 'string' -> 'text' for web input
           width={'70%'}
           value={document.Name}
           onChange={(e) => {
@@ -53,7 +56,7 @@ const MainCard = ({ changeInput, changeSelection }) => {
           setModalVisible={setMomentModal}
         />
 
-        <View style={{
+        <div style={{
           width: '70%'
         }}>
           <CustomSelection
@@ -65,11 +68,11 @@ const MainCard = ({ changeInput, changeSelection }) => {
             placeholder={'Satış novü'}
             title={'Satış növü'}
           />
-        </View>
-      </View>
+        </div>
+      </div>
 
     </ManageCard>
   )
 }
 
-export default MainCard
+export default MainCard;

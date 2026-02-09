@@ -1,11 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React, { useState } from 'react'
-import Button from './Button'
-import PricesModal from './modals/PricesModal'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import api from '../../services/api'
-import { formatPrice } from '../../services/formatPrice'
-import ErrorMessage from './RepllyMessage/ErrorMessage'
+import React, { useState } from 'react';
+import Button from './Button';
+import PricesModal from './modals/PricesModal';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import api from '../../services/api';
+import { formatPrice } from '../../services/formatPrice';
+import ErrorMessage from './RepllyMessage/ErrorMessage';
 
 
 const AllChangeProductPriceType = ({ document, setDocument, setHasUnsavedChanges }) => {
@@ -17,7 +16,7 @@ const AllChangeProductPriceType = ({ document, setDocument, setHasUnsavedChanges
         let obj = {
             pricetype: item.Id,
             products: data.Positions.map(item => item.ProductId),
-            token: await AsyncStorage.getItem('token')
+            token: await AsyncStorageWrapper.getItem('token')
         }
 
         await api('products/getproductsrate.php', obj).then(res => {
@@ -60,9 +59,7 @@ const AllChangeProductPriceType = ({ document, setDocument, setHasUnsavedChanges
                 pressable={handleChangePriceType}
             />
         </>
-    )
-}
+    );
+};
 
-export default AllChangeProductPriceType
-
-const styles = StyleSheet.create({})
+export default AllChangeProductPriceType;

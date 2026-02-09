@@ -1,44 +1,51 @@
-import { StyleSheet, View } from 'react-native'
-import React from 'react'
-import Ionicons from 'react-native-vector-icons/Ionicons'
+import React from 'react';
+import { IoAdd } from 'react-icons/io5';
 import useTheme from './../theme/useTheme';
-import { Pressable } from '@react-native-material/core';
 
 const FabButton = ({ onPress }) => {
-
     let theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         addButtonContainer: {
             width: 60,
             height: 60,
             borderRadius: 70,
             backgroundColor: theme.pink,
-            position: 'absolute',
+            position: 'fixed',
             bottom: 30,
             right: 20,
-            elevation: 10,
+            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            overflow: 'hidden'
-          },
-          addButton: {
+            overflow: 'hidden',
+            zIndex: 100
+        },
+        addButton: {
             width: 60,
             height: 60,
+            display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center'
-          },
-    })
-    return (
-        <View style={styles.addButtonContainer}>
-            <Pressable
-                style={styles.addButton}
-                onPress={onPress}
-            >
-                <Ionicons name='add-outline' size={25} color={theme.bg} />
-            </Pressable>
-        </View>
-    )
-}
+            alignItems: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease'
+        }
+    };
 
-export default FabButton
+    return (
+        <div style={styles.addButtonContainer}>
+            <button
+                style={styles.addButton}
+                onClick={onPress}
+                onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            >
+                <IoAdd size={25} color={theme.bg} />
+            </button>
+        </div>
+    );
+};
+
+export default FabButton;

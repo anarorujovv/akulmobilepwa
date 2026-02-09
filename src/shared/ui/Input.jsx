@@ -1,21 +1,28 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import useTheme from './../theme/useTheme';
-import { Pressable } from '@react-native-material/core';
 
 const Input = ({ value, onChange, width, password, placeholder, rightIcon, type, disabled, txPosition, labelButton, onPressLabelButton, isRequired }) => {
   const [active, setActive] = useState(false);
   const theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
+    container: {
+      width: width,
+      height: 50,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-end',
+    },
     input: {
-      borderBottomWidth: !active ? 1 : 2,
-      borderColor: !active ? theme.input.grey : theme.primary,
+      borderWidth: 0,
+      borderBottom: !active ? `1px solid ${theme.input.grey}` : `2px solid ${theme.primary}`,
       padding: 0,
       fontSize: 14,
       width: '100%',
       color: theme.input.text,
       textAlign: txPosition ? txPosition : 'left',
+      outline: 'none',
+      backgroundColor: 'transparent',
     },
     textNonButton: {
       color: theme.input.grey,
@@ -26,66 +33,62 @@ const Input = ({ value, onChange, width, password, placeholder, rightIcon, type,
       color: theme.primary,
       fontSize: 14,
       textAlign: txPosition ? txPosition : 'left',
-      textDecorationLine: "underline"
+      textDecoration: 'underline',
+      cursor: 'pointer',
+      background: 'none',
+      border: 'none',
+      padding: 0,
     },
-  });
+    inputContainer: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center'
+    },
+    labelContainer: {
+      display: 'flex',
+      flexDirection: 'row'
+    }
+  };
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    if (type === "number") {
+      onChange(newValue.replace(',', '.'));
+    } else {
+      onChange(newValue);
+    }
+  };
 
   return (
-    <View style={{
-      width: width,
-      height: 50,
-      justifyContent: 'flex-end',
-    }}>
+    <div style={styles.container}>
+      {labelButton ? (
+        <button style={styles.text} onClick={onPressLabelButton}>
+          <span style={{ color: isRequired ? 'red' : theme.input.grey }}>{isRequired ? '*' : ''}</span>
+          <span>{placeholder}</span>
+        </button>
+      ) : (
+        <div style={styles.labelContainer}>
+          <span style={{ ...styles.textNonButton, color: isRequired ? 'red' : theme.input.grey }}>{isRequired ? '*' : ''}</span>
+          <span style={styles.textNonButton}>{placeholder}</span>
+        </div>
+      )}
 
-      {
-        labelButton ?
-          <Pressable pressEffectColor={theme.primary} onPress={onPressLabelButton}>
-            <Text style={[styles.text,{color:isRequired ? 'red' : theme.input.grey}]}>{isRequired ? '*' : ''}</Text>
-            <Text style={[styles.text]}>{placeholder}</Text>
-          </Pressable>
-          :
-          <View style={{
-            flexDirection:'row'
-          }}>
-            <Text style={[styles.textNonButton,{color:isRequired ? 'red' : theme.input.grey}]}>{isRequired ? '*' : ''}</Text>
-            <Text style={[styles.textNonButton]}>{placeholder}</Text>
-          </View>
-      }
-
-      <View style={{
-        width: '100%',
-        flexDirection: 'row'
-      }}>
-        <TextInput
-          editable={!disabled}
-          keyboardType={type && type == "number" ? 'numeric' : 'email-address'}
-          secureTextEntry={password}
+      <div style={styles.inputContainer}>
+        <input
+          disabled={disabled}
+          type={password ? 'password' : type === 'number' ? 'number' : 'text'}
           value={String(value)}
-          onChangeText={(e) => {
-            if (type == "number") {
-              onChange(e.replace(',', '.'));
-            }else{
-              onChange(e);
-            }
-            
-          }}
-          onFocus={() => {
-            setActive(true);
-          }}
-          onBlur={() => {
-            setActive(false);
-          }}
-          cursorColor={theme.primary}
+          onChange={handleChange}
+          onFocus={() => setActive(true)}
+          onBlur={() => setActive(false)}
           placeholder='...'
           style={styles.input}
-          placeholderTextColor={theme.input.grey}
         />
-        <View style={{ marginRight: 10 }} />
-        {
-          rightIcon
-        }
-      </View>
-    </View>
+        <div style={{ marginRight: 10 }} />
+        {rightIcon}
+      </div>
+    </div>
   );
 };
 

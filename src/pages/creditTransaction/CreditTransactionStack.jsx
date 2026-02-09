@@ -1,26 +1,13 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import CreditTransactionList from './CreditTransactionList';
-import Filter from '../../shared/ui/Filter';
 
-
-const CashTransactionStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
+const CreditTransactionStack = () => {
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation:'fade'
-            }}            
-        >
-            <Stack.Screen name="credit-transaction-list" component={CreditTransactionList} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<CreditTransactionList />} />
+        </Routes>
+    );
+};
 
-export default CashTransactionStack
-
-const styles = StyleSheet.create({})
+export default CreditTransactionStack;

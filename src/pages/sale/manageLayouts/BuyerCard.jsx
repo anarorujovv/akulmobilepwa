@@ -1,69 +1,73 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import ManageCard from '../../../shared/ui/ManageCard'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import useTheme from '../../../shared/theme/useTheme'
-import { formatPrice } from '../../../services/formatPrice'
+import React from 'react';
+import ManageCard from '../../../shared/ui/ManageCard';
+import { IoPerson } from 'react-icons/io5';
+import useTheme from '../../../shared/theme/useTheme';
+import { formatPrice } from '../../../services/formatPrice';
 import Selection from './../../../shared/ui/Selection';
 
 const BuyerCard = ({ document }) => {
 
     const theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         header: {
             width: '100%',
             padding: 15,
             gap: 10,
-            flexDirection: 'row'
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            boxSizing: 'border-box'
+        },
+        container: {
+            gap: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '0 15px 15px 15px',
+            boxSizing: 'border-box'
         }
-    })
+    };
 
     return (
-        <>
-            <ManageCard>
-                <View style={styles.header}>
-                    <Ionicons size={20} color={theme.grey} name='person' />
-                    <Text style={{
-                        color: theme.grey
-                    }}>Qarşı-Tərəf</Text>
-                </View>
+        <ManageCard>
+            <div style={styles.header}>
+                <IoPerson size={20} color={theme.grey} />
+                <span style={{
+                    color: theme.grey
+                }}>Qarşı-Tərəf</span>
+            </div>
 
-                <View style={{
-                    gap: 15,
-                    alignItems: 'center'
+            <div style={styles.container}>
 
-                }}>
+                <Selection
+                    disabled={true}
+                    isRequired={true}
+                    apiBody={{}}
+                    apiName={'customers/getfast.php'}
+                    searchApi={'customers/getfast.php'}
+                    change={() => { }}
+                    searchKey={'fast'}
+                    title={'Qarşı-Tərəf'}
+                    value={document.CustomerId}
+                    defaultValue={document.CustomerName}
+                    bottomTitle={'Qarşı-tərəf'}
+                />
 
-                    <Selection
-                        disabled={true}
-                        isRequired={true}
-                        apiBody={{}}
-                        apiName={'customers/getfast.php'}
-                        searchApi={'customers/getfast.php'}
-                        change={() => { }}
-                        searchKey={'fast'}
-                        title={'Qarşı-Tərəf'}
-                        value={document.CustomerId}
-                        defaultValue={document.CustomerName}
-                        bottomTitle={'Qarşı-tərəf'}
-                    />
+                <Selection
+                    disabled={true}
+                    isRequired={true}
+                    apiBody={{}}
+                    apiName={'stocks/get.php'}
+                    change={() => { }}
+                    title={"Anbar"}
+                    value={document.StockId}
+                    defaultValue={document.StockName}
+                />
 
-                    <Selection
-                        disabled={true}
-                        isRequired={true}
-                        apiBody={{}}
-                        apiName={'stocks/get.php'}
-                        change={() => { }}
-                        title={"Anbar"}
-                        value={document.StockId}
-                        defaultValue={document.StockName}
-                    />
-
-                </View>
-            </ManageCard >
-        </>
+            </div>
+        </ManageCard>
     )
 }
 
-export default BuyerCard
+export default BuyerCard;

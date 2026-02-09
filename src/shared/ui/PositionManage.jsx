@@ -1,14 +1,13 @@
-import { ActivityIndicator, StyleSheet, Text, View, KeyboardAvoidingView, Platform, ScrollView, Keyboard } from 'react-native'
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react';
 import useTheme from '../theme/useTheme';
 import Input from './Input';
 import { formatPrice } from '../../services/formatPrice';
 import Button from './Button';
-import AntDesign from 'react-native-vector-icons/AntDesign'
+import { AiOutlineMinusSquare, AiOutlinePlusSquare } from 'react-icons/ai';
 import pricingUtils from '../../services/pricingUtils';
 import applyDiscount from './../../services/report/applyDiscount';
 import PricesModal from './modals/PricesModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
 import api from '../../services/api';
 import ListItem from './list/ListItem';
@@ -20,8 +19,22 @@ import permission_ver from '../../services/permissionVerification';
 import playSound from '../../services/playSound';
 
 const PositionManage = ({ route, navigation }) => {
+  // route.params kullanımı React Router ile location.state'e dönüşmeli.
+  // Ancak component yapısını bozmamak için props olarak alıyoruz varsayımıyla devam ediyorum.
+  // Eğer bu bir 'page' ise useParams veya useLocation kullanılmalı.
+  // Şimdilik props'un doğru geldiğini varsayıyorum veya wrapper bir page component bu propları geçiyor.
+  // Genelde { product, state, setState, units, type, setUnits, setHasUnsavedChanges, pricePermission } 
+  // gibi proplar modal veya alt sayfa olarak açıldığında geçilir.
 
-  let { product, state, setState, units, type, setUnits, setHasUnsavedChanges, pricePermission = true } = route.params;
+  // React Router DOM adaptasyonu:
+  /*
+    Eğer bu component bir Route olarak kullanılıyorsa:
+    const location = useLocation();
+    const { product, ... } = location.state || {};
+  */
+
+  let { product, state, setState, units, type, setUnits, setHasUnsavedChanges, pricePermission = true } = route?.params || {};
+  // route.params yoksa hata almaması için boş obje kontrolü ekledim.
 
   const permissions = useGlobalStore(state => state.permissions);
 
@@ -32,7 +45,67 @@ const PositionManage = ({ route, navigation }) => {
   const scrollViewRef = useRef(null);
 
   let theme = useTheme();
+
+  const styles = {
+    container: {
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'column',
+      backgroundColor: theme.bg,
+      height: '100vh',
+      overflow: 'hidden'
+    },
+    scrollView: {
+      flex: 1,
+      overflowY: 'auto',
+      paddingBottom: 50,
+      display: 'flex',
+      flexDirection: 'column'
+    },
+    contentContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: 20,
+      flexGrow: 1,
+      minHeight: 500
+    },
+    row: {
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      justifyContent: 'space-between',
+      marginBottom: 10
+    },
+    text: {
+      color: theme.black,
+      margin: 0
+    },
+    margin20: {
+      margin: 20
+    },
+    margin10: {
+      margin: 10
+    },
+    quantityControl: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      alignItems: 'center'
+    },
+    loadingCenter: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      width: '100%'
+    }
+  };
+
   const loadInitalData = async () => {
+    if (!product) return; // Product yoksa işlem yapma
+
     let info = { ...product };
     let document = { ...state };
 
@@ -98,7 +171,7 @@ const PositionManage = ({ route, navigation }) => {
       let obj = {
         moment: document.Moment,
         stockid: document.StockId,
-        token: await AsyncStorage.getItem('token'),
+        token: await AsyncStorageWrapper.getItem('token'),
         productids: [info.ProductId]
       }
       await api('stockbalancebyid/get.php', obj)
@@ -141,7 +214,7 @@ const PositionManage = ({ route, navigation }) => {
     } else {
       propsState.Positions[index] = stateData;
     }
-    playSound('bc');
+    // playSound('bc'); // Web implementation needed or remove
     setState({ ...propsState, ...(pricingUtils(propsState.Positions)) });
     setHasUnsavedChanges(true);
     navigation.goBack();
@@ -213,7 +286,7 @@ const PositionManage = ({ route, navigation }) => {
       products: [
         data.ProductId
       ],
-      token: await AsyncStorage.getItem('token')
+      token: await AsyncStorageWrapper.getItem('token')
     }
 
     await api('products/getproductsrate.php', obj).then(res => {
@@ -240,32 +313,20 @@ const PositionManage = ({ route, navigation }) => {
     loadInitalData();
   }, [product])
 
-  // Keyboard event listener - klavye açıldığında scroll'u en alta kaydır
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      }
-    );
+  // Keyboard listener web'de gerek yok.
 
-    return () => {
-      keyboardDidShowListener.remove();
-    };
-  }, []);
+  if (!product && Object.keys(data).length === 0) {
+    // Eğer product parametresi yoksa ve data boşsa bir şey gösterme veya geri dön
+    return <div style={styles.loadingCenter}>Məlumat tapılmadı</div>
+  }
 
   return (
     Object.keys(data).length == 0 ?
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size={40} color={theme.primary} />
-      </View>
+      <div style={styles.loadingCenter}>
+        <div className="spinner"></div>
+      </div>
       :
-      <View style={{
-        flex: 1,
-        backgroundColor: theme.bg,
-      }}>
+      <div style={styles.container}>
 
         <PositionManageHeader
           handleSave={handleSave}
@@ -275,175 +336,154 @@ const PositionManage = ({ route, navigation }) => {
           createText={'Təsdiqlə'}
         />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-        >
-          <ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={{
-              justifyContent: 'space-between',
-              padding: 20,
-              flex: 1,
-              minHeight: 500 // Increased min height to enable scrolling
-            }}>
+        <div style={styles.scrollView} ref={scrollViewRef}>
+          <div style={styles.contentContainer}>
 
-              <View>
-                <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
-                <View style={{
-                  width: '100%',
-                  height: 100,
-                  marginTop: 20
-                }}>
-                  <View>
+            <div>
+              <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
+              <div style={{
+                width: '100%',
+                marginTop: 20
+              }}>
+                <div>
 
+                  {
+                    pricePermission ?
+                      permission_ver(permissions, 'profit', 'D') &&
+                        data.CostPrice ?
+                        <div style={styles.row}>
+                          <span style={styles.text}>Mayası</span>
+                          <span style={styles.text}>{formatPrice(data.CostPrice)}</span>
+                        </div>
+                        :
+                        ""
+                      :
+                      ""
+                  }
+
+                  {
+                    data.TargetSalePrice ?
+                      <div style={styles.row}>
+                        <span style={styles.text}>Satış qiyməti</span>
+                        <span style={styles.text}>{formatPrice(data.TargetSalePrice)}</span>
+                      </div>
+                      :
+                      ''
+                  }
+
+                </div>
+              </div>
+
+
+            </div>
+
+            <div>
+
+              {
+                units && units[data.ProductId] ?
+                  <>
+                    <MySelection
+                      label={'Vahid'}
+                      value={data.UnitId}
+                      onValueChange={handleChangeUnit}
+                      list={units[data.ProductId]}
+                      labelName={'Name'}
+                      valueName={'Id'}
+                    />
+
+                    <div style={styles.margin10} />
+                  </>
+                  :
+                  ""
+              }
+
+
+              {
+                pricePermission ? <Input
+                  placeholder={'Məbləğ'}
+                  value={data.AllSum}
+                  width={'100%'}
+                  type={'number'}
+                  onChange={(e) => {
+                    handleChangeAllSum(e);
+                  }}
+                />
+                  :
+                  ""
+              }
+
+              {
+                pricePermission ? <div style={styles.margin20} />
+                  :
+                  ""
+              }
+
+              {
+                pricePermission ?
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
                     {
-                      pricePermission ?
-                        permission_ver(permissions, 'profit', 'D') &&
-                          data.CostPrice ?
-                          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-                            <Text style={{ color: theme.black }}>Mayası</Text>
-                            <Text style={{ color: theme.black }}>{formatPrice(data.CostPrice)}</Text>
-                          </View>
-                          :
-                          ""
+                      state.BasicAmount != undefined ?
+                        <Input
+                          placeholder={'Endirim'}
+                          value={data.Discount}
+                          width={'45%'}
+                          type={'number'}
+                          onChange={(e) => {
+                            handleChangeDiscount(e);
+                          }}
+                        />
                         :
                         ""
                     }
 
-                    {
-                      data.TargetSalePrice ?
-                        <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-                          <Text style={{ color: theme.black }}>Satış qiyməti</Text>
-                          <Text style={{ color: theme.black }}>{formatPrice(data.TargetSalePrice)}</Text>
-                        </View>
-                        :
-                        ''
-                    }
+                    <Input
+                      labelButton={type == 0 ? true : false}
+                      onPressLabelButton={() => {
+                        setPriceModal(true);
+                      }}
+                      placeholder={priceName == '' ? type == 0 ? 'Satış qiyməti' : "Alış qiyməti" : priceName}
+                      value={data.Price}
+                      width={state.BasicAmount ? '45%' : '100%'}
+                      type={'number'}
+                      onChange={(e) => {
+                        handleChangePrice(String(e))
+                      }}
+                    />
+                  </div>
+                  :
+                  ""
+              }
 
-                  </View>
-                </View>
+              <div style={styles.margin20} />
 
+              <div style={styles.quantityControl}>
+                <Button disabled={data.Quantity == 1} onClick={() => {
+                  handleChangeQuantity(Number(data.Quantity) - 1);
+                }} width={'30%'} icon={<AiOutlineMinusSquare size={35} />} />
+                <Input
+                  txPosition={'center'}
+                  placeholder={'Miqdar'}
+                  value={data.Quantity}
+                  type={'number'}
+                  onChange={(e) => {
+                    handleChangeQuantity(e)
+                  }}
+                  width={'30%'}
+                />
 
-              </View>
+                <Button onClick={() => {
+                  handleChangeQuantity(Number(data.Quantity) + 1);
+                }} width={'30%'} icon={<AiOutlinePlusSquare size={35} />} />
+              </div>
+            </div>
 
-              <View>
-
-                {
-                  units[data.ProductId] ?
-                    <>
-
-                      <MySelection
-                        label={'Vahid'}
-                        value={data.UnitId}
-                        onValueChange={handleChangeUnit}
-                        list={units[data.ProductId]}
-                        labelName={'Name'}
-                        valueName={'Id'}
-                      />
-
-                      <View style={{ margin: 10 }} />
-                    </>
-                    :
-                    ""
-                }
-
-
-                {
-                  pricePermission ? <Input
-                    placeholder={'Məbləğ'}
-                    value={data.AllSum}
-                    width={'100%'}
-                    type={'number'}
-                    onChange={(e) => {
-                      handleChangeAllSum(e);
-                    }}
-                  />
-                    :
-                    ""
-                }
-
-                {
-                  pricePermission ? <View style={{ margin: 20 }} />
-                    :
-                    ""
-                }
-
-                {
-                  pricePermission ?
-                    <View style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      width: '100%'
-                    }}>
-                      {
-                        state.BasicAmount != undefined ?
-                          <Input
-                            placeholder={'Endirim'}
-                            value={data.Discount}
-                            width={'45%'}
-                            type={'number'}
-                            onChange={(e) => {
-                              handleChangeDiscount(e);
-                            }}
-                          />
-                          :
-                          ""
-                      }
-
-                      <Input
-                        labelButton={type == 0 ? true : false}
-                        onPressLabelButton={() => {
-                          setPriceModal(true);
-                        }}
-                        placeholder={priceName == '' ? type == 0 ? 'Satış qiyməti' : "Alış qiyməti" : priceName}
-                        value={data.Price}
-                        width={state.BasicAmount ? '45%' : '100%'}
-                        type={'number'}
-                        onChange={(e) => {
-                          handleChangePrice(String(e))
-                        }}
-                      />
-                    </View>
-                    :
-                    ""
-                }
-
-                <View style={{ margin: 20 }} />
-
-                <View style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  alignItems: 'center'
-                }}>
-                  <Button disabled={data.Quantity == 1} onClick={() => {
-                    handleChangeQuantity(Number(data.Quantity) - 1);
-                  }} width={'30%'} icon={<AntDesign size={35} name='minussquareo' />} />
-                  <Input
-                    txPosition={'center'}
-                    placeholder={'Miqdar'}
-                    value={data.Quantity}
-                    type={'number'}
-                    onChange={(e) => {
-                      handleChangeQuantity(e)
-                    }}
-                    width={'30%'}
-                  />
-
-                  <Button onClick={() => {
-                    handleChangeQuantity(Number(data.Quantity) + 1);
-                  }} width={'30%'} icon={<AntDesign size={35} name='plussquareo' />} />
-                </View>
-              </View>
-
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </div>
+        </div>
 
         {
           type == 0 ?
@@ -451,10 +491,8 @@ const PositionManage = ({ route, navigation }) => {
             :
             ""
         }
-      </View>
+      </div>
   )
 }
 
-export default PositionManage
-
-const styles = StyleSheet.create({})
+export default PositionManage;

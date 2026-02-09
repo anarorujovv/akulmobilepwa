@@ -1,81 +1,160 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import useTheme from '../../shared/theme/useTheme';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AntDesign from 'react-native-vector-icons/AntDesign'
-import Entypo from 'react-native-vector-icons/Entypo'
+import { AiOutlineShoppingCart, AiOutlineBank, AiOutlineWallet, AiOutlineAppstore } from 'react-icons/ai';
+import { BsCashCoin } from 'react-icons/bs';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import { formatPrice } from '../../services/formatPrice';
 import getDateByIndex from '../../services/report/getDateByIndex';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
-import Selection from '../../shared/ui/Selection'
+import Selection from '../../shared/ui/Selection';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
+import { useNavigate } from 'react-router-dom';
 
-const ExpeditorList = ({ navigation }) => {
-
+const ExpeditorList = () => {
+    const navigate = useNavigate();
     const theme = useTheme();
 
-    const permissions = useGlobalStore(state => state.permissions)
+    const permissions = useGlobalStore(state => state.permissions);
     const [cashes, setCashes] = useState([]);
     const [demandSums, setDemandSums] = useState([]);
     const [paymentSums, setPaymentSums] = useState([]);
     const [debtSums, setDebtsSums] = useState([]);
-    const [customerOrderAndMoveSums, setCustomerOrderAndMoves] = useState([])
+    const [customerOrderAndMoveSums, setCustomerOrderAndMoves] = useState([]);
     const [dateFilter, setDateFilter] = useState({
         ...getDateByIndex(0)
-    })
+    });
     const [selectedTime, setSelectedTime] = useState(0);
     const [owner, setOwner] = useState(null);
 
+    const styles = {
+        container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
+        },
+        scrollView: {
+            flex: 1,
+            overflowY: 'auto',
+            padding: 15
+        },
+        headerText: {
+            fontSize: 24,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginBottom: 20,
+            width: '100%',
+            color: theme.primary,
+            marginTop: 10
+        },
+        gridContainer: {
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 15
+        },
+        cardContainer: {
+            width: 'calc(50% - 10px)',
+            borderRadius: 10,
+            padding: 15,
+            border: '1px solid #ddd',
+            backgroundColor: theme.whiteGrey,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            boxSizing: 'border-box',
+            marginBottom: 15
+        },
+        cardHeader: {
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        cardTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginLeft: 10,
+            color: theme.primary
+        },
+        cardContent: {
+            marginTop: 10,
+        },
+        cardItem: {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+            cursor: 'pointer'
+        },
+        cardItemKey: {
+            fontSize: 14,
+            color: theme.primary,
+            textDecoration: "underline"
+        },
+        cardItemValue: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: theme.black
+        },
+        loadingContainer: {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 10
+        }
+    };
+
     const renderCard = (title, icon, items, style = {}) => (
-        <View onPress={() => {
-        }} style={[styles.cardContainer, style, { backgroundColor: theme.whiteGrey }]}>
-            <View style={styles.cardHeader}>
+        <div style={{ ...styles.cardContainer, ...style }}>
+            <div style={styles.cardHeader}>
                 {icon}
-                <Text style={[styles.cardTitle, { color: theme.primary }]}>{title}</Text>
-            </View>
-            <View style={styles.cardContent}>
-
-                {
-                    items != null ?
-                        items[0] ?
-                            items.map((item, index) => (
-                                <TouchableOpacity onPress={() => {
+                <span style={styles.cardTitle}>{title}</span>
+            </div>
+            <div style={styles.cardContent}>
+                {items != null ? (
+                    items[0] ? (
+                        items.map((item, index) => (
+                            <div
+                                key={index}
+                                onClick={() => {
                                     if (item.navParams == undefined) {
-                                        navigation.navigate(item.navName)
+                                        navigate(item.navName);
                                     } else {
-                                        navigation.navigate(item.navName, { ...item.navParams });
+                                        // Pass state for React Router
+                                        navigate(item.navName, { state: { ...item.navParams } });
                                     }
-                                }} key={index} style={styles.cardItem}>
-                                    <Text style={[styles.cardItemKey, { color: theme.primary, textDecorationLine: "underline" }]}>{item.key}</Text>
-                                    <Text style={[styles.cardItemValue, { color: theme.black }]}>{item.value}</Text>
-                                </TouchableOpacity>
-                            ))
-                            :
-                            <View>
-                                <ActivityIndicator size={30} color={theme.primary} />
-                            </View>
-                        :
-                        ""
-                }
-
-            </View>
-        </View>
+                                }}
+                                style={styles.cardItem}
+                            >
+                                <span style={styles.cardItemKey}>{item.key}</span>
+                                <span style={styles.cardItemValue}>{item.value}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={styles.loadingContainer}>
+                            <div className="spinner" style={{ width: 20, height: 20 }}></div>
+                        </div>
+                    )
+                ) : (
+                    ""
+                )}
+            </div>
+        </div>
     );
-
 
     async function fetchingCashes() {
         let obj = {
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             dr: 0,
             lm: 100,
             pg: 0,
             ownerName: owner
-        }
+        };
         await api('cashes/get.php', obj)
             .then(element => {
                 if (element != null) {
@@ -87,8 +166,8 @@ const ExpeditorList = ({ navigation }) => {
                 }
             })
             .catch(err => {
-                ErrorMessage(err)
-            })
+                ErrorMessage(err);
+            });
     }
 
     async function fetchingDemandAmounts() {
@@ -97,47 +176,44 @@ const ExpeditorList = ({ navigation }) => {
             lm: 100,
             pg: 0,
             ownerName: owner,
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             ...dateFilter
-        }
+        };
 
-        let arr = [
+        let arr = [];
 
-        ]
-
-        let demand = await api('demands/get.php', obj)
+        let demand = await api('demands/get.php', obj);
         let demandReturn = await api('demandreturns/get.php', obj);
 
         if (demand != null) {
             arr.push({
                 key: 'Satış',
                 value: formatPrice(demand.AllSum),
-                navName: "demand"
-            })
+                navName: "/demands/demand" // Updated path
+            });
         } else {
             arr.push({
                 key: 'Satış',
                 value: 0,
-                navName: "demand"
-            })
+                navName: "/demands/demand"
+            });
         }
 
         if (demandReturn != null) {
             arr.push({
                 key: 'İadə',
                 value: formatPrice(demandReturn.AllSum),
-                navName: 'demandreturns'
-            })
+                navName: '/demands/demandreturns' // Updated path
+            });
         } else {
             arr.push({
                 key: 'İadə',
                 value: 0,
-                navName: 'demandreturns'
-            })
+                navName: '/demands/demandreturns'
+            });
         }
 
         setDemandSums(arr);
-
     }
 
     async function fetchingPaymentAmounts() {
@@ -148,18 +224,12 @@ const ExpeditorList = ({ navigation }) => {
             pg: 0,
             sr: 'Moment',
             ownerName: owner,
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             ...dateFilter
-        }
+        };
 
-        let paydirs = [
-            'i',
-            'o'
-        ]
-
-        let list = [
-
-        ]
+        let paydirs = ['i', 'o'];
+        let list = [];
 
         for (let index = 0; index < paydirs.length; index++) {
             let payType = paydirs[index];
@@ -173,18 +243,17 @@ const ExpeditorList = ({ navigation }) => {
                             {
                                 key: payType == 'i' ? 'Mədaxil' : "Məxaric",
                                 value: formatPrice(payType == 'i' ? element.InSum : element.OutSum),
-                                navName: 'transactions'
+                                navName: '/transactions' // Updated path
                             }
-                        )
+                        );
                     }
                 })
                 .catch(err => {
-                    ErrorMessage(err)
-                })
+                    ErrorMessage(err);
+                });
         }
 
         setPaymentSums(list);
-
     }
 
     async function fetchingDebtAmounts() {
@@ -197,9 +266,9 @@ const ExpeditorList = ({ navigation }) => {
             sr: 'CustomerName',
             ownerName: owner,
             ownerid: owner,
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             zeors: 3,
-        }
+        };
 
         await api('settlements/get.php', obj).then((element) => {
             if (element != null) {
@@ -207,41 +276,39 @@ const ExpeditorList = ({ navigation }) => {
                     {
                         key: 'Alınacaq',
                         value: formatPrice(element.AllInSum),
-                        navName: "settlements"
+                        navName: "/settlements" // Updated path
                     },
                     {
                         key: 'Veriləcək',
                         value: formatPrice(element.AllOutSum),
-                        navName: 'settlements'
+                        navName: '/settlements' // Updated path
                     }
-                ])
+                ]);
             }
         })
             .catch(err => {
-                ErrorMessage(err)
-            })
+                ErrorMessage(err);
+            });
     }
 
     async function fetchingCustomerOrderAndMoveAllSum() {
-        let list = [
-
-        ]
+        let list = [];
         let result = await api('customerorders/get.php', {
             dr: 1,
             lm: 100,
             pg: 0,
             sr: 'Moment',
             ownerName: owner,
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             ...dateFilter
-        })
+        });
 
         if (result != null) {
             list.push({
                 key: 'Sifariş',
                 value: formatPrice(result.AllSum),
-                navName: "customerorders"
-            })
+                navName: "/customer-orders" // Updated path
+            });
         }
 
         let move = await api('moves/get.php', {
@@ -250,42 +317,41 @@ const ExpeditorList = ({ navigation }) => {
             pg: 0,
             sr: 'Moment',
             ownerName: owner,
-            token: await AsyncStorage.getItem('token'),
+            token: await AsyncStorageWrapper.getItem('token'),
             ...getDateByIndex(0)
-        })
+        });
 
         if (move != null) {
             list.push({
                 key: 'Yerdəyişmə',
                 value: formatPrice(move.AllSum),
-                navName: "move"
-            })
+                navName: "/moves" // Updated path
+            });
         }
 
         setCustomerOrderAndMoves(list);
-
     }
 
     async function fetchOwner() {
         await api('permissions/get.php', {
-            token: await AsyncStorage.getItem('token')
+            token: await AsyncStorageWrapper.getItem('token')
         }).then(element => {
             if (element != null) {
                 setOwner(element.OwnerId);
             }
-        }).catch(err => console.log(err))
+        }).catch(err => console.log(err));
     }
 
     useEffect(() => {
         fetchOwner();
-    }, [])
+    }, []);
 
     useEffect(() => {
         if (owner != null) {
             fetchingCashes();
             fetchingDebtAmounts();
         }
-    }, [owner])
+    }, [owner]);
 
     useEffect(() => {
         if (owner != null) {
@@ -294,26 +360,23 @@ const ExpeditorList = ({ navigation }) => {
             }
 
             if (customerOrderAndMoveSums[0]) {
-                setCustomerOrderAndMoves([])
+                setCustomerOrderAndMoves([]);
             }
 
             if (paymentSums[0]) {
-                setPaymentSums([])
+                setPaymentSums([]);
             }
 
             fetchingDemandAmounts();
             fetchingPaymentAmounts();
             fetchingCustomerOrderAndMoveAllSum();
         }
-    }, [dateFilter, owner])
+    }, [dateFilter, owner]);
 
     return (
-        <View style={{
-            flex: 1,
-        }}>
-
-            <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
-                <Text style={[styles.headerText, { color: theme.primary, marginTop: 10 }]}>Distributorlar</Text>
+        <div style={styles.container}>
+            <div style={styles.scrollView}>
+                <span style={styles.headerText}>Distributorlar</span>
                 {
                     permission_ver(permissions, 'owner', 'R') ?
                         owner != null ?
@@ -321,7 +384,7 @@ const ExpeditorList = ({ navigation }) => {
                                 apiBody={{}}
                                 apiName={'owners/get.php'}
                                 change={(e) => {
-                                    setOwner(e.Id)
+                                    setOwner(e.Id);
                                 }}
                                 title={'Cavabdeh'}
                                 value={owner}
@@ -337,144 +400,57 @@ const ExpeditorList = ({ navigation }) => {
                     selected={selectedTime}
                     setSelected={setSelectedTime}
                 />
-                {(
-                    <View style={styles.gridContainer}>
 
-                        {renderCard(
-                            'Satışlar',
-                            <Icon name="cart-outline" size={24} color={theme.orange} />,
-                            [
-                                ...demandSums
-                            ]
-                        )
-                        }
+                <div style={styles.gridContainer}>
 
-                        {renderCard(
-                            'Distributor',
-                            <AntDesign name="isv" size={24} color={theme.primary} />,
-                            [
-                                ...customerOrderAndMoveSums
-                            ]
-                        )}
+                    {renderCard(
+                        'Satışlar',
+                        <AiOutlineShoppingCart size={24} color={theme.orange} />,
+                        [...demandSums]
+                    )}
 
+                    {renderCard(
+                        'Distributor',
+                        <AiOutlineAppstore size={24} color={theme.primary} />,
+                        [...customerOrderAndMoveSums]
+                    )}
 
+                    {renderCard(
+                        'Ödənişlər',
+                        <BsCashCoin size={24} color={theme.pink} />,
+                        [...paymentSums]
+                    )}
 
+                    {renderCard(
+                        'Borclar',
+                        <AiOutlineBank size={24} color={theme.red} />,
+                        [...debtSums]
+                    )}
 
-                        {renderCard(
-                            'Ödənişlər',
-                            <Icon name="cash-multiple" size={24} color={theme.pink} />,
-                            [
-                                ...paymentSums
-                            ]
-                        )}
+                    {renderCard(
+                        'Balans',
+                        <AiOutlineWallet size={24} color={theme.orange} />,
+                        cashes == null ?
+                            null :
+                            cashes[0] ?
+                                cashes.map(element => ({
+                                    key: element.Name, value: formatPrice(element.Balance),
+                                    navName: "/cashe/cashe-manage", // Updated to likely correct path
+                                    navParams: {
+                                        id: element.Id,
+                                        name: element.Name,
+                                        balance: formatPrice(element.Balance)
+                                    }
+                                }))
+                                :
+                                [],
+                        { width: '100%' }
+                    )}
 
-                        {renderCard(
-                            'Borclar',
-                            <Icon name="bank" size={24} color={theme.red} />,
-                            [
-                                ...debtSums
-                            ]
-                        )}
-
-                        {renderCard(
-                            'Balans',
-                            <Entypo name="wallet" size={24} color={theme.orange} />,
-                            cashes == null ?
-                                null :
-                                cashes[0] ?
-                                    cashes.map(element => ({
-                                        key: element.Name, value: formatPrice(element.Balance), navName: "cashe-manage", navParams: {
-                                            id: element.Id,
-                                            name: element.Name,
-                                            balance: formatPrice(element.Balance)
-                                        }
-                                    }))
-                                    :
-                                    [],
-                            { width: '100%' }
-                        )}
-
-                    </View>
-                )}
-            </ScrollView>
-        </View>
+                </div>
+            </div>
+        </div>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 16,
-    },
-    gridContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        padding: 15,
-    },
-    headerText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 20,
-        width: '100%',
-    },
-    cardContainer: {
-        width: '45%',
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 15,
-        borderWidth: 1,
-        borderColor: '#ddd',
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    cardTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 10,
-    },
-    cardContent: {
-        marginTop: 10,
-    },
-    cardItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    cardItemKey: {
-        fontSize: 14,
-    },
-    cardItemValue: {
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    chartContainer: {
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    chartScrollContainer: {
-        paddingHorizontal: 10,
-    },
-    chartTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-});
 
 export default ExpeditorList;

@@ -1,38 +1,51 @@
-import { ActivityIndicator, BackHandler, ScrollView, StyleSheet, View } from 'react-native'
-import React, { useCallback, useContext, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
-import api from '../../services/api'
-import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import ProductCard from './manageLayouts/ProductCard'
-import pricingUtils from '../../services/pricingUtils'
+import api from '../../services/api';
+import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import ProductCard from './manageLayouts/ProductCard';
+import pricingUtils from '../../services/pricingUtils';
 import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import { CatalogGlobalContext } from '../../shared/data/CatalogGlobalState';
 import Button from '../../shared/ui/Button';
-import prompt from '../../services/prompt';
-import { useFocusEffect } from '@react-navigation/native';
 import DestinationCard from './../../shared/ui/DestinationCard';
 import moment from 'moment';
 import calculateUnit from './../../services/report/calculateUnit';
 import fetchPaydirByDocument from './../../services/report/fetchPaydirByDocument';
-import ReleatedDocuments from './../../shared/ui/ReleatedDocuments';
-import playSound from './../../services/playSound';
+// import playSound from './../../services/playSound'; // Skipping sound
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const CatalogManage = ({ route, navigation }) => {
-
+const CatalogManage = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.whiteGrey,
+            overflowY: 'auto'
+        },
+        loadingContainer: {
             flex: 1,
-            backgroundColor: theme.whiteGrey
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        content: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 20,
+            padding: 10
         }
-    })
+    };
 
-    let { id } = route.params;
+    let { id } = location.state || {}; // Get ID from state
 
     const { document, setDocument, units, setUnits } = useContext(CatalogGlobalContext);
     const [loading, setLoading] = useState(false);
@@ -50,14 +63,14 @@ const CatalogManage = ({ route, navigation }) => {
                 Amount: 0,
                 Discount: 0,
                 BasicAmount: 0,
-                OwnerId: await AsyncStorage.getItem("ownerId") == null ? "" : await AsyncStorage.getItem('ownerId'),
-                DepartmentId: await AsyncStorage.getItem("depId") == null ? "" : await AsyncStorage.getItem('depId'),
+                OwnerId: await AsyncStorageWrapper.getItem("ownerId") == null ? "" : await AsyncStorageWrapper.getItem('ownerId'),
+                DepartmentId: await AsyncStorageWrapper.getItem("depId") == null ? "" : await AsyncStorageWrapper.getItem('depId'),
                 Description: ""
             }
 
             await api('catalogs/newname.php', {
                 n: "",
-                token: await AsyncStorage.getItem("token")
+                token: await AsyncStorageWrapper.getItem("token")
             }).then(element => {
                 if (element != null) {
                     obj.Name = element.ResponseService;
@@ -69,7 +82,7 @@ const CatalogManage = ({ route, navigation }) => {
         } else {
             let obj = {
                 id: id,
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             }
             await api('catalogs/get.php', obj)
                 .then(async element => {
@@ -100,7 +113,7 @@ const CatalogManage = ({ route, navigation }) => {
         if (info.name == "") {
             await api('catalogs/newname.php', {
                 n: "",
-                token: await AsyncStorage.getItem("token")
+                token: await AsyncStorageWrapper.getItem("token")
             }).then(element => {
                 if (element != null) {
                     info.name = element.ResponseService;
@@ -111,7 +124,7 @@ const CatalogManage = ({ route, navigation }) => {
         }
 
 
-        info.token = await AsyncStorage.getItem("token")
+        info.token = await AsyncStorageWrapper.getItem("token")
         let documentId = await api('catalogs/put.php', info).then(async element => {
             if (element != null) {
                 if (!info.id) {
@@ -120,7 +133,7 @@ const CatalogManage = ({ route, navigation }) => {
                 SuccessMessage("Yadda saxlanıldı.");
                 fetchingDocument(element.ResponseService);
                 setHasUnsavedChanges(false);
-                playSound('success');
+                // playSound('success');
                 return element.ResponseService;
             }
         }).catch(err => {
@@ -129,7 +142,7 @@ const CatalogManage = ({ route, navigation }) => {
 
         setLoading(false);
         return documentId || null;
-        
+
     }
 
     const hasUnsavedChangesFunction = () => {
@@ -148,38 +161,22 @@ const CatalogManage = ({ route, navigation }) => {
         hasUnsavedChangesFunction();
     }
 
-
-    useFocusEffect(
-
-        useCallback(() => {
-            const onBackPress = async () => {
-                navigation.setParams({ shouldGoToSpecificPage: false });
-                hasUnsavedChanges ? prompt('Çıxmağa əminsiniz ?', () => navigation.goBack()) : (navigation.goBack());
-                return true;
-            };
-
-            BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-            return () =>
-                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-        }, [hasUnsavedChanges]))
-
     useEffect(() => {
         fetchingDocument(id);
     }, [])
 
     return (
 
-        <View style={styles.container}>
+        <div style={styles.container}>
             {
                 document == null ?
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <ActivityIndicator size={40} color={theme.primary} />
-                    </View>
+                    <div style={styles.loadingContainer}>
+                        <div className="spinner"></div>
+                    </div>
                     :
                     <>
                         <ManageHeader
-                            navigation={navigation}
+                            // navigation={navigation} // ManageHeader might need update to use react-router navigate
                             document={document}
                             print={'catalogs'}
                             isSubmitVisible={hasUnsavedChanges}
@@ -187,24 +184,19 @@ const CatalogManage = ({ route, navigation }) => {
                             isPriceList={true}
                         />
 
-                        <ScrollView>
-                            <View style={{
-                                gap: 20
-                            }}>
+                        <div style={styles.content}>
+                            <MainCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} id={id} />
+                            <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} />
+                            <DestinationCard
+                                document={document}
+                                setDocument={setDocument}
+                                changeInput={handleChangeInput}
+                                changeSelection={handleChangeSelection}
+                            />
+                        </div>
 
-                                <MainCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} navigation={navigation} id={id} />
-                                <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} navigation={navigation} />
-                                <DestinationCard
-                                    document={document}
-                                    setDocument={setDocument}
-                                    changeInput={handleChangeInput}
-                                    changeSelection={handleChangeSelection}
-                                />
-
-                            </View>
-                        </ScrollView>
-                        {
-                            hasUnsavedChanges ?
+                        {hasUnsavedChanges && (
+                            <div style={{ padding: 10, paddingBottom: 20 }}>
                                 <Button
                                     bg={theme.green}
                                     disabled={loading}
@@ -213,13 +205,12 @@ const CatalogManage = ({ route, navigation }) => {
                                 >
                                     Yadda Saxla
                                 </Button>
-                                :
-                                ""
-                        }
+                            </div>
+                        )}
                     </>
             }
-        </View>
+        </div>
     )
 }
 
-export default CatalogManage
+export default CatalogManage;

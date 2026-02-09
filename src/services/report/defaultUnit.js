@@ -1,10 +1,10 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageWrapper from "../AsyncStorageWrapper";
 
 const defaultUnit = async () => {
-    let unitIndex = await AsyncStorage.getItem('defaultUnit');
+    let unitIndex = await AsyncStorageWrapper.getItem('defaultUnit');
     if (unitIndex != null) {
         return Number(unitIndex)
-    }else{
+    } else {
         return 0
     }
 }

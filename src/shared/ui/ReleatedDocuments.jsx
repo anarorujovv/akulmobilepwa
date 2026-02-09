@@ -1,14 +1,12 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import ManageCard from './ManageCard';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { IoDocuments } from 'react-icons/io5';
 import useTheme from '../theme/useTheme';
 import Button from './Button';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import api from '../../services/api';
 import ListItem from './list/ListItem';
 import { formatPrice } from '../../services/formatPrice';
-import { useFocusEffect } from '@react-navigation/native';
 import MyModal from './MyModal';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
 
@@ -17,36 +15,51 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
 
   let theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
     header: {
       width: '100%',
       padding: 15,
       gap: 10,
+      display: 'flex',
       flexDirection: 'row',
+      alignItems: 'center',
+      boxSizing: 'border-box'
     },
     modalContent: {
       flex: 1,
       gap: 15,
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor:theme.whiteGrey,
-      borderRadius:5
+      backgroundColor: theme.whiteGrey,
+      borderRadius: 5,
+      height: '100%',
+      width: '100%'
     },
     optionButton: {
       padding: 10,
-      borderWidth: 1,
-      borderColor: theme.primary,
+      border: `1px solid ${theme.primary}`,
       borderRadius: 5,
       width: '80%',
+      display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      backgroundColor: 'transparent'
     },
     optionText: {
       color: theme.primary,
       fontWeight: 'bold',
+      margin: 0
     },
-  });
-
-  
+    loadingContainer: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }
+  };
 
   const [releatedDocuments, setReleatedDocuments] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -58,7 +71,7 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
       let obj = {
         doctype: document.target,
         id: document.Id,
-        token: await AsyncStorage.getItem("token"),
+        token: await AsyncStorageWrapper.getItem("token"),
       };
 
       await api('links/get.php', obj)
@@ -115,14 +128,16 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
     setIsLoading(false);
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      if (releatedDocuments == null || releatedDocuments[0]) {
-        setReleatedDocuments([]);
-      }
-      fetchApiReleatedDocuments();
-    }, [])
-  );
+  useEffect(() => {
+    // useFocusEffect yerine useEffect, dependency array'i boş tutuyoruz veya ilgili propları veriyoruz
+    // React Router dom ile navigation değişimlerinde component remount olabilir veya location değişebilir.
+    // Şimdilik sadece mount'da çalışacak
+    if (releatedDocuments == null || releatedDocuments[0]) {
+      setReleatedDocuments([]);
+    }
+    fetchApiReleatedDocuments();
+  }, []);
+  // Not: Eğer sayfalar arası geçişte veri güncellenmiyorsa navigation location'ı dependency olarak eklenmeli.
 
 
   return (
@@ -134,10 +149,10 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
             paddingBottom: 10,
           }}>
 
-          <View style={styles.header}>
-            <Ionicons size={20} color={theme.grey} name='documents' />
-            <Text style={{ color: theme.grey }}>Əlaqəli sənədlər</Text>
-          </View>
+          <div style={styles.header}>
+            <IoDocuments size={20} color={theme.grey} />
+            <span style={{ color: theme.grey }}>Əlaqəli sənədlər</span>
+          </div>
 
           {
             releatedDocuments == null ?
@@ -157,14 +172,15 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
                   />
                 ))
               ) : (
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <ActivityIndicator size={30} color={theme.primary} />
-                </View>
+                <div style={styles.loadingContainer}>
+                  <div className="spinner"></div>
+                </div>
               )}
 
           {
             !shouldDisable &&
-            <View style={{
+            <div style={{
+              display: 'flex',
               flexDirection: 'row',
               gap: 10,
               justifyContent: 'center',
@@ -179,7 +195,7 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
               >
                 Sənəd yarat
               </Button>
-            </View>
+            </div>
           }
         </ManageCard>
       )}
@@ -191,41 +207,37 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
         height={150}
         center
       >
-        <View style={styles.modalContent}>
+        <div style={styles.modalContent}>
           {
             !isLoading ?
               <>
                 {
                   payment &&
-                  <TouchableOpacity style={styles.optionButton} onPress={() => {
+                  <button style={styles.optionButton} onClick={() => {
                     click('pay');
                   }}>
-                    <Text style={styles.optionText}>Ödəniş</Text>
-                  </TouchableOpacity>
+                    <span style={styles.optionText}>Ödəniş</span>
+                  </button>
                 }
 
                 {selection != undefined &&
                   selection.map((element, index) => {
                     return (
-                      <TouchableOpacity style={styles.optionButton} onPress={() => {
+                      <button key={index} style={styles.optionButton} onClick={() => {
                         click('custom', element.onClick);
                       }}>
-                        <Text style={styles.optionText}>{element.Text}</Text>
-                      </TouchableOpacity>
+                        <span style={styles.optionText}>{element.Text}</span>
+                      </button>
                     )
                   })
                 }
               </>
               :
-              <View style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}>
-                <ActivityIndicator size={30} color={theme.primary} />
-              </View>
+              <div style={styles.loadingContainer}>
+                <div className="spinner"></div>
+              </div>
           }
-        </View>
+        </div>
       </MyModal>
     </>
   );

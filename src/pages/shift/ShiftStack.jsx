@@ -1,27 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import ShiftManage from './ShiftManage';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import ShiftList from './ShiftList';
+import ShiftManage from './ShiftManage';
 
 const ShiftStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
+        <Routes>
+            <Route path="/" element={<ShiftList />} />
+            <Route path="/shift-manage" element={<ShiftManage />} />
+        </Routes>
+    );
+};
 
-            screenOptions={{
-                headerShown: false,
-                animation: 'fade'
-            }}
-        >
-            <Stack.Screen name="shift-list" component={ShiftList} />
-            <Stack.Screen name="shift-manage" component={ShiftManage} />
-        </Stack.Navigator>
-    )
-}
-
-export default ShiftStack
-
-const styles = StyleSheet.create({})
+export default ShiftStack;

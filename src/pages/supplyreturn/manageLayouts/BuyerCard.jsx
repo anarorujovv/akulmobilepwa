@@ -1,32 +1,40 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React, { useContext } from 'react'
-import ManageCard from '../../../shared/ui/ManageCard'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import useTheme from '../../../shared/theme/useTheme'
-import api from '../../../services/api'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage'
-import { formatPrice } from '../../../services/formatPrice'
-import applyDiscount from '../../../services/report/applyDiscount'
-import pricingUtils from '../../../services/pricingUtils'
-import { SupplyReturnGlobalContext } from '../../../shared/data/SupplyReturnGlobalState'
+import React, { useContext } from 'react';
+import ManageCard from '../../../shared/ui/ManageCard';
+import { IoPerson } from 'react-icons/io5';
+import useTheme from '../../../shared/theme/useTheme';
+import api from '../../../services/api';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
+import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage';
+import { formatPrice } from '../../../services/formatPrice';
+import applyDiscount from '../../../services/report/applyDiscount';
+import pricingUtils from '../../../services/pricingUtils';
+import { SupplyReturnGlobalContext } from '../../../shared/data/SupplyReturnGlobalState';
 import mergeProductQuantities from './../../../services/mergeProductQuantities';
-import Selection from '../../../shared/ui/Selection'
+import Selection from '../../../shared/ui/Selection';
 
 const BuyerCard = ({ changeSelection }) => {
-
     const { document, setDocument } = useContext(SupplyReturnGlobalContext);
     const theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         header: {
             width: '100%',
             padding: 15,
             gap: 10,
-            flexDirection: 'row'
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            boxSizing: 'border-box'
+        },
+        container: {
+            gap: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            padding: '0 15px 15px 15px',
+            boxSizing: 'border-box'
         }
-    })
-
+    };
 
     const fetchingCustomerData = async (item) => {
 
@@ -34,7 +42,7 @@ const BuyerCard = ({ changeSelection }) => {
 
         let obj = {
             id: item.Id,
-            token: await AsyncStorage.getItem("token")
+            token: await AsyncStorageWrapper.getItem("token")
         }
 
         await api("customers/getdata.php", obj)
@@ -70,45 +78,41 @@ const BuyerCard = ({ changeSelection }) => {
     }
 
     return (
-        <>
-            <ManageCard>
-                <View style={styles.header}>
-                    <Ionicons size={20} color={theme.grey} name='person' />
-                    <Text style={{
-                        color: theme.grey
-                    }}>Qarşı-Tərəf</Text>
-                </View>
+        <ManageCard>
+            <div style={styles.header}>
+                <IoPerson size={20} color={theme.grey} />
+                <span style={{
+                    color: theme.grey
+                }}>Qarşı-Tərəf</span>
+            </div>
 
-                <View style={{
-                    gap: 15,
-                }}>
-                    <Selection
-                        searchApi={'customers/getfast.php'}
-                        searchKey={'fast'}
-                        isRequired={true}
-                        apiName={'customers/getfast.php'}
-                        apiBody={{}}
-                        value={document.CustomerId}
-                        title={'Tərəf-Müqabil'}
-                        defaultValue={document.CustomerName}
-                        change={fetchingCustomerData}
-                        bottomText={document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : "0"}
-                        bottomTitle={'Qalıq borc'}
-                    />
+            <div style={styles.container}>
+                <Selection
+                    searchApi={'customers/getfast.php'}
+                    searchKey={'fast'}
+                    isRequired={true}
+                    apiName={'customers/getfast.php'}
+                    apiBody={{}}
+                    value={document.CustomerId}
+                    title={'Tərəf-Müqabil'}
+                    defaultValue={document.CustomerName}
+                    change={fetchingCustomerData}
+                    bottomText={document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : "0"}
+                    bottomTitle={'Qalıq borc'}
+                />
 
-                    <Selection
-                        isRequired={true}
-                        value={document.StockId}
-                        apiName={'stocks/get.php'}
-                        apiBody={{}}
-                        defaultValue={document.StockName}
-                        title={'Anbar'}
-                        change={fetchingStockData}
-                    />
-                </View>
-            </ManageCard >
-        </>
+                <Selection
+                    isRequired={true}
+                    value={document.StockId}
+                    apiName={'stocks/get.php'}
+                    apiBody={{}}
+                    defaultValue={document.StockName}
+                    title={'Anbar'}
+                    change={fetchingStockData}
+                />
+            </div>
+        </ManageCard>
     )
 }
 
-export default BuyerCard
+export default BuyerCard;

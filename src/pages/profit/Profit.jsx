@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, ScrollView } from 'react-native';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
-import { Pressable } from '@react-native-material/core';
 import useTheme from '../../shared/theme/useTheme';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import { formatPrice } from './../../services/formatPrice';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 import getDateByIndex from './../../services/report/getDateByIndex';
 
 const Profit = () => {
@@ -17,123 +15,144 @@ const Profit = () => {
   let [profit, setProfit] = useState(null);
   let [selectedTime, setSelectedTime] = useState(2);
 
-  let [filter, setFilter] = useState(
-    {
-      dr: 1,
-      sr: "",
-      pg: 1,
-      lm: 100,
-      ...getDateByIndex(2)
-    }
-  )
+  let [filter, setFilter] = useState({
+    dr: 1,
+    sr: "",
+    pg: 1,
+    lm: 100,
+    ...getDateByIndex(2)
+  });
   let [loading, setLoading] = useState(true);
 
-  const styles = StyleSheet.create({
+  const styles = {
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.bg,
+      overflow: 'hidden'
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto'
+    },
     header: {
+      display: 'flex',
       flexDirection: 'row',
-      backgroundColor: theme.primary,  // Using theme's background color for the header
+      backgroundColor: theme.primary,
       padding: 12,
       justifyContent: 'space-between',
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10
     },
     headerText: {
-      color: theme.bg,  // Using theme's grey for header text color
+      color: theme.bg,
       fontWeight: 'bold',
       fontSize: 16,
       flex: 1,
       textAlign: 'center',
     },
     row: {
+      display: 'flex',
       flexDirection: 'row',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.whiteGrey,  // Using theme's whiteGrey for border color
-      backgroundColor: theme.whiteGrey,  // Using theme's whiteGrey for row background
+      padding: '10px 0',
+      borderBottom: `1px solid ${theme.whiteGrey}`,
+      backgroundColor: theme.whiteGrey,
       alignItems: 'center',
-      borderRadius: 12
+      cursor: 'pointer'
     },
     cell: {
       flex: 1,
       textAlign: 'left',
       fontSize: 14,
-      color: theme.black,  // Using theme's black for text color
+      color: theme.black,
       paddingLeft: 10,
     },
-    valueCell: {
-      color: theme.black,  // Using theme's black for value cell text color
-    },
     subRow: {
+      display: 'flex',
       flexDirection: 'row',
-      paddingVertical: 8,
-      paddingLeft: 20,  // Adds space for nested structure
-      borderBottomWidth: 1,
-      borderBottomColor: theme.whiteGrey,  // Using theme's whiteGrey for border color
-      backgroundColor: theme.whiteGrey,  // Using theme's whiteGrey for background color
+      padding: '8px 0 8px 20px',
+      borderBottom: `1px solid ${theme.whiteGrey}`,
+      backgroundColor: theme.whiteGrey,
     },
     subCell: {
       flex: 1,
       textAlign: 'left',
       fontSize: 13,
-      color: theme.grey,  // Using theme's grey for sub-cell text color
+      color: theme.grey,
     },
-    icon: {
-      fontSize: 18,
-      paddingRight: 10,  // Adds space to the right of the icon
-      color: theme.primary,  // Using theme's primary color for the icon
-      fontWeight: 'bold',
+    tableContainer: {
+      margin: 10,
+      borderRadius: 12,
+      border: `2px solid ${theme.primary}`,
+      overflow: 'hidden'
     },
-  });
+    loadingContainer: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20
+    }
+  };
 
   const handleExpandItem = () => {
-    setExpandedItem(rel => rel == 3 ? 0 : 3)
-  }
+    setExpandedItem(rel => rel == 3 ? 0 : 3);
+  };
 
-  let isBold = [1, 3, 5]
+  let isBold = [1, 3, 5];
 
-  const renderItem = ({ item, index }) => {
+  const renderItem = (item, index) => {
     let answer = isBold.findIndex(rel => rel == item.id);
+    const isBoldStyle = answer != -1 ? { fontWeight: 'bold' } : {};
+    const isNegativeStyle = formatPrice(item.value).includes('-') ? { color: theme.red } : {}; // formatPrice might return string with currency, assume negative check based on value being passed
+
+    // Quick check if value is logically negative, but formatPrice usually returns string. 
+    // If formatPrice handles negative formatting, we just check style.
+    // Replicating original logic: formatPrice(item.value) < 0 ? ... which is numeric comparison on string? no.
+    // Assuming item.value is number here.
 
     if (item.isExpandable) {
       return (
-        <View>
-          <Pressable onPress={handleExpandItem} pressEffectColor={theme.grey} style={styles.row}>
-            <Text style={[styles.cell]}>{item.key}</Text>
-            <Text style={[styles.cell, styles.valueCell,]}>{item.value}</Text>
-          </Pressable>
+        <div key={index}>
+          <div onClick={handleExpandItem} style={styles.row}>
+            <span style={styles.cell}>
+              {item.key} <span style={{ marginLeft: 5 }}>{expandedItem === index ? <FaAngleUp /> : <FaAngleDown />}</span>
+            </span>
+            <span style={{ ...styles.cell, ...styles.valueCell }}>{item.value}</span>
+          </div>
 
           {expandedItem === index && item.subItems.map((subItem, subIndex) => (
-            <View key={subIndex} style={styles.subRow}>
-              <Text style={styles.subCell}>{subItem.Name}</Text>
-              <Text style={[styles.subCell, styles.valueCell]}>{formatPrice(subItem.Amount)}</Text>
-            </View>
+            <div key={subIndex} style={styles.subRow}>
+              <span style={styles.subCell}>{subItem.Name}</span>
+              <span style={{ ...styles.subCell, ...styles.valueCell }}>{formatPrice(subItem.Amount)}</span>
+            </div>
           ))}
-        </View>
+        </div>
       );
     } else {
       return (
-        item.id !== 5 ?
-          <View style={styles.row}>
-            <Text style={[styles.cell, answer != -1 && { fontWeight: 'bold' }]}>{item.key}</Text>
-            <Text style={[styles.cell, styles.valueCell, answer != -1 && { fontWeight: 'bold' }]}>{item.value}</Text>
-          </View>
-          :
-          <View style={styles.row}>
-            <Text style={[styles.cell, answer != -1 && { fontWeight: 'bold' }]}>{item.key}</Text>
-            <Text style={[styles.cell, styles.valueCell, answer != -1 && { fontWeight: 'bold' }, formatPrice(item.value) < 0 ? { color: theme.red } : {}]}>{item.value}</Text>
-          </View>
+        <div key={index} style={styles.row}>
+          <span style={{ ...styles.cell, ...isBoldStyle }}>{item.key}</span>
+          <span style={{
+            ...styles.cell,
+            ...styles.valueCell,
+            ...isBoldStyle,
+            ...(item.id === 5 && parseFloat(item.raw_value || 0) < 0 ? { color: theme.red } : {})
+          }}>
+            {item.value}
+          </span>
+        </div>
       );
     }
   };
 
   const fetchingProfit = async () => {
-
     let obj = {
       ...filter,
-      token: await AsyncStorage.getItem('token'),
+      token: await AsyncStorageWrapper.getItem('token'),
       pg: filter.pg - 1
-    }
-    
+    };
+
     await api('profit/get.php', obj)
       .then((item) => {
         if (item != null) {
@@ -143,33 +162,32 @@ const Profit = () => {
             { key: 'Mayası', value: formatPrice(itemData.CostSum), id: 2 },
             { key: 'Dövriyyə mənfəəti', value: formatPrice(itemData.TurnoverProfit), id: 3 },
             {
-              key: <Text><FontAwesome6 name='angle-down' size={15} /> Xərclər (toplam)</Text>,
+              key: 'Xərclər (toplam)',
               value: formatPrice(itemData.SpendItemsSum),
               isExpandable: true,
               id: 4,
-              subItems: [...itemData.SpendItems]
+              subItems: itemData.SpendItems ? [...itemData.SpendItems] : []
             },
-            { key: 'Təmiz mənfəət', value: formatPrice(itemData.NetProfit), id: 5 }
-          ]
+            { key: 'Təmiz mənfəət', value: formatPrice(itemData.NetProfit), id: 5, raw_value: itemData.NetProfit }
+          ];
           setProfit(data);
           setLoading(false);
         }
       }).catch(err => {
-        ErrorMessage(err)
-      })
-  }
+        ErrorMessage(err);
+      });
+  };
 
   useEffect(() => {
     fetchingProfit();
-  }, [filter])
-  
+  }, [filter]);
+
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView>
+    <div style={styles.container}>
       <ListPagesHeader
         header={'Mənfəət və Zərər'}
       />
-      <>
+      <div style={styles.content}>
         <DocumentTimes
           filter={filter}
           setFilter={setFilter}
@@ -177,36 +195,24 @@ const Profit = () => {
           setSelected={setSelectedTime}
         />
 
-        <View style={{
-          margin: 10,
-          borderRadius: 12,
-          borderWidth: 2,
-          borderColor: theme.primary
-        }}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Maddə</Text>
-            <Text style={styles.headerText}>Mənfəət/Zərər</Text>
-          </View>
+        <div style={styles.tableContainer}>
+          <div style={styles.header}>
+            <span style={styles.headerText}>Maddə</span>
+            <span style={styles.headerText}>Mənfəət/Zərər</span>
+          </div>
 
-          {
-            loading ?
-              <View style={{
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}>
-                <ActivityIndicator size={50} color={theme.primary} />
-              </View>
-              :
-              <FlatList
-                data={profit}
-                renderItem={renderItem}
-                keyExtractor={(item, index) => index.toString()}
-              />
-          }
-        </View>
-      </>
-      </ScrollView>
-    </View>
+          {loading ? (
+            <div style={styles.loadingContainer}>
+              <div className="spinner"></div>
+            </div>
+          ) : (
+            <div>
+              {profit && profit.map((item, index) => renderItem(item, index))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

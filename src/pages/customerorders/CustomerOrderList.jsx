@@ -1,9 +1,8 @@
-import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native'
-import React, { useState, useCallback } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useState, useCallback, useEffect } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
@@ -12,13 +11,14 @@ import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
-import prompt from '../../services/prompt';
+// import prompt from '../../services/prompt'; // Web's window.confirm is enough or custom modal
 import ListItem from '../../shared/ui/list/ListItem';
 import Line from '../../shared/ui/Line';
-import { useFocusEffect } from '@react-navigation/native';
 import translatePayed from './../../services/report/translatePayed';
+import { useNavigate } from 'react-router-dom';
 
-const CustomerOrderList = ({ route, navigation }) => {
+const CustomerOrderList = () => {
+    const navigate = useNavigate();
     let theme = useTheme();
     let permissions = useGlobalStore(state => state.permissions);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -36,28 +36,38 @@ const CustomerOrderList = ({ route, navigation }) => {
     const [itemSize, setItemSize] = useState(0)
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
             backgroundColor: theme.bg,
+            overflow: 'hidden'
         },
-        deleteButton: {
-            backgroundColor: theme.red,
+        listContainer: {
+            flex: 1,
+            overflowY: 'auto',
+            paddingBottom: '80px' // Space for FabButton
+        },
+        loadingContainer: {
+            width: '100%',
+            height: 20,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        emptyContainer: {
+            flex: 1,
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            width: 100,
-            height: '100%',
-        },
-        deleteText: {
-            color: theme.stable.white,
-            fontWeight: 'bold',
-            fontSize: 16,
-        },
-    });
+            paddingTop: 50
+        }
+    };
 
     const fetchingDocumentData = useCallback(async () => {
         setIsRefreshing(true);
-        let obj = { ...filter, token: await AsyncStorage.getItem('token') }
+        let obj = { ...filter, token: await AsyncStorageWrapper.getItem('token') }
         obj.pg = obj.pg - 1;
 
         try {
@@ -79,7 +89,7 @@ const CustomerOrderList = ({ route, navigation }) => {
     const handleDelete = async (id) => {
         if (permission_ver(permissions, 'demand', 'D')) {
             await api('customerorders/del.php?id=' + id, {
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             }).then(element => {
                 if (element != null) {
                     setDocuments([]);
@@ -112,14 +122,22 @@ const CustomerOrderList = ({ route, navigation }) => {
         )
     }
 
-    const renderItem = ({ item, index }) => (
-        <>
+    useEffect(() => {
+        setDocuments(null);
+        let time = setTimeout(() => {
+            fetchingDocumentData();
+        }, 300);
+        return () => clearTimeout(time);
+    }, [filter]);
+
+    const renderItem = (item, index) => (
+        <div key={item.Id}>
             <ListItem
                 index={index + 1}
                 onLongPress={() => {
-                    prompt('Satışı silməyə əminsiniz?', () => {
+                    if (window.confirm('Satışı silməyə əminsiniz?')) {
                         handleDelete(item.Id);
-                    })
+                    }
                 }}
                 {...translatePayed(item.Payed)}
                 centerText={item.CustomerName}
@@ -129,33 +147,19 @@ const CustomerOrderList = ({ route, navigation }) => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'customerorders', 'R')) {
-                        navigation.navigate('customer-order-manage', {
-                            id: item.Id
+                        navigate('/customerorders/customer-order-manage', {
+                            state: { id: item.Id }
                         })
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
                 }}
             />
-        </>
+        </div>
     );
 
-
-    useFocusEffect(
-        useCallback(() => {
-            setDocuments(null);
-
-            let time = setTimeout(() => {
-                fetchingDocumentData();
-            }, 300);
-
-            return () => clearTimeout(time);
-
-        }, [filter])
-    )
-
     return (
-        <View style={styles.container}>
+        <div style={styles.container}>
 
             <ListPagesHeader
                 isSearch={true}
@@ -165,37 +169,39 @@ const CustomerOrderList = ({ route, navigation }) => {
                 filterSearchKey={'docNumber'}
                 isFilter={true}
                 processFilterClick={() => {
-                    navigation.navigate('filter', {
-                        filter: filter,
-                        setFilter: setFilter,
-                        searchParams: [
-                            'product',
-                            'stocks',
-                            'owners',
-                            'documentName'
-                        ],
-                        sortList: [
-                            {
-                                id: '1',
-                                label: 'Tarix',
-                                value: "Moment"
-                            },
-                            {
-                                id: '2',
-                                label: 'Anbar',
-                                value: 'StockName'
-                            },
-                            {
-                                id: '3',
-                                label: "Məbləğə görə",
-                                value: 'Amount'
-                            },
-                            {
-                                id: '4',
-                                label: 'Status',
-                                value: "Mark"
-                            }
-                        ],
+                    navigate('/filter', {
+                        state: {
+                            filter: filter,
+                            // setFilter: setFilter,
+                            searchParams: [
+                                'product',
+                                'stocks',
+                                'owners',
+                                'documentName'
+                            ],
+                            sortList: [
+                                {
+                                    id: '1',
+                                    label: 'Tarix',
+                                    value: "Moment"
+                                },
+                                {
+                                    id: '2',
+                                    label: 'Anbar',
+                                    value: 'StockName'
+                                },
+                                {
+                                    id: '3',
+                                    label: "Məbləğə görə",
+                                    value: 'Amount'
+                                },
+                                {
+                                    id: '4',
+                                    label: 'Status',
+                                    value: "Mark"
+                                }
+                            ],
+                        }
                     });
                 }}
             />
@@ -215,73 +221,48 @@ const CustomerOrderList = ({ route, navigation }) => {
                     },
                 ]} />
             ) : (
-                <View style={{
-                    width: '100%',
-                    height: 20,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <ActivityIndicator size={15} color={theme.primary} />
+                <div style={styles.loadingContainer}>
+                    <div className="spinner" style={{ width: 15, height: 15 }}></div>
                     <Line width={'100%'} />
-                </View>
+                </div>
             )}
 
-            <>
+            <div style={styles.listContainer}>
                 {
                     documents == null ?
-                        <View style={{
+                        <div style={{
                             flex: 1,
                             justifyContent: 'center',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            display: 'flex'
                         }}>
-                            <ActivityIndicator size={30} color={theme.primary} />
-                        </View>
+                            <div className="spinner"></div> // List loading
+                        </div>
                         :
-                        <FlatList
-                            data={documents}
-                            renderItem={renderItem}
-                            keyExtractor={item => item.Id.toString()}
-                            refreshing={isRefreshing}
-                            ListEmptyComponent={() => (
-                                <View style={{
-                                    flex: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    paddingTop: 50
-                                }}>
-                                    {documents === null ? (
-                                        <ActivityIndicator size={30} color={theme.primary} />
-                                    ) : (
-                                        <Text style={{ color: theme.text }}>List boşdur</Text>
-                                    )}
-                                </View>
+                        <>
+                            {documents.length === 0 ? (
+                                <div style={styles.emptyContainer}>
+                                    <span style={{ color: theme.text }}>List boşdur</span>
+                                </div>
+                            ) : (
+                                documents.map((item, index) => renderItem(item, index))
                             )}
-                            onRefresh={() => {
-                                if (selectedTime != null) {
-                                    setSelectedTime(null);
-                                    let filterData = { ...filter };
-                                    delete filterData.momb;
-                                    delete filterData.mome;
-                                    filterData.agrigate = 1;
-                                    setFilter(filterData);
-                                }
-                            }}
-                            ListFooterComponent={RenderFooter}
-                        />
+                            <RenderFooter />
+                        </>
                 }
-            </>
+            </div>
 
             <FabButton
                 onPress={() => {
                     if (permission_ver(permissions, 'customerorders', 'C')) {
-                        navigation.navigate('customer-order-manage', {
-                            id: null
+                        navigate('/customerorders/customer-order-manage', {
+                            state: { id: null }
                         })
                     }
                 }}
             />
-        </View>
+        </div>
     )
 }
 
-export default CustomerOrderList
+export default CustomerOrderList;

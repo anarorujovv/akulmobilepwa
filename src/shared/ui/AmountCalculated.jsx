@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
 import MyModal from './MyModal';
 import Input from './Input';
 import Button from './Button';
@@ -10,6 +9,7 @@ import calculateDiscount from './../../services/report/calculateDiscount';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
 import useTheme from '../theme/useTheme';
 import applyDiscount from '../../services/report/applyDiscount';
+
 const AmountCalculated = ({
     modalVisible,
     setModalVisible,
@@ -26,18 +26,27 @@ const AmountCalculated = ({
         { key: 'discount', value: 'Endirim' },
     ];
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             padding: 16,
             justifyContent: 'space-between',
+            height: '100%',
+            boxSizing: 'border-box'
+        },
+        titleContainer: {
+            gap: 10,
+            display: 'flex',
+            flexDirection: 'column'
         },
         title: {
             fontSize: 18,
             fontWeight: 'bold',
-            color: theme.primary
+            color: theme.primary,
+            margin: 0
         },
-    });
+    };
 
     const handleCalculateTotalAmount = () => {
         const info = { ...document };
@@ -85,13 +94,11 @@ const AmountCalculated = ({
 
     return (
         <MyModal modalVisible={modalVisible} setModalVisible={setModalVisible} width="90%" height="50%" center>
-            <View style={styles.container}>
-                <View style={{
-                    gap: 10
-                }}>
-                    <Text style={styles.title}>Ümumi məbləğ - {formatPrice(document.Amount)}</Text>
-                    <Text style={styles.title}>Ümumi endirim - {formatPrice(document.Discount)}</Text>
-                </View>
+            <div style={styles.container}>
+                <div style={styles.titleContainer}>
+                    <span style={styles.title}>Ümumi məbləğ - {formatPrice(document.Amount)}</span>
+                    <span style={styles.title}>Ümumi endirim - {formatPrice(document.Discount)}</span>
+                </div>
 
                 <Input
                     value={sum}
@@ -115,7 +122,7 @@ const AmountCalculated = ({
                 >
                     Təstiqlə
                 </Button>
-            </View>
+            </div>
         </MyModal>
     );
 };

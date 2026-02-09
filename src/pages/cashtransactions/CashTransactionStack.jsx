@@ -1,28 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import CashTransactionList from './CashTransactionList';
 import CashTransactionManage from './CashTransactionManage';
-import Filter from '../../shared/ui/Filter';
-
 
 const CashTransactionStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation:'fade'
-            }}            
-        >
-            <Stack.Screen name="cash-transaction-list" component={CashTransactionList} />
-            <Stack.Screen name="cash-transaction-manage" component={CashTransactionManage} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<CashTransactionList />} />
+            <Route path="/cash-transaction-manage" element={<CashTransactionManage />} />
+        </Routes>
+    );
+};
 
-export default CashTransactionStack
-
-const styles = StyleSheet.create({})
+export default CashTransactionStack;

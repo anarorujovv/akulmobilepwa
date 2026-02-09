@@ -1,36 +1,45 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
-import React from 'react'
-import useTheme from '../theme/useTheme'
+import React from 'react';
+import useTheme from '../theme/useTheme';
 
 const Avatar = ({ size, txt, imageUrl }) => {
   let theme = useTheme();
 
-  return (
-    <View style={{
+  const styles = {
+    container: {
       width: size,
       height: size,
       borderRadius: 3,
       backgroundColor: theme.primary,
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       overflow: 'hidden'
-    }}>
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover'
+    },
+    text: {
+      fontSize: 16,
+      color: 'white',
+      margin: 0
+    }
+  };
+
+  return (
+    <div style={styles.container}>
       {imageUrl ? (
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
+        <img
+          src={imageUrl}
+          style={styles.image}
+          alt="Avatar"
         />
       ) : (
-        <Text style={{
-          fontSize: 16,
-          color: 'white'
-        }}>{txt ? txt[0] : ""}</Text>
+        <span style={styles.text}>{txt ? txt[0] : ""}</span>
       )}
-    </View>
-  )
-}
+    </div>
+  );
+};
 
-export default Avatar
-
-const styles = StyleSheet.create({})
+export default Avatar;

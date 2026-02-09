@@ -1,21 +1,21 @@
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useEffect } from 'react';
 import useTheme from '../theme/useTheme';
 import ListPagesHeader from './ListPagesHeader';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
 import ProductListItem from './list/ProductListItem';
 import Line from './Line';
 import SuccessMessage from './RepllyMessage/SuccessMessage';
 import defaultUnit from './../../services/report/defaultUnit';
-import { useFocusEffect } from '@react-navigation/native';
 import isValidEAN from '../../services/isValidEan';
 import MyPagination from './MyPagination';
 
 const DocumentProductList = ({ route, navigation }) => {
-
-    let { type, state, setState, units, setUnits, setHasUnsavedChanges, pricePermission } = route.params;
+    // route.params react-router-dom ile location.state'den alınmalı.
+    // Ancak bu component bir stack screen olarak kullanılıyorsa, react-router adaptasyonu üstte yapılmalı.
+    // Şimdilik props olarak gelen varsayalım ya da location.state'den alalım.
+    const { type, state, setState, units, setUnits, setHasUnsavedChanges, pricePermission } = route?.params || {};
 
     const [products, setProducts] = useState([]);
     const [unitList, setUnitList] = useState(null);
@@ -31,27 +31,26 @@ const DocumentProductList = ({ route, navigation }) => {
         lm: 100,
         ar: 0,
         productname: "",
-    })
+    });
 
     let theme = useTheme();
 
     const fetchingProductsSearchData = async () => {
-
+        setIsRefresh(true);
         let data = {
             ...filter,
             pg: filter.pg - 1,
-            token: await AsyncStorage.getItem('token'),
-        }
+            token: await AsyncStorageWrapper.getItem('token'),
+        };
 
-        if (state.StockId) {
+        if (state?.StockId) {
             if (state.StockId != '') {
-                data.stockid = state.StockId,
-                    data.moment = state.Moment
+                data.stockid = state.StockId;
+                data.moment = state.Moment;
             }
         }
 
-
-        if (state.CustomerId != undefined) {
+        if (state?.CustomerId != undefined) {
             if (state.CustomerId != "") {
                 if (state.CustomerInfo?.CustomerData?.PriceTypeId != 0) {
                     data.pricetype = state.CustomerInfo.CustomerData.PriceTypeId;
@@ -59,7 +58,7 @@ const DocumentProductList = ({ route, navigation }) => {
             }
         }
 
-        console.log(state.CustomerInfo?.CustomerData)
+        console.log(state?.CustomerInfo?.CustomerData);
         await api('products/getfast.php', data).then(element => {
             console.log(element);
             if (element != null) {
@@ -73,9 +72,11 @@ const DocumentProductList = ({ route, navigation }) => {
                 }
             }
         }).catch(err => {
-            ErrorMessage(err)
-        })
-    }
+            ErrorMessage(err);
+        }).finally(() => {
+            setIsRefresh(false);
+        });
+    };
 
     const handleClickItem = async (item, thisUnits) => {
         let targetProduct = item;
@@ -89,7 +90,7 @@ const DocumentProductList = ({ route, navigation }) => {
             [targetProduct.ProductId]: [
                 ...targetUnits
             ]
-        }
+        };
 
         if (units) {
             lastUnits = { ...lastUnits, ...units };
@@ -117,30 +118,29 @@ const DocumentProductList = ({ route, navigation }) => {
             setHasUnsavedChanges: setHasUnsavedChanges,
             pricePermission: pricePermission
         });
-    }
+    };
 
     // index'i sayfalama(pg) ve lm (limit) değerine göre hesapla
-    const renderItem = ({ item, index }) => {
+    const renderItem = (item, index) => {
         // index: 0 tabanlıdır
         // filter.pg: 1 tabanlıdır
         // filter.lm: bir sayfadaki ürün sayısı
         // Örn: 2. sayfa, 100'lük sayfa, ilk ürünün index'i: (2-1)*100+1 = 101
         const realIndex = (filter.pg - 1) * filter.lm + (index + 1);
         return (
-            <>
+            <div key={item.Id}>
                 <ProductListItem
-                    isActive={state.Positions.findIndex(rel => rel.ProductId == item.Id) != -1 ? true : false}
+                    isActive={state?.Positions.findIndex(rel => rel.ProductId == item.Id) != -1 ? true : false}
                     iconCube={true}
                     onPress={() => handleClickItem(item, unitList)}
-                    key={item.Id}
                     product={item}
                     type={type}
-                    priceType={state.CustomerInfo?.CustomerData?.PriceTypeId != 0 ? state.CustomerInfo?.CustomerData?.PriceTypeId : undefined}
+                    priceType={state?.CustomerInfo?.CustomerData?.PriceTypeId != 0 ? state?.CustomerInfo?.CustomerData?.PriceTypeId : undefined}
                     index={realIndex}
                 />
                 <Line width={'90%'} />
-            </>
-        )
+            </div>
+        );
     };
 
     const handleScanner = () => {
@@ -153,7 +153,7 @@ const DocumentProductList = ({ route, navigation }) => {
 
     const reload = () => {
         fetchingProductsSearchData();
-    }
+    };
 
     // Sayfalama bileşeni
     const FooterComponent = () => {
@@ -166,31 +166,29 @@ const DocumentProductList = ({ route, navigation }) => {
                     setFilter(rel => ({ ...rel, pg: e }));
                 }}
             />
-        )
-    }
+        );
+    };
 
-    useFocusEffect(
-        useCallback(() => {
-            setFocusMode(true);
-            let time;
-            if (products[0] || products == null) {
-                setProducts([]);
-            }
-            if (filter.productname == "") {
+    useEffect(() => {
+        setFocusMode(true);
+        let time;
+        if (products && (products[0] || products == null)) {
+            // setProducts([]); // Don't clear immediately to avoid flash
+        }
+        if (filter.productname == "") {
+            fetchingProductsSearchData();
+        } else {
+            // setProducts([]);
+            time = setTimeout(() => {
                 fetchingProductsSearchData();
-            } else {
-                setProducts([]);
-                time = setTimeout(() => {
-                    fetchingProductsSearchData();
-                }, 400);
-            }
+            }, 400);
+        }
 
-            return () => clearTimeout(time);
-        }, [filter])
-    )
+        return () => clearTimeout(time);
+    }, [filter]);
 
     return (
-        <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <div style={{ flex: 1, backgroundColor: theme.bg, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
             <ListPagesHeader
                 searchM={focusMode}
                 processScannerClick={handleScanner}
@@ -203,30 +201,27 @@ const DocumentProductList = ({ route, navigation }) => {
 
             {
                 products == null ?
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>Məhsul axtarışı...</Text>
-                    </View>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <span style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>Məhsul axtarışı...</span>
+                    </div>
                     :
-
                     products[0] ?
-                        <FlatList
-                            data={products}
-                            renderItem={renderItem}
-                            refreshing={isRefresh}
-                            onRefresh={() => {
-                                setIsRefresh(true);
-                                reload();
-                                SuccessMessage("Yeniləndi...");
-                                setIsRefresh(false);
-                            }}
-                            ListFooterComponent={FooterComponent}
-                        />
+                        <>
+                            {/* Refresh butonu eklenebilir veya pull-to-refresh kütüphanesi kullanılabilir */}
+                            <div style={{ width: '100%' }}>
+                                {products.map((item, index) => renderItem(item, index))}
+                            </div>
+                            <FooterComponent />
+                        </>
                         :
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                            <ActivityIndicator color={theme.primary} size={40} />
-                        </View>
+                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 100 }}>
+                            {isRefresh ?
+                                <div className="spinner"></div> :
+                                <span style={{ color: theme.text }}>Heç nə tapılmadı</span>
+                            }
+                        </div>
             }
-        </View>
+        </div>
     );
 };
 

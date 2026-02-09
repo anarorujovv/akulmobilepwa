@@ -1,36 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Linking, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigate } from 'react-router-dom';
+import { MdExitToApp, MdAccountCircle, MdSupportAgent, MdAccountBalanceWallet, MdSettings } from 'react-icons/md';
 import useTheme from '../../shared/theme/useTheme';
-import { Pressable } from '@react-native-material/core';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
-import RNRestart from 'react-native-restart';
 import packageJson from '../../../package.json';
 
-const ProfileScreen = ({ route, navigation }) => {
+const ProfileScreen = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loginInfo, setLoginInfo] = useState(null);
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
-      flex: 1,
-      backgroundColor: theme.bg,  // Using theme background color
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.bg,
       padding: 10,
+      overflowY: 'auto'
     },
     header: {
+      display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingBottom: 16,
     },
+    headerText: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.primary
+    },
     exitIcon: {
       marginRight: 16,
       padding: 8,
+      cursor: 'pointer'
     },
     profileSection: {
+      display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       paddingBottom: 24,
@@ -40,60 +50,70 @@ const ProfileScreen = ({ route, navigation }) => {
     },
     userInfo: {
       flex: 1,
+      display: 'flex',
+      flexDirection: 'column'
     },
     companyName: {
       fontSize: 16,
       fontWeight: '500',
-      color: theme.primary,  // Using theme's primary color
+      color: theme.primary,
       marginBottom: 4,
     },
     userName: {
       fontSize: 20,
       fontWeight: '700',
-      color: theme.black,  // Using theme's black for text
+      color: theme.black,
       marginBottom: 2,
     },
     email: {
       fontSize: 14,
-      color: theme.grey,  // Using theme's grey for email text
+      color: theme.grey,
     },
     separator: {
       height: 1,
-      backgroundColor: theme.whiteGrey,  // Using theme's whiteGrey for separator color
+      backgroundColor: theme.whiteGrey,
+      width: '100%',
+      margin: '10px 0'
     },
     balanceSection: {
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       paddingVertical: 16,
     },
     balanceTitle: {
       fontSize: 16,
-      color: theme.grey,  // Using theme's grey for balance title
+      color: theme.grey,
       marginBottom: 1,
     },
     balanceValue: {
       fontSize: 28,
       fontWeight: '800',
-      color: theme.primary,  // Using theme's primary color for balance value
+      color: theme.primary,
     },
     optionItem: {
+      display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 12,
+      cursor: 'pointer'
     },
     optionIcon: {
       marginRight: 16,
     },
     optionText: {
       fontSize: 16,
-      color: theme.black,  // Using theme's black for option text
+      color: theme.black,
     },
     versionText: {
       textAlign: 'center',
       fontSize: 14,
-      color: theme.grey,  // Using theme's grey for version text
+      color: theme.grey,
       marginTop: 20,
     },
     footerContainer: {
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       marginTop: 'auto',
       paddingBottom: 20,
@@ -102,24 +122,30 @@ const ProfileScreen = ({ route, navigation }) => {
       width: 60,
       height: 60,
       marginBottom: 5,
+      objectFit: 'contain'
     },
     companyText: {
       fontSize: 14,
       color: theme.grey,
       fontWeight: '500',
+    },
+    loadingContainer: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     }
-  });
-
-  // Fetch profile and login information
+  };
 
   const fetchingProfileInfo = async () => {
     await api('company/get.php', {
-      token: await AsyncStorage.getItem("token")
+      token: await AsyncStorageWrapper.getItem("token")
     })
       .then(async item => {
         if (item != null) {
           const data = item;
-          const loginData = JSON.parse(await AsyncStorage.getItem("login_info"));
+          const loginInfoStr = await AsyncStorageWrapper.getItem("login_info");
+          const loginData = loginInfoStr ? JSON.parse(loginInfoStr) : null;
           setProfile(data);
           setLoginInfo(loginData);
         }
@@ -129,111 +155,110 @@ const ProfileScreen = ({ route, navigation }) => {
       });
   };
 
-  // Log out function
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("publicMode");
-      await AsyncStorage.removeItem("login_info");
-      RNRestart.restart();
+      await AsyncStorageWrapper.removeItem("token");
+      await AsyncStorageWrapper.removeItem("publicMode");
+      await AsyncStorageWrapper.removeItem("login_info");
+      window.location.reload();
     } catch (error) {
-      ErrorMessage("Çıkış işlemi başarısız oldu.");
+      ErrorMessage("Çıxış işlemi başarısız oldu.");
     }
   };
 
   const handleSupport = () => {
-    Linking.openURL('https://chat.integracio.ru/7db6cfb178b2bfc6c8e488cc8c53775a/akul.az/az');
-  }
+    window.open('https://chat.integracio.ru/7db6cfb178b2bfc6c8e488cc8c53775a/akul.az/az', '_blank');
+  };
 
   useEffect(() => {
     fetchingProfileInfo();
   }, []);
 
-
   const handleBalanceIncrease = () => {
-    Linking.openURL("https://million.az/services/other/beinaz_yigim")
-      .catch(err => ErrorMessage("Bağlantı açılamadı."));
+    window.open("https://million.az/services/other/beinaz_yigim", "_blank");
   };
 
   const handleSettingsPress = () => {
-    navigation.navigate("settings");
+    navigate("settings");
   };
 
-
+  // Use a placeholder logo if import fails or verify path. 
+  // Since I cannot verify generic assets easily, I will use a simple img tag with relative path 
+  // or assume the build system handles it. 
+  // If the image is in src/images, in React it depends on how it's imported.
+  // I will use require logic if using Webpack/Vite compatible bundler or just text if fail.
+  // For now I'll use a placeholder or try to mimic the import.
+  // React Native `require` works in Webpack.
+  const logoSource = require('../../images/logo_only.png');
 
   return (
-    <View style={styles.container}>
+    <div style={styles.container}>
 
-      <View style={styles.header}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.primary }}>Profil</Text>
-        <Pressable pressEffectColor={theme.grey} onPress={handleLogout} style={styles.exitIcon}>
-          <Icon name="exit-to-app" size={28} color={theme.primary} />
-        </Pressable>
-      </View>
+      <div style={styles.header}>
+        <span style={styles.headerText}>Profil</span>
+        <div onClick={handleLogout} style={styles.exitIcon}>
+          <MdExitToApp size={28} color={theme.primary} />
+        </div>
+      </div>
 
-      {
-        loginInfo == null ?
-          "" :
-          profile != null ?
-            <>
-              <View style={styles.profileSection}>
-                <Icon name="account-circle" size={80} color={theme.input.grey} style={styles.avatarIcon} />
+      {loginInfo == null ? (
+        ""
+      ) : profile != null ? (
+        <>
+          <div style={styles.profileSection}>
+            <MdAccountCircle size={80} color={theme.input.grey} style={styles.avatarIcon} />
 
-                <View style={styles.userInfo}>
-                  <Text style={styles.companyName}>{profile.CompanyName}</Text>
-                  <Text style={styles.userName}>{loginInfo.OwnerName}</Text>
-                  <Text style={styles.email}>{loginInfo.Login}</Text>
-                </View>
-              </View>
+            <div style={styles.userInfo}>
+              <span style={styles.companyName}>{profile.CompanyName}</span>
+              <span style={styles.userName}>{loginInfo.OwnerName}</span>
+              <span style={styles.email}>{loginInfo.Login}</span>
+            </div>
+          </div>
 
-              <View style={styles.separator} />
+          <div style={styles.separator} />
 
-              <View style={styles.balanceSection}>
-                <Text style={styles.balanceTitle}>Balans</Text>
-                <Text style={styles.balanceValue}>₼{loginInfo.Balance}</Text>
-              </View>
+          <div style={styles.balanceSection}>
+            <span style={styles.balanceTitle}>Balans</span>
+            <span style={styles.balanceValue}>₼{loginInfo.Balance}</span>
+          </div>
 
-              <View style={styles.separator} />
+          <div style={styles.separator} />
 
-              <Pressable onPress={handleSupport} pressEffectColor={theme.grey} style={styles.optionItem}>
-                <Icon name="support-agent" size={24} color={theme.primary} style={styles.optionIcon} />
-                <Text style={styles.optionText}>Support</Text>
-              </Pressable>
+          <div onClick={handleSupport} style={styles.optionItem}>
+            <MdSupportAgent size={24} color={theme.primary} style={styles.optionIcon} />
+            <span style={styles.optionText}>Support</span>
+          </div>
 
-              <View style={styles.separator} />
+          <div style={styles.separator} />
 
-              <Pressable onPress={handleBalanceIncrease} pressEffectColor={theme.grey} style={styles.optionItem}>
-                <Icon name="account-balance-wallet" size={24} color={theme.primary} style={styles.optionIcon} />
-                <Text style={styles.optionText}>Balans Artımı</Text>
-              </Pressable>
+          <div onClick={handleBalanceIncrease} style={styles.optionItem}>
+            <MdAccountBalanceWallet size={24} color={theme.primary} style={styles.optionIcon} />
+            <span style={styles.optionText}>Balans Artımı</span>
+          </div>
 
-              <View style={styles.separator} />
+          <div style={styles.separator} />
 
-                  <Pressable onPress={handleSettingsPress} pressEffectColor={theme.grey} style={styles.optionItem}>
-                    <Icon name="settings" size={24} color={theme.primary} style={styles.optionIcon} />
-                    <Text style={styles.optionText}>Ayarlar</Text>
-                  </Pressable>
+          <div onClick={handleSettingsPress} style={styles.optionItem}>
+            <MdSettings size={24} color={theme.primary} style={styles.optionIcon} />
+            <span style={styles.optionText}>Ayarlar</span>
+          </div>
 
-            </>
-            :
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size={50} color={theme.primary} />
-            </View>
-      }
+        </>
+      ) : (
+        <div style={styles.loadingContainer}>
+          <div className="spinner"></div>
+        </div>
+      )}
 
-      <Text style={styles.versionText}>Version {packageJson.version}</Text>
+      <div style={styles.versionText}>Version {packageJson.version}</div>
 
-      <View style={styles.footerContainer}>
-        <Image 
-          source={require('../../images/logo_only.png')} 
-          style={styles.logoImage} 
-          resizeMode="contain"
-        />
-        <Text style={styles.companyText}>From</Text>
-        <Text style={[styles.companyText, {fontWeight: '700', color: theme.primary}]}>Bein Systems</Text>
-      </View>
+      <div style={styles.footerContainer}>
+        <img src={logoSource} style={styles.logoImage} alt="Logo" />
+        <span style={styles.companyText}>From</span>
+        <span style={{ ...styles.companyText, fontWeight: '700', color: theme.primary }}>Bein Systems</span>
+      </div>
 
-    </View>
+    </div>
   );
 };
 

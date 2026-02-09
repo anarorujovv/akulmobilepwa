@@ -1,12 +1,10 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import MyModal from './../MyModal';
 import api from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
 import Line from '../Line';
-import { ActivityIndicator, Pressable } from '@react-native-material/core';
 import Input from '../Input';
 import contains from './../../../services/contains';
 
@@ -22,7 +20,7 @@ const DepartmentModal = ({
 
   const fetchingInfos = async () => {
     await api('departments/get.php', {
-      token: await AsyncStorage.getItem('token'),
+      token: await AsyncStorageWrapper.getItem('token'),
     }).then((element) => {
       if (element != null) {
         if (element.List[0]) {
@@ -36,26 +34,33 @@ const DepartmentModal = ({
     })
   }
 
-  const renderItem = ({ item, index }) => {
+  const renderItem = (item, index) => {
     return (
-      <>
-        <Pressable onPress={() => {
+      <div key={item.Id || index} style={{ width: '100%' }}>
+        <div onClick={() => {
           setState(rel => ({ ...rel, ['DepartmentName']: item.Name }))
           setState(rel => ({ ...rel, ['DepartmentId']: item.Id }));
           setModalVisible(false);
-        }} pressEffectColor={theme.input.grey} style={{
-          width: '100%',
-          height: 55,
-          paddingLeft: 20,
-          justifyContent: 'center',
-        }}>
-          <Text style={{
+        }}
+          style={{
+            width: '100%',
+            height: 55,
+            paddingLeft: 20,
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          <span style={{
             color: theme.black,
             fontSize: 13
-          }}>{item.Name}</Text>
-        </Pressable>
+          }}>{item.Name}</span>
+        </div>
         <Line width={'90%'} />
-      </>
+      </div>
     )
   }
 
@@ -69,12 +74,37 @@ const DepartmentModal = ({
   useEffect(() => {
     fetchingInfos();
   }, [])
-  
+
+  const styles = {
+    trigger: {
+      width: '100%',
+      cursor: 'pointer'
+    },
+    loadingTrigger: {
+      width: '100%',
+      height: 55,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    noDataContainer: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    listContainer: {
+      width: '100%',
+      height: '100%',
+      overflowY: 'auto'
+    }
+  }
+
   return (
     <>
       {
         infos[0] ?
-          <Pressable onPress={() => setModalVisible(true)}>
+          <div style={styles.trigger} onClick={() => setModalVisible(true)}>
             <Input
               width={'100%'}
               value={contains(infos, state.DepartmentId) == null ? "" : contains(infos, state.DepartmentId).Name}
@@ -82,57 +112,40 @@ const DepartmentModal = ({
               type={'string'}
               placeholder={'Şöbə'}
             />
-          </Pressable>
+          </div>
           :
-          <View style={{
-            width: '100%',
-            height: 55,
-            justifyContent: 'center',
-          }}>
-            <ActivityIndicator size={30} color={theme.primary} />
-          </View>
+          <div style={styles.loadingTrigger}>
+            <div className="spinner"></div>
+          </div>
       }
       <MyModal
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
         width={'100%'}
-        height={"100%"}
       >
         {
           infos == null ?
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{
+            <div style={styles.noDataContainer}>
+              <span style={{
                 fontSize: 16,
                 color: theme.primary
-              }}>Məlumat tapılmadı...</Text>
-            </View>
+              }}>Məlumat tapılmadı...</span>
+            </div>
             :
-            <View style={{
-              width: '100%',
-              height: '100%'
-            }}>
+            <div style={styles.listContainer}>
               {
                 infos[0] ?
-                  <FlatList
-                    data={infos}
-                    renderItem={renderItem}
-                  />
+                  infos.map((item, index) => renderItem(item, index))
                   :
-                  <View style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    <ActivityIndicator size={40} color={theme.primary} />
-                  </View>
+                  <div style={styles.noDataContainer}>
+                    <div className="spinner"></div>
+                  </div>
               }
-            </View>
+            </div>
         }
       </MyModal>
     </>
   )
 }
 
-export default DepartmentModal
-
-const styles = StyleSheet.create({})
+export default DepartmentModal;

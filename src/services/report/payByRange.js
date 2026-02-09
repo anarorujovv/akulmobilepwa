@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageWrapper from "../AsyncStorageWrapper";
 import api from "../api";
 import { formatPrice } from './../formatPrice';
 const payByRange = async (info, payAmount, documentAmount) => {
@@ -9,7 +9,7 @@ const payByRange = async (info, payAmount, documentAmount) => {
     let obj = {
         doctype: info.target,
         id: info.Id,
-        token: await AsyncStorage.getItem("token")
+        token: await AsyncStorageWrapper.getItem("token")
     }
     await api('links/get.php', obj).then(element => {
         if (element != null) {

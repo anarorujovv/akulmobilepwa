@@ -1,11 +1,9 @@
-import { StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React from 'react';
 import useTheme from "../../theme/useTheme";
-import { Pressable } from "@react-native-material/core";
-import FontAwesome from 'react-native-vector-icons/FontAwesome'
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
+import { FaCube, FaShoppingBasket } from 'react-icons/fa';
 import Line from '../Line';
 import useGlobalStore from '../../data/zustand/useGlobalStore';
+
 const ListItem = ({ firstText, centerText, endText, notIcon, priceText, priceBottomText, iconBasket, notPriceIcon, statusText, status, onPress, onLongPress, index, markId, indexIsButtonIcon, indexIsButtonIconPress, deactiveStatus }) => {
 
   let theme = useTheme();
@@ -16,166 +14,199 @@ const ListItem = ({ firstText, centerText, endText, notIcon, priceText, priceBot
 
   const opacity = deactiveStatus ? 0.5 : 1;
 
+  const styles = {
+    container: {
+      width: '100%',
+      minHeight: 70,
+      display: 'flex',
+      flexDirection: 'row',
+      opacity: opacity,
+      cursor: 'pointer',
+      backgroundColor: theme.bg,
+      boxSizing: 'border-box',
+      transition: 'background-color 0.2s',
+      padding: '10px 0'
+    },
+    left: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    indexBox: {
+      width: 20,
+      height: 20,
+      borderRadius: 2,
+      border: `1px solid ${status == undefined ? theme.primary : status ? theme.primary : theme.red}`,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      color: status == undefined ? theme.primary : status ? theme.primary : theme.red,
+      fontSize: 10
+    },
+    iconButton: {
+      width: 30,
+      height: 30,
+      borderRadius: 2,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer'
+    },
+    center: {
+      flex: 5,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      gap: 2
+    },
+    row: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 20,
+      width: '85%',
+    },
+    firstText: {
+      fontSize: 12
+    },
+    statusText: {
+      fontSize: 10,
+      color: status ? theme.green : theme.red,
+      border: `1px solid ${status ? theme.green : theme.red}`,
+      borderRadius: 5,
+      padding: '0 5px',
+    },
+    mark: {
+      backgroundColor: currentMark?.Color,
+      padding: '2px 6px',
+      borderRadius: 4,
+    },
+    markText: {
+      fontSize: 10,
+      color: '#fff',
+    },
+    centerText: {
+      color: 'black'
+    },
+    endTextContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10
+    },
+    right: {
+      flex: 2,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'flex-end',
+      paddingRight: 10
+    }
+  };
+
   return (
     <>
-      <Pressable
-        onPress={onPress}
-        onLongPress={onLongPress}
-        style={{
-          flex: 1,
-          minHeight: 70,
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          opacity: opacity
-        }}>
-        <View style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
+      <div
+        onClick={onPress}
+        style={styles.container}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (onLongPress) onLongPress();
+        }}
+      >
+        <div style={styles.left}>
           {
             !indexIsButtonIcon ?
-              (<View style={{
-                width: 20,
-                height: 20,
-                borderRadius: 2,
-                borderWidth: 1,
-                borderColor: status == undefined ? theme.primary : status ? theme.primary : theme.red,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}>
-                <Text style={{ color: status == undefined ? theme.primary : status ? theme.primary : theme.red, fontSize: 10 }}>{index}</Text>
-              </View>)
+              (<div style={styles.indexBox}>
+                <span>{index}</span>
+              </div>)
               :
-              <TouchableOpacity
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 2,
-                  justifyContent: 'center',
-                  alignItems: 'center'
+              <button
+                style={styles.iconButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  indexIsButtonIconPress();
                 }}
-                onPress={indexIsButtonIconPress}
               >
-                {
-                  indexIsButtonIcon
-                }
-              </TouchableOpacity>
+                {indexIsButtonIcon}
+              </button>
           }
-        </View>
-        <View style={{
-          flex: 5,
-          justifyContent: 'center',
-          gap: 2
-        }}>
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 20,
-            width: '85%',
-          }}>
+        </div>
+        <div style={styles.center}>
+          <div style={styles.row}>
             {
               firstText != undefined ?
-                <Text style={{
-                  fontSize: 12
-                }}>{firstText}</Text>
+                <span style={styles.firstText}>{firstText}</span>
                 :
-                ""
+                null
             }
             {
               statusText != undefined ?
-                <Text style={{
-                  fontSize: 10,
-                  color: status ? theme.green : theme.red,
-                  borderWidth: 1,
-                  borderRadius: 5,
-                  paddingLeft: 5,
-                  paddingRight: 5,
-                  borderColor: status ? theme.green : theme.red
-                }}>{statusText}</Text>
-                : ""
+                <span style={styles.statusText}>{statusText}</span>
+                : null
             }
             {
               currentMark != null ?
-                <View style={{
-                  backgroundColor: currentMark.Color,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  borderRadius: 4,
-                }}>
-                  <Text style={{
-                    fontSize: 10,
-                    color: '#fff',
-                  }}>{currentMark.Name}</Text>
-                </View>
-                : ""
+                <div style={styles.mark}>
+                  <span style={styles.markText}>{currentMark.Name}</span>
+                </div>
+                : null
             }
-          </View>
+          </div>
           {
             centerText != undefined ?
-              <Text style={{
-                color: 'black'
-              }}>{centerText}</Text>
+              <span style={styles.centerText}>{centerText}</span>
               :
-              ""
+              null
           }
           {
             endText != undefined ?
-              <View style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10
-              }}>
+              <div style={styles.endTextContainer}>
                 {
                   !notIcon ?
                     !iconBasket ?
-                      <FontAwesome size={10} name='cube' color={endText > 0 ? theme.greeb : theme.red} />
+                      <FaCube size={10} color={endText > 0 ? theme.green : theme.red} />
                       :
-                      <SimpleLineIcons size={10} name='basket' color={endText > 0 ? theme.green : theme.red} />
+                      <FaShoppingBasket size={10} color={endText > 0 ? theme.green : theme.red} />
                     :
-                    ""
+                    null
 
                 }
-                <Text style={[{
-                  fontSize: 12
-                }, !notIcon && { color: endText > 0 ? theme.green : theme.red }]}>{endText}</Text>
-              </View>
+                <span style={{
+                  fontSize: 12,
+                  color: !notIcon ? (endText > 0 ? theme.green : theme.red) : 'inherit'
+                }}>{endText}</span>
+              </div>
               :
-              ""
+              null
           }
-        </View>
-        <View style={{
-          flex: 2,
-          justifyContent: 'center',
-          alignItems: 'flex-end',
-          paddingRight: 10
-        }}>
+        </div>
+        <div style={styles.right}>
           {
             priceText != undefined ?
-              <Text style={{
+              <span style={{
                 color: theme.black
-              }}>{priceText} {!notPriceIcon && '₼'}</Text>
+              }}>{priceText} {!notPriceIcon && '₼'}</span>
               :
-              ""
+              null
           }
           {
             priceBottomText != undefined ?
-              <Text style={{
+              <span style={{
                 color: theme.black,
                 fontSize: 12
-              }}>{priceBottomText} {!notPriceIcon && '₼'}</Text>
+              }}>{priceBottomText} {!notPriceIcon && '₼'}</span>
               :
-              ""
+              null
           }
-        </View>
-      </Pressable>
+        </div>
+      </div>
       <Line width={'100%'} />
     </>
-  )
-}
+  );
+};
 
-export default ListItem
-
-const styles = StyleSheet.create({})
+export default ListItem;

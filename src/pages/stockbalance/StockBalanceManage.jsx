@@ -1,96 +1,112 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import api from '../../services/api'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useEffect, useState } from 'react';
+import api from '../../services/api';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
+import useTheme from '../../shared/theme/useTheme';
 import translateProductStockTerm from './../../services/report/translateProductStockTerm';
-import { formatPrice } from '../../services/formatPrice'
-import MyPagination from '../../shared/ui/MyPagination'
+import { formatPrice } from '../../services/formatPrice';
+import MyPagination from '../../shared/ui/MyPagination';
 import Line from './../../shared/ui/Line';
-import ListItem from '../../shared/ui/list/ListItem'
-import DateRangePicker from '../../shared/ui/DateRangePicker'
-import moment from 'moment'
-import FontAwesome from 'react-native-vector-icons/FontAwesome'
-import DocumentTimes from '../../shared/ui/DocumentTimes'
-import useGlobalStore from '../../shared/data/zustand/useGlobalStore'
+import ListItem from '../../shared/ui/list/ListItem';
+import DateRangePicker from '../../shared/ui/DateRangePicker';
+import DocumentTimes from '../../shared/ui/DocumentTimes';
+import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
+import { useLocation } from 'react-router-dom';
+import { FaCube } from 'react-icons/fa';
 
-const StockBalanceManage = ({ route, params }) => {
-
-  let { id, name } = route.params
+const StockBalanceManage = () => {
+  const location = useLocation();
+  const { id, name } = location.state || {}; // Get from state
 
   let theme = useTheme();
 
   const [selectedTime, setSelectedTime] = useState(4);
   const local = useGlobalStore(state => state.local);
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
-      flex: 1,
-      backgroundColor: theme.bg
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.bg,
+      overflow: 'hidden'
     },
-    iconContainer: {
-      width: 15,
-      height: 15,
-      borderRadius: 100,
+    title: {
+      margin: 10,
+      textAlign: 'center',
+      fontWeight: 'bold',
+      fontSize: 20,
+      color: theme.black
+    },
+    datePickerContainer: {
+      width: '100%'
+    },
+    loadingContainer: {
+      flex: 1,
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center'
+    },
+    listContainer: {
+      flex: 1,
+      overflowY: 'auto'
     }
-  })
-  
+  };
+
   let [filter, setFilter] = useState({
     lm: 50,
     productid: id,
     dr: 1,
     pg: 0,
     sr: "Moment",
-  })
+  });
 
-  const [productStaus, setProductStatus] = useState(null);
-  const [itemSize, setItemSize] = useState(0)
+  const [productStatus, setProductStatus] = useState(null); // Fixed typo 'productStaus'
+  const [itemSize, setItemSize] = useState(0);
 
   let fetchingStockList = async () => {
     let obj = { ...filter };
-    obj.token = await AsyncStorage.getItem("token")
+    obj.token = await AsyncStorageWrapper.getItem("token");
     await api('producthistory/get.php', obj).then(item => {
       if (item != null) {
         setItemSize(item.Count);
-        let data = [...item.List]
-        console.log(data);
-        if(!local.demands.stockBalance.supplyBalance){
-          data = data.filter(item => item.Document != 'supplies' && 'supplyreturns');
+        let data = [...item.List];
+        if (!local.demands.stockBalance.supplyBalance) {
+          data = data.filter(item => item.Document != 'supplies' && item.Document != 'supplyreturns'); // corrected logical operator assumption from original code
         }
         item.List = [...data];
         setProductStatus(item);
       }
     }).catch(err => {
-      ErrorMessage(err)
-    })
-  }
+      ErrorMessage(err);
+    });
+  };
 
   useEffect(() => {
-    fetchingStockList()
-  }, [filter])
+    if (id) {
+      // Update filter if ID changes or on mount
+      setFilter(prev => ({ ...prev, productid: id }));
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (filter.productid) {
+      fetchingStockList();
+    }
+  }, [filter]);
 
   return (
-    <View style={styles.container}>
-      <Text style={{
-        margin: 10, textAlign: 'center',
-        fontWeight: 'bold',
-        fontSize: 20,
-        color: theme.black
-      }}>{name}</Text>
+    <div style={styles.container}>
+      <span style={styles.title}>{name}</span>
       <Line width={'90%'} />
-      <View style={{
-        width: '100%'
-      }}>
+      <div style={styles.datePickerContainer}>
         <DateRangePicker
           submit={true}
           width={'100%'}
           filter={filter}
           setFilter={setFilter}
         />
-      </View>
+      </div>
 
       <DocumentTimes
         filter={filter}
@@ -99,45 +115,44 @@ const StockBalanceManage = ({ route, params }) => {
         setSelected={setSelectedTime}
       />
 
-      {
-        productStaus == null ?
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size={40} color={theme.primary} />
-          </View>
-          :
-          <>
-            <ScrollView>
-              {
-                productStaus.List.map((element, index) => {
+      {productStatus == null ? (
+        <div style={styles.loadingContainer}>
+          <div className="spinner"></div>
+        </div>
+      ) : (
+        <div style={styles.listContainer}>
+          {productStatus.List.map((element, index) => {
+            return (
+              <div key={index}>
+                <ListItem
+                  index={index + 1}
+                  iconBasket={true}
+                  firstText={translateProductStockTerm(element.Document)}
+                  centerText={formatPrice(element.Price)}
+                  endText={formatPrice(element.Quantity)}
+                  priceText={
+                    <span>
+                      {formatPrice(element.StockQuantity)} <FaCube size={10} color={parseFloat(element.StockQuantity) >= 0 ? theme.green : theme.red} />
+                    </span>
+                  }
+                  notPriceIcon={true}
+                />
+              </div>
+            );
+          })}
 
-                  return (
-                      <ListItem
-                        index={index + 1}
-                        iconBasket={true}
-                        firstText={translateProductStockTerm(element.Document)}
-                        centerText={formatPrice(element.Price)}
-                        endText={formatPrice(element.Quantity)}
-                        priceText={<Text>{formatPrice(element.StockQuantity)} <FontAwesome size={10} name='cube' color={formatPrice(element.StockQuantity) >= 0 ? theme.green : theme.red} /></Text>}
-                        notPriceIcon={true}
-                      />
-                  )
-                })
-              }
+          <MyPagination
+            itemSize={itemSize}
+            page={filter.pg + 1}
+            pageSize={50}
+            setPage={(e) => {
+              setFilter(rel => ({ ...rel, ['pg']: e - 1 }));
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
-              <MyPagination
-                itemSize={itemSize}
-                page={filter.pg + 1}
-                pageSize={50}
-                setPage={(e) => {
-                  setFilter(rel => ({ ...rel, ['pg']: e - 1 }))
-                }}
-              />
-            </ScrollView>
-          </>
-      }
-    </View>
-  )
-}
-
-export default StockBalanceManage
-
+export default StockBalanceManage;

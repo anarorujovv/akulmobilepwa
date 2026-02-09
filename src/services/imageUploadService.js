@@ -1,5 +1,5 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageWrapper from "./AsyncStorageWrapper";
 import ErrorMessage from "../shared/ui/RepllyMessage/ErrorMessage";
 import SuccessMessage from "../shared/ui/RepllyMessage/SuccessMessage";
 import api from "./api";
@@ -10,7 +10,7 @@ import api from "./api";
  */
 export const refreshAccessToken = async () => {
   try {
-    const refreshToken = await AsyncStorage.getItem('refreshToken');
+    const refreshToken = await AsyncStorageWrapper.getItem('refreshToken');
 
     const response = await axios.post(
       'https://api.akul.az/1.0/dev/login/refresh.php',
@@ -19,7 +19,7 @@ export const refreshAccessToken = async () => {
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${await AsyncStorage.getItem('token')}`
+          "Authorization": `Bearer ${await AsyncStorageWrapper.getItem('token')}`
         }
       }
     );
@@ -114,7 +114,7 @@ export const updateProductImages = async (productId, existingImages = [], newIma
     }
 
     // Make request to update product images
-    const token = await AsyncStorage.getItem('token');
+    const token = await AsyncStorageWrapper.getItem('token');
     const response = await api('products/images.php', {
       id: productId,
       images: images,

@@ -1,26 +1,89 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import WebView from 'react-native-webview';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState, useRef } from 'react';
 import useTheme from '../../shared/theme/useTheme';
-import RNPrint from 'react-native-print';
 import { formatPrice } from '../../services/formatPrice';
 import calculateDiscount from '../../services/report/calculateDiscount';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import { useLocation } from 'react-router-dom';
+import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 
-const Check = ({
-    route, navigation
-}) => {
-
-    const { demand } = route.params;
+const Check = () => {
+    const location = useLocation();
+    const { demand } = location.state || {};
     const theme = useTheme();
 
     const [customer, setCustomer] = useState({});
-
     const [loading, setLoading] = useState(true);
+    const iframeRef = useRef(null);
 
-    let html = `<!DOCTYPE html>
+    const styles = {
+        container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: '#fff',
+            position: 'relative'
+        },
+        iframe: {
+            flex: 1,
+            border: 'none',
+            width: '100%',
+            height: '100%'
+        },
+        printButton: {
+            position: 'absolute',
+            bottom: 30,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.primary || '#0078D4',
+            padding: '14px 30px',
+            borderRadius: 30,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
+            border: 'none',
+            color: 'white',
+            fontSize: 16,
+            fontWeight: 'bold',
+            zIndex: 10
+        },
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }
+    };
+
+    const getCustomerDetails = async () => {
+        if (!demand) {
+            setLoading(false);
+            return;
+        }
+        const customerId = demand.CustomerId;
+        const token = await AsyncStorageWrapper.getItem('token');
+        await api('customers/getdata.php', {
+            id: customerId,
+            token: token
+        }).then(element => {
+            setCustomer(element);
+        }).catch(err => {
+            console.error(err);
+        })
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        getCustomerDetails();
+    }, [])
+
+    if (!demand) {
+        return <div style={styles.loadingContainer}><span>Məlumat yoxdur</span></div>;
+    }
+
+    const html = `<!DOCTYPE html>
 <html lang="az">
 <head>
     <meta charset="UTF-8">
@@ -163,7 +226,7 @@ const Check = ({
     </div>
 
     <div class="dold-box">
-    <p>Долг: ${formatPrice(customer.Debt)}</p>
+    <p>Долг: ${customer.Debt ? formatPrice(customer.Debt) : '0.00'}</p>
     </div>
 
     <div class="debt-box">
@@ -178,90 +241,35 @@ const Check = ({
 
 </body>
 </html>
-    `
+    `;
 
-    const getPrint = async () => {
-        try {
-            await RNPrint.print({
-                html: html,
-                fileName: 'PrintDocument',
-            });
-        } catch (err) {
-            ErrorMessage(err);
+    const handlePrint = () => {
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+            iframeRef.current.contentWindow.print();
         }
-    }
-
-    const styles = StyleSheet.create({
-        printButton: {
-            position: 'absolute',
-            bottom: 30,
-            alignSelf: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: theme.primary || '#0078D4',
-            paddingVertical: 14,
-            paddingHorizontal: 30,
-            borderRadius: 30,
-            shadowColor: theme.primary || '#0078D4',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
-        },
-        printButtonText: {
-            color: 'white',
-            fontSize: 16,
-            fontWeight: 'bold',
-            marginLeft: 8
-        },
-    })
-
-    const getCustomerDetails = async () => {
-        const customer = demand.CustomerId;
-        const token = await AsyncStorage.getItem('token');
-        await api('customers/getdata.php', {
-            id: customer,
-            token: token
-        }).then(element => {
-            setCustomer(element);
-        }).catch(err => {
-            console.error(err);
-        })
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        getCustomerDetails();
-    }, [])
+    };
 
     if (loading) {
-        return <ActivityIndicator size={30} />
+        return (
+            <div style={styles.loadingContainer}>
+                <div className="spinner"></div>
+            </div>
+        )
     }
 
     return (
-        <SafeAreaView
-            style={{
-                flex: 1, backgroundColor: "#fff"
-            }}
-        >
-            <View style={{ flex: 1, }}>
-                <WebView
-                    source={{ html, baseUrl: '' }}
-                    style={{ flex: 1, backgroundColor: 'transparent' }}
-                    originWhitelist={['*']}
-                    scalesPageToFit={false}
-                    textZoom={100}
-                />
-            </View>
-
-            <TouchableOpacity onPress={getPrint} style={styles.printButton} activeOpacity={0.8}>
-                <Text style={styles.printButtonText}>Çap Et</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
-    )
+        <div style={styles.container}>
+            <iframe
+                ref={iframeRef}
+                srcDoc={html}
+                style={styles.iframe}
+                title="Receipt"
+            />
+            <button onClick={handlePrint} style={styles.printButton}>
+                Çap Et
+            </button>
+        </div>
+    );
 }
 
-export default Check
-
-const styles = StyleSheet.create({})
+export default Check;

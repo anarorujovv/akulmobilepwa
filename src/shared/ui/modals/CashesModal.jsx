@@ -1,15 +1,13 @@
-import {FlatList, StyleSheet, Text, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import MyModal from './../MyModal';
 import api from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
 import Line from '../Line';
-import {ActivityIndicator, Pressable} from '@react-native-material/core';
 import Input from '../Input';
 import contains from '../../../services/contains';
-import {formatPrice} from '../../../services/formatPrice';
+import { formatPrice } from '../../../services/formatPrice';
 
 const CashesModal = ({
   document,
@@ -23,14 +21,9 @@ const CashesModal = ({
   const [cashs, setCashs] = useState([]);
   const [cashModal, setCashModal] = useState(false);
 
-  let obj = {
-    payment: 'cash',
-    invoice: 'noncash',
-  };
-
   const fetchingCashes = async () => {
     await api('cashes/get.php', {
-      token: await AsyncStorage.getItem('token'),
+      token: await AsyncStorageWrapper.getItem('token'),
     })
       .then(element => {
         if (element != null) {
@@ -46,13 +39,13 @@ const CashesModal = ({
       });
   };
 
-  const renderItem = ({item, index}) => {
+  const renderItem = (item, index) => {
     return (
-      <>
-        <Pressable
-          onPress={() => {
-            setDocument(rel => ({...rel, ['CashName']: item.Name}));
-            setDocument(rel => ({...rel, ['CashId']: item.Id}));
+      <div key={item.Id || index} style={{ width: '100%' }}>
+        <div
+          onClick={() => {
+            setDocument(rel => ({ ...rel, ['CashName']: item.Name }));
+            setDocument(rel => ({ ...rel, ['CashId']: item.Id }));
             setCashModal(false);
             if (returnChanged) {
               returnChanged();
@@ -62,23 +55,30 @@ const CashesModal = ({
               selectedType(item);
             }
           }}
-          pressEffectColor={theme.input.grey}
           style={{
             width: '100%',
             height: 55,
             paddingLeft: 20,
-            justifyContent: 'center',
-          }}>
-          <Text
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            backgroundColor: 'transparent',
+            border: 'none',
+            transition: 'background 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          <span
             style={{
               color: theme.black,
               fontSize: 13,
             }}>
             {item.Name}
-          </Text>
-        </Pressable>
+          </span>
+        </div>
         <Line width={'90%'} />
-      </>
+      </div>
     );
   };
 
@@ -92,15 +92,35 @@ const CashesModal = ({
     fetchingCashes();
   }, []);
 
+  const styles = {
+    loadingContainer: {
+      width: '100%',
+      height: 55,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    trigger: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      cursor: 'pointer'
+    },
+    balanceRow: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '70%',
+    }
+  }
+
   return (
     <>
       {cashs[0] ? (
-        <Pressable
-          style={{
-            width: '100%',
-            alignItems: 'center',
-          }}
-          onPress={() => {
+        <div
+          style={styles.trigger}
+          onClick={() => {
             setCashModal(true);
           }}>
           <Input
@@ -117,14 +137,10 @@ const CashesModal = ({
           {contains(cashs, document.CashId) == null ? (
             ''
           ) : (
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                width: '70%',
-              }}>
-              <Text style={{fontSize: 12, color: theme.orange}}>Balans</Text>
-              <Text
+            <div
+              style={styles.balanceRow}>
+              <span style={{ fontSize: 12, color: theme.orange }}>Balans</span>
+              <span
                 style={{
                   fontSize: 12,
                   color:
@@ -133,46 +149,45 @@ const CashesModal = ({
                       : theme.orange,
                 }}>
                 {formatPrice(contains(cashs, document.CashId).Balance)} ₼
-              </Text>
-            </View>
+              </span>
+            </div>
           )}
-        </Pressable>
+        </div>
       ) : (
-        <View
-          style={{
-            width: '100%',
-            height: 55,
-            justifyContent: 'center',
-          }}>
-          <ActivityIndicator size={30} color={theme.primary} />
-        </View>
+        <div
+          style={styles.loadingContainer}>
+          <div className="spinner"></div>
+        </div>
       )}
       <MyModal
         modalVisible={cashModal}
         setModalVisible={setCashModal}
         width={'100%'}>
         {cashs == null ? (
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text
+          <div
+            style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <span
               style={{
                 fontSize: 16,
                 color: theme.primary,
               }}>
               Məlumat tapılmadı...
-            </Text>
-          </View>
+            </span>
+          </div>
         ) : cashs[0] ? (
-          <FlatList data={cashs} renderItem={renderItem} />
+          <div style={{ width: '100%', overflowY: 'auto', maxHeight: '400px' }}>
+            {cashs.map((item, index) => renderItem(item, index))}
+          </div>
         ) : (
-          <View
+          <div
             style={{
               flex: 1,
+              display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-            <ActivityIndicator size={40} color={theme.primary} />
-          </View>
+            <div className="spinner"></div>
+          </div>
         )}
       </MyModal>
     </>
@@ -180,5 +195,3 @@ const CashesModal = ({
 };
 
 export default CashesModal;
-
-const styles = StyleSheet.create({});

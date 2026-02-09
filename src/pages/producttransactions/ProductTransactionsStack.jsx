@@ -1,21 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import ProductTransactionsList from './ProductTransactionsList';
 import ProductTransactionsManage from './ProductTransactionsManage';
 
 const ProductTransactionsStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-            <Stack.Screen name="product-transactions-list" component={ProductTransactionsList} />
-            <Stack.Screen name="product-transactions-manage" component={ProductTransactionsManage} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<ProductTransactionsList />} />
+            <Route path="/product-transactions-manage" element={<ProductTransactionsManage />} />
+        </Routes>
+    );
+};
 
-export default ProductTransactionsStack
-
-const styles = StyleSheet.create({})
+export default ProductTransactionsStack;

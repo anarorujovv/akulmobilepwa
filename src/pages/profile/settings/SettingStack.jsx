@@ -1,23 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Setting from './pages/Setting';
 import SpendItemStack from './pages/spendItem/SpendItemStack';
 
-let Stack = createNativeStackNavigator();
-
 const SettingStack = () => {
-
   return (
-    <Stack.Navigator screenOptions={{
-      headerShown:false
-    }}>
-        <Stack.Screen name='setting'  component={Setting}/>
-        <Stack.Screen name='spend-items' component={SpendItemStack}/>
-    </Stack.Navigator>
-  )
-}
+    <Routes>
+      <Route path="/" element={<Setting />} />
+      <Route path="/spend-items/*" element={<SpendItemStack />} />
+    </Routes>
+  );
+};
 
-export default SettingStack
-
-const styles = StyleSheet.create({})
+export default SettingStack;

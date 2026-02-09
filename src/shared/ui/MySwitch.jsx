@@ -1,6 +1,5 @@
-import { StyleSheet, Switch, Text, View } from 'react-native'
-import React from 'react'
-import useTheme from '../theme/useTheme'
+import React from 'react';
+import useTheme from '../theme/useTheme';
 
 const MySwitch = ({
     value,
@@ -12,24 +11,37 @@ const MySwitch = ({
 
     let theme = useTheme();
 
-    return (
-        <View style={{
-            width,
+    const styles = {
+        container: {
+            width: width || '100%',
+            display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'space-between'
-        }}>
-            <Text style={{
-                color:theme.grey
-            }}>{text}</Text>
-            <Switch
-            disabled={disabled}
-                trackColor={{ false: theme.input.greyWhite, true: theme.button.disabled }}
-                thumbColor={value ? theme.primary : theme.input.grey}
-                onValueChange={onChange}
-                value={value}
-            />
-        </View>
-    )
-}
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px 0'
+        },
+        text: {
+            color: theme.grey,
+            fontSize: 14,
+            margin: 0
+        },
+        switch: {
+            cursor: disabled ? 'not-allowed' : 'pointer'
+        }
+    };
 
-export default MySwitch
+    return (
+        <div style={styles.container}>
+            <span style={styles.text}>{text}</span>
+            <input
+                type="checkbox"
+                checked={value}
+                onChange={(e) => onChange(e.target.checked)}
+                disabled={disabled}
+                style={styles.switch}
+            />
+        </div>
+    );
+};
+
+export default MySwitch;

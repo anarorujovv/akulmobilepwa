@@ -1,28 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import SaleReportList from './SaleReportList';
 import SaleReportManage from './SaleReportManage';
 
 const SaleReportStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation: 'fade'
-            }}
-        >
-            <Stack.Screen name="sale-report-list" component={SaleReportList} initialParams={{
-                type: "product"
-            }} />
-            <Stack.Screen name="sale-report-manage" component={SaleReportManage} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<SaleReportList />} />
+            <Route path="/sale-report-manage" element={<SaleReportManage />} />
+        </Routes>
+    );
+};
 
-export default SaleReportStack
-
-const styles = StyleSheet.create({})
+export default SaleReportStack;

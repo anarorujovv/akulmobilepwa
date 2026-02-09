@@ -1,27 +1,20 @@
-import Sound from 'react-native-sound';
-
-Sound.setCategory('Playback');
-
-let obj = {
-  bc: require('../sounds/bc.mp3'),
-  success: require('../sounds/ok.mp3')
-}
+// Web Audio API ile ses çalma
+const sounds = {
+  bc: '/sounds/bc.mp3',
+  success: '/sounds/ok.mp3'
+};
 
 const playSound = (soundName) => {
-  const sound = new Sound(obj[soundName], (error) => {
-    if (error) {
-      console.log('Error loading sound:', error);
-      return;
-    }
-    sound.play((success) => {
-      if (!success) {
-        console.log('Error playing sound');
-      } else {
-        console.log('Sound played successfully');
-      }
-      sound.release();
+  try {
+    const audio = new Audio(sounds[soundName]);
+    audio.play().then(() => {
+      console.log('Sound played successfully');
+    }).catch((error) => {
+      console.log('Error playing sound:', error);
     });
-  });
+  } catch (error) {
+    console.log('Error loading sound:', error);
+  }
 };
 
 export default playSound;

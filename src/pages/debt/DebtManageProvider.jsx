@@ -1,16 +1,13 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
+import React from 'react';
 import { DebtGlobalProvider } from '../../shared/data/DebtGlobalState';
 import DebtManage from './DebtManage';
 
-const DebtManageProvider = ({route,navigation}) => {
+const DebtManageProvider = () => {
     return (
         <DebtGlobalProvider>
-            <DebtManage route={route} navigation={navigation}/>
+            <DebtManage />
         </DebtGlobalProvider>
-    )
-}
+    );
+};
 
-export default DebtManageProvider
-
-const styles = StyleSheet.create({})
+export default DebtManageProvider;

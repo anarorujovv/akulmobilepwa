@@ -1,45 +1,53 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { Pressable, Swipeable } from 'react-native-gesture-handler';
+import React from 'react';
 import useTheme from '../theme/useTheme';
+import { AiOutlineDelete } from 'react-icons/ai';
 
 const MySwipeable = ({ onPress, ...props }) => {
 
     let theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
+        container: {
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            width: '100%'
+        },
+        content: {
+            flex: 1
+        },
         deleteButton: {
-            backgroundColor: theme.red,
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 10,
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            width: 100,
-            height: '100%',
-        },
-        deleteText: {
-            color: 'white',
-            fontWeight: 'bold',
-            fontSize: 16
+            color: theme.red // İkon rengi olarak kullanacağız
         }
-    })
-
-    const renderRightActions = () => {
-        return (
-            <Pressable
-                style={styles.deleteButton}
-                onPress={onPress}
-            >
-                <Text style={styles.deleteText}>Sil</Text>
-            </Pressable>
-        )
-    }
+    };
 
     return (
-        <Swipeable
-            renderRightActions={() => renderRightActions()}
-        >
-            {props.children}
-        </Swipeable>
-    )
-}
+        <div style={styles.container}>
+            <div style={styles.content}>
+                {props.children}
+            </div>
+            {onPress && (
+                <button
+                    style={styles.deleteButton}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPress();
+                    }}
+                    title="Sil"
+                >
+                    <AiOutlineDelete size={20} color={theme.red} />
+                </button>
+            )}
+        </div>
+    );
+};
 
-export default MySwipeable
+export default MySwipeable;

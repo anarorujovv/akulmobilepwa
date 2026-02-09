@@ -1,75 +1,79 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { Pressable } from '@react-native-material/core';
+import React from 'react';
 import IconButton from './IconButton';
-import Ionicons from 'react-native-vector-icons/Ionicons'
+import { IoArrowBack } from 'react-icons/io5';
 import useTheme from '../theme/useTheme';
 import prompt from '../../services/prompt';
 
-const PositionManageHeader = ({ navigation, handleSave, loading, id, createText, updateText,hasUnsavedChanges}) => {
+const PositionManageHeader = ({ navigation, handleSave, loading, id, createText, updateText, hasUnsavedChanges }) => {
 
   const theme = useTheme();
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-    },
+  const styles = {
     top: {
       width: '100%',
       height: 55,
       backgroundColor: theme.primary,
+      display: 'flex',
       flexDirection: 'row',
       justifyContent: "space-between",
       alignItems: 'center',
       paddingLeft: 10,
-      paddingRight: 10
+      paddingRight: 10,
+      boxSizing: 'border-box'
     },
     text: {
       fontSize: 18,
       color: theme.stable.white
+    },
+    saveButton: {
+      height: 40,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '0 10px'
     }
-  })
+  };
 
   const handleBack = () => {
+    // HasUnsavedChanges kontrolü prompt servisi ile
     if (hasUnsavedChanges) {
-      prompt('Çıxmağa əminsiniz ?', () => {
+      // prompt fonksiyonunun web versiyonu window.confirm olabilir veya custom modal.
+      // Şimdilik varsayılan bir yapı kullanıyoruz
+      if (window.confirm('Çıxmağa əminsiniz ?')) {
         navigation.goBack();
-      })
+      }
     } else {
       navigation.goBack();
     }
-  }
+  };
 
 
   return (
-    <View style={styles.top}>
+    <div style={styles.top}>
       <IconButton onPress={handleBack} size={40}>
-        <Ionicons name='arrow-back' size={25} color={theme.stable.white} />
+        <IoArrowBack size={25} color={theme.stable.white} />
       </IconButton>
 
-      <Pressable onPress={handleSave} style={{
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-        disabled={loading}
-      >
+      <button onClick={handleSave} style={styles.saveButton} disabled={loading}>
         {
           loading ?
-            <ActivityIndicator color={theme.bg} />
+            <div className="spinner-white"></div>
             :
-            <Text style={styles.text}>
+            <span style={styles.text}>
               {
                 id == null ?
                   createText
                   :
                   updateText
               }
-            </Text>
+            </span>
         }
-      </Pressable>
-    </View>
-  )
-}
+      </button>
+    </div>
+  );
+};
 
 export default PositionManageHeader;

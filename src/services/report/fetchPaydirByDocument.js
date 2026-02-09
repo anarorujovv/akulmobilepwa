@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageWrapper from "../AsyncStorageWrapper";
 import api from "../api";
 
 const fetchPaydirByDocument = async (id) => {
@@ -8,7 +8,7 @@ const fetchPaydirByDocument = async (id) => {
         list: [
             id
         ],
-        token: await AsyncStorage.getItem('token')
+        token: await AsyncStorageWrapper.getItem('token')
     })
 }
 

@@ -1,11 +1,14 @@
-import { Toast } from "react-native-toast-notifications";
+import { toast } from 'react-toastify';
 
 const SuccessMessage = (message) => {
-    Toast.show(message, {
-        type: "success",
-        placement: "top",
-        animationType: "slide-in",
+    toast.success(message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
     });
-}
+};
 
-export default SuccessMessage
+export default SuccessMessage;

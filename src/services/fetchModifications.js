@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageWrapper from "./AsyncStorageWrapper";
 import api from "./api";
 
 const fetchModifications = async (target) => {
@@ -6,7 +6,7 @@ const fetchModifications = async (target) => {
     let list = [];
 
     let obj = {
-        token: await AsyncStorage.getItem('token')
+        token: await AsyncStorageWrapper.getItem('token')
     }
 
     if (target) {
@@ -21,7 +21,7 @@ const fetchModifications = async (target) => {
         })
 
     return list;
-    
+
 }
 
 export default fetchModifications;

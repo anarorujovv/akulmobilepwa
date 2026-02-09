@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import useTheme from '../../shared/theme/useTheme';
-import MySelection from '../../shared/ui/MySelection';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import { formatPrice } from '../../services/formatPrice';
-import Input from '../../shared/ui/Input';
-import { Pressable } from '@react-native-material/core';
 import CustomersModal from '../../shared/ui/modals/CustomersModal';
-import moment from 'moment';
-import DateRangePicker from './../../shared/ui/DateRangePicker';
 import CardItem from '../../shared/ui/list/CardItem';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
@@ -31,55 +25,68 @@ const Comprehensive = () => {
     let [data, setData] = useState([]);
     const [selectedTime, setSelectedTime] = useState(4);
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
+        },
+        content: {
             flex: 1,
             padding: 10,
-            backgroundColor: theme.bg,          // Using theme background color
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10
         },
         section: {
             marginBottom: 15,
             borderRadius: 8,
             overflow: 'hidden',
-            backgroundColor: theme.whiteGrey,   // Using theme light grey for section background
-            borderColor: theme.grey,            // Using theme grey for border color
-            borderWidth: 1,
+            backgroundColor: theme.whiteGrey,
+            border: `1px solid ${theme.grey}`,
         },
         sectionTitle: {
-            backgroundColor: theme.primary,     // Using theme primary color for section title background
+            backgroundColor: theme.primary,
             padding: 10,
             fontSize: 16,
             fontWeight: 'bold',
-            color: theme.bg,                    // Using theme bg color for text (to ensure contrast)
+            color: theme.bg,
         },
         itemsContainer: {
-            paddingHorizontal: 10,
-            paddingVertical: 5,
+            padding: '5px 10px',
         },
         itemRow: {
-            flexDirection: 'row',
+            display: 'flex',
             justifyContent: 'space-between',
-            paddingVertical: 4,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.whiteGrey, // Using theme whiteGrey for row divider
+            padding: '4px 0',
+            borderBottom: `1px solid ${theme.whiteGrey}`,
         },
         itemKey: {
             fontSize: 14,
-            color: theme.black,                 // Using theme black for item key text
+            color: theme.black,
         },
         itemValue: {
             fontSize: 14,
-            color: theme.black,                 // Using theme black for item value text
+            color: theme.black,
             fontWeight: 'bold',
         },
-    });
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }
+    };
 
     let fetchingData = async () => {
         setInfo(null);
 
         let obj = {
             ...filter,
-            token: await AsyncStorage.getItem('token')
+            token: await AsyncStorageWrapper.getItem('token')
         };
 
         if (customer.CustomerId !== '') {
@@ -89,7 +96,6 @@ const Comprehensive = () => {
         await api('comprehensive/get.php', obj)
             .then((item) => {
                 if (item != null) {
-                    // Veriyi bileşenle formatlayarak `data` state'ine ekle
                     let list = [
                         {
                             title: 'ANBAR QALIĞI',
@@ -157,7 +163,7 @@ const Comprehensive = () => {
                 ErrorMessage(err);
             });
     };
-    
+
     useEffect(() => {
         fetchingData();
     }, [customer]);
@@ -171,7 +177,7 @@ const Comprehensive = () => {
     }, [filter])
 
     return (
-        <>
+        <div style={styles.container}>
             <ListPagesHeader
                 header={'Təchizatçı hesabatı'}
                 filter={filter}
@@ -179,12 +185,7 @@ const Comprehensive = () => {
                 isSearch={true}
                 filterSearchKey={'docNumber'}
             />
-            <View style={{
-                flex: 1,
-                backgroundColor: theme.bg,
-                padding: 10,
-                gap: 10
-            }}>
+            <div style={styles.content}>
 
                 <CustomersModal
                     width={'100%'}
@@ -194,7 +195,7 @@ const Comprehensive = () => {
                     isName={true}
                 />
 
-                <DocumentTimes        
+                <DocumentTimes
                     filter={filter}
                     setFilter={setFilter}
                     selected={selectedTime}
@@ -202,28 +203,28 @@ const Comprehensive = () => {
                 />
 
                 {info == null ? (
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <ActivityIndicator size={40} color={theme.primary} />
-                    </View>
+                    <div style={styles.loadingContainer}>
+                        <div className="spinner"></div> // Web spinner
+                    </div>
                 ) : info == 'not' ? (
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: "center" }}>
-                        <Text style={{ textAlign: 'center', color: theme.primary, fontWeight: 'bold' }}>Məlumat tapılmadı!</Text>
-                    </View>
+                    <div style={styles.loadingContainer}>
+                        <span style={{ textAlign: 'center', color: theme.primary, fontWeight: 'bold' }}>Məlumat tapılmadı!</span>
+                    </div>
                 ) : (
-                    <ScrollView style={styles.container}>
+                    <div>
                         {data.map((section, index) => (
-                            <CardItem
-                                items={section.items}
-                                title={section.title}
-                                valueFormatPrice={true}
-                            />
+                            <div key={index} style={{ marginBottom: 10 }}>
+                                <CardItem
+                                    items={section.items}
+                                    title={section.title}
+                                    valueFormatPrice={true}
+                                />
+                            </div>
                         ))}
-                    </ScrollView>
+                    </div>
                 )}
-
-
-            </View>
-        </>
+            </div>
+        </div>
     );
 };
 

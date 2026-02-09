@@ -1,14 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React from 'react';
 
 const CreatedReleatedDocument = () => {
     return (
-        <View>
-            <Text>CreatedReleatedDocument</Text>
-        </View>
+        <div>
+            <span>CreatedReleatedDocument</span>
+        </div>
     )
 }
 
-export default CreatedReleatedDocument
-
-const styles = StyleSheet.create({})
+export default CreatedReleatedDocument;

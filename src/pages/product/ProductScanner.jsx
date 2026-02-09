@@ -1,254 +1,142 @@
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { RNCamera } from 'react-native-camera';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Animated, {
-  useSharedValue,
-  withTiming,
-  useAnimatedStyle,
-  withRepeat,
-  Easing
-} from 'react-native-reanimated';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useTheme from '../../shared/theme/useTheme';
+import { IoArrowBack, IoBarcode, IoFlash, IoFlashOff, IoCameraReverse } from 'react-icons/io5';
 
-const { width, height } = Dimensions.get('window');
-const SCAN_SIZE = width * 0.7;
+const ProductScanner = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { setData } = location.state || {}; // Access state correctly
+  const theme = useTheme();
 
-const ProductScanner = ({ route, navigation }) => {
-  let { setData } = route.params;
-  let theme = useTheme();
-
-  const [isFlashOn, setIsFlashOn] = useState(false);
-  const [isFrontCamera, setIsFrontCamera] = useState(false);
-
-  const scanLinePos = useSharedValue(0);
+  const [code, setCode] = useState('');
+  const inputRef = useRef(null);
 
   useEffect(() => {
-    scanLinePos.value = withRepeat(
-      withTiming(SCAN_SIZE, {
-        duration: 2000,
-        easing: Easing.inOut(Easing.ease)
-      }),
-      -1,
-      true
-    );
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, []);
 
-  const animatedLineStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: scanLinePos.value }]
-    };
-  });
-
-  const toggleFlash = () => {
-    setIsFlashOn(!isFlashOn);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (code && setData) {
+      setData(code);
+      navigate(-1);
+    }
   };
 
-  const toggleCamera = () => {
-    setIsFrontCamera(!isFrontCamera);
-  };
-
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
-      flex: 1,
-      backgroundColor: theme.black,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.black || '#000',
+      color: 'white',
+      position: 'relative',
+      overflow: 'hidden'
     },
     header: {
+      display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 40,
-      paddingBottom: 20,
-      backgroundColor: 'transparent',
+      padding: '20px',
+      paddingTop: '40px',
+      width: '100%',
+      boxSizing: 'border-box',
       position: 'absolute',
       top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 10,
-    },
-    headerTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: theme.stable.white,
-      textShadowColor: 'rgba(0, 0, 0, 0.75)',
-      textShadowOffset: { width: -1, height: 1 },
-      textShadowRadius: 10
-    },
-    cameraStyle: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    overlay: {
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    unfilled: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      width: '100%',
-    },
-    row: {
-      flexDirection: 'row',
-    },
-    centerColumn: {
-      width: SCAN_SIZE,
-      height: SCAN_SIZE,
-      backgroundColor: 'transparent',
-      position: 'relative',
-    },
-    side: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    marker: {
-      width: SCAN_SIZE,
-      height: SCAN_SIZE,
-      backgroundColor: 'transparent',
-      zIndex: 2,
-    },
-    corner: {
-      position: 'absolute',
-      width: 40,
-      height: 40,
-      borderColor: theme.primary,
-    },
-    topLeft: {
-      top: 0,
-      left: 0,
-      borderTopWidth: 5,
-      borderLeftWidth: 5,
-      borderTopLeftRadius: 20,
-    },
-    topRight: {
-      top: 0,
-      right: 0,
-      borderTopWidth: 5,
-      borderRightWidth: 5,
-      borderTopRightRadius: 20,
-    },
-    bottomLeft: {
-      bottom: 0,
-      left: 0,
-      borderBottomWidth: 5,
-      borderLeftWidth: 5,
-      borderBottomLeftRadius: 20,
-    },
-    bottomRight: {
-      bottom: 0,
-      right: 0,
-      borderBottomWidth: 5,
-      borderRightWidth: 5,
-      borderBottomRightRadius: 20,
-    },
-    scanLine: {
-      width: '100%',
-      height: 2,
-      backgroundColor: theme.primary,
-      shadowColor: theme.primary,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.8,
-      shadowRadius: 10,
-      elevation: 10,
-    },
-    footer: {
-      position: 'absolute',
-      bottom: 50,
-      left: 0,
-      right: 0,
-      alignItems: 'center',
-      padding: 20,
-    },
-    footerText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: theme.stable.white,
-      marginBottom: 5,
-    },
-    footerSubText: {
-      fontSize: 14,
-      color: 'rgba(255,255,255,0.7)',
+      zIndex: 10
     },
     backButton: {
-      padding: 8,
-      borderRadius: 12,
-      backgroundColor: 'rgba(0,0,0,0.3)',
+      background: 'rgba(0,0,0,0.3)',
+      border: 'none',
+      borderRadius: '12px',
+      padding: '8px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'white'
+    },
+    title: {
+      fontSize: '18px',
+      fontWeight: '600',
+      textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+    },
+    cameraArea: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative'
+    },
+    input: {
+      padding: '15px',
+      fontSize: '18px',
+      borderRadius: '8px',
+      border: `2px solid ${theme.primary}`,
+      width: '80%',
+      maxWidth: '400px',
+      textAlign: 'center',
+      outline: 'none',
+      marginTop: '20px'
+    },
+    overlay: {
+      border: `2px solid ${theme.primary}`,
+      width: '70%',
+      height: '40%', // Approximate scan area aspect ratio
+      maxWidth: '300px',
+      maxHeight: '300px',
+      borderRadius: '20px',
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      boxShadow: `0 0 0 100vmax rgba(0,0,0,0.6)` // Dim surroundings
+    },
+    instruction: {
+      position: 'absolute',
+      bottom: '50px',
+      textAlign: 'center',
+      width: '100%'
     }
-  });
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="chevron-left" size={30} color="#fff" />
-        </TouchableOpacity>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <button style={styles.backButton} onClick={() => navigate(-1)}>
+          <IoArrowBack size={24} />
+        </button>
+        <span style={styles.title}>Məhsul Skaneri</span>
+        <div style={{ width: '40px' }}></div> {/* Spacer for alignment */}
+      </div>
 
-        <Text style={styles.headerTitle}>Məhsul Skaneri</Text>
+      <div style={styles.cameraArea}>
+        <div style={styles.overlay}>
+          <IoBarcode size={100} color={theme.primary} style={{ opacity: 0.5 }} />
+        </div>
 
-        <View style={{ flexDirection: 'row', gap: 15 }}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={toggleCamera}
-          >
-            <Icon name="camera-flip-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={toggleFlash}
-          >
-            <Icon name={isFlashOn ? "flash" : "flash-off"} size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+        <form onSubmit={handleSubmit} style={{ zIndex: 20, width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <input
+            ref={inputRef}
+            style={styles.input}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Barkodu daxil edin və ya oxudun"
+            autoFocus
+          />
+        </form>
+      </div>
 
-      <RNCamera
-        style={styles.cameraStyle}
-        type={isFrontCamera ? RNCamera.Constants.Type.front : RNCamera.Constants.Type.back}
-        flashMode={isFlashOn ? RNCamera.Constants.FlashMode.torch : RNCamera.Constants.FlashMode.off}
-        captureAudio={false}
-        androidCameraPermissionOptions={{
-          title: 'Kamera icazəsi',
-          message: 'Məhsulları skan etmək üçün kameradan istifadəyə icazə verməlisiniz',
-          buttonPositive: 'Tamam',
-          buttonNegative: 'İmtina',
-        }}
-        onBarCodeRead={(e) => {
-          setData(e.data)
-          navigation.goBack();
-        }}
-      >
-        <View style={StyleSheet.absoluteFill}>
-          <View style={styles.unfilled} />
-          <View style={styles.row}>
-            <View style={styles.side} />
-            <View style={styles.centerColumn}>
-              <View style={styles.marker}>
-                <View style={[styles.corner, styles.topLeft]} />
-                <View style={[styles.corner, styles.topRight]} />
-                <View style={[styles.corner, styles.bottomLeft]} />
-                <View style={[styles.corner, styles.bottomRight]} />
-                <Animated.View style={[styles.scanLine, animatedLineStyle]} />
-              </View>
-            </View>
-            <View style={styles.side} />
-          </View>
-          <View style={styles.unfilled} />
-        </View>
-      </RNCamera>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Barkod və ya QR kod</Text>
-        <Text style={styles.footerSubText}>Kodu çərçivənin daxilinə gətirin</Text>
-      </View>
-    </View>
+      <div style={styles.instruction}>
+        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>Barkod və ya QR kod</div>
+        <div style={{ opacity: 0.7 }}>Ştrix-kodu manual daxil edin və ya skanerlə oxudun</div>
+      </div>
+    </div>
   )
 }
 

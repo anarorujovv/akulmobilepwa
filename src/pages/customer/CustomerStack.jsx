@@ -1,28 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import CustomerManageProvider from './CustomerManageProvider';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import CustomerList from './CustomerList';
+import CustomerManageProvider from './CustomerManageProvider';
 
 const CustomerStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation:'fade'
-            }}
-        >
-            <Stack.Screen name="customer-list" component={CustomerList} initialParams={{
-                type: "product"
-            }} />
-            <Stack.Screen name="customer-manage" component={CustomerManageProvider} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<CustomerList />} />
+            <Route path="/customer-manage" element={<CustomerManageProvider />} />
+        </Routes>
+    );
+};
 
-export default CustomerStack
-
-const styles = StyleSheet.create({})
+export default CustomerStack;

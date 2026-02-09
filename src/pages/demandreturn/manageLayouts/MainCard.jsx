@@ -1,10 +1,6 @@
-import { Text, View } from 'react-native'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from 'react';
 import ManageCard from './../../../shared/ui/ManageCard';
 import Input from '../../../shared/ui/Input';
-import { Pressable } from '@react-native-material/core';
-import DatePicker from 'react-native-date-picker';
-import moment from 'moment';
 import { DemandReturnGlobalContext } from '../../../shared/data/DemandReturnGlobalState';
 import useTheme from '../../../shared/theme/useTheme';
 import SelectionDate from '../../../shared/ui/SelectionDate';
@@ -21,19 +17,25 @@ const MainCard = ({ changeInput, changeSelection }) => {
 
   return (
     <ManageCard>
-      <View style={{
+      <div style={{
         width: '100%',
         padding: 15,
+        boxSizing: 'border-box'
       }}>
-        <Text style={{
+        <span style={{
           fontSize: 20,
-          color: theme.primary
-        }}>Satış iadəsi</Text>
-      </View>
-      <View style={{
+          color: theme.primary,
+          fontWeight: 'bold',
+          display: 'block'
+        }}>Satış iadəsi</span>
+      </div>
+      <div style={{
         marginTop: 20,
         gap: 20,
-        alignItems: 'center'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingBottom: 20
       }}>
 
         <Input
@@ -55,10 +57,10 @@ const MainCard = ({ changeInput, changeSelection }) => {
           setModalVisible={setMomentModal}
         />
 
-      </View>
+      </div>
 
     </ManageCard>
   )
 }
 
-export default MainCard
+export default MainCard;

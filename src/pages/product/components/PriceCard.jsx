@@ -1,11 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React, { useContext } from 'react'
-import useTheme from '../../../shared/theme/useTheme'
-import Input from '../../../shared/ui/Input'
-import { ProductGlobalContext } from '../../../shared/data/ProductGlobalState'
-import Entypo from 'react-native-vector-icons/Entypo';
-import useGlobalStore from '../../../shared/data/zustand/useGlobalStore'
-import permission_ver from '../../../services/permissionVerification'
+import React, { useContext } from 'react';
+import useTheme from '../../../shared/theme/useTheme';
+import Input from '../../../shared/ui/Input';
+import { ProductGlobalContext } from '../../../shared/data/ProductGlobalState';
+import { IoPricetag } from 'react-icons/io5';
+import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
+import permission_ver from '../../../services/permissionVerification';
 
 const PriceCard = ({ changeInput }) => {
 
@@ -14,35 +13,43 @@ const PriceCard = ({ changeInput }) => {
 
   let theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
       width: '100%',
-      elevation: 2,
-      shadowColor: theme.black,
       backgroundColor: theme.bg,
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
-      paddingBottom: 50
+      paddingBottom: 50,
+      boxShadow: `0 2px 4px ${theme.black}20`
     },
     header: {
+      display: 'flex',
       flexDirection: 'row',
       gap: 10,
       width: '100%',
-      padding: 15
+      padding: 15,
+      alignItems: 'center',
+      boxSizing: 'border-box'
     },
     center: {
-      gap: 10
+      gap: 10,
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      alignItems: 'center'
     }
-  })
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Entypo size={20} color={theme.grey} name='price-tag' />
-        <Text style={{
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <IoPricetag size={20} color={theme.grey} />
+        <span style={{
           color: theme.grey
-        }}>Qiymət</Text>
-      </View>
-      <View style={styles.center}>
+        }}>Qiymət</span>
+      </div>
+      <div style={styles.center}>
 
         <Input
           placeholder={"Satış qiymət"}
@@ -55,17 +62,17 @@ const PriceCard = ({ changeInput }) => {
 
         {
           permission_ver(permissions, 'sub_buy_price', 'R') ?
-          <Input
-            type={'number'}
-            placeholder={"Alış qiymət"}
-            value={product.BuyPrice}
-            width={'70%'}
-            onChange={(e) => {
-              changeInput('BuyPrice', e)
-            }}
-          />
-          :
-        ""
+            <Input
+              type={'number'}
+              placeholder={"Alış qiymət"}
+              value={product.BuyPrice}
+              width={'70%'}
+              onChange={(e) => {
+                changeInput('BuyPrice', e)
+              }}
+            />
+            :
+            ""
         }
 
         <Input
@@ -78,9 +85,9 @@ const PriceCard = ({ changeInput }) => {
           }}
         />
 
-      </View>
-    </View>
+      </div>
+    </div>
   )
 }
 
-export default PriceCard
+export default PriceCard;

@@ -1,10 +1,7 @@
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import React, { useEffect, useRef, useState } from 'react';
+import { IoArrowBack, IoFilter, IoSearch, IoScan } from 'react-icons/io5';
 import useTheme from '../theme/useTheme';
 import IconButton from './IconButton';
-
 
 const ListPagesHeader = ({
     header,
@@ -17,69 +14,69 @@ const ListPagesHeader = ({
     processFilterClick,
     searchM,
 }) => {
-
     const theme = useTheme();
     const [searchMode, setSearchMode] = useState(false);
     const inputRef = useRef(null);
 
-
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
             backgroundColor: theme.primary,
             width: '100%',
             height: 55,
+            display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
             paddingLeft: 10,
             paddingRight: 10,
-            alignItems: 'center'
+            alignItems: 'center',
+            boxSizing: 'border-box'
         },
         right: {
+            display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-around',
-            width: 150
+            width: 150,
+            alignItems: 'center'
         },
         text: {
             fontSize: 18,
-            color: theme.stable.white
+            color: theme.stable.white,
+            fontWeight: 500
         },
-        pressContainer: {
-            borderRadius: 40,
-            overflow: 'hidden'
-        },
-        press: {
-            width: 40,
-            height: 40,
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 40
-        },
-
         right_active: {
             width: '10%'
         },
         left: {
+            display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            width: '80%'
+            width: '80%',
+            gap: 10
         },
         input: {
             color: theme.stable.white,
-            fontSize: 18
+            fontSize: 18,
+            backgroundColor: 'transparent',
+            border: 'none',
+            outline: 'none',
+            width: '100%',
+            '::placeholder': {
+                color: theme.whiteGrey
+            }
         }
-    })
+    };
 
     useEffect(() => {
-        if (searchMode) {
+        if (searchMode && inputRef.current) {
             inputRef.current.focus();
         }
     }, [searchMode]);
 
     useEffect(() => {
         if (searchM) {
-            setSearchMode(true)
+            setSearchMode(true);
         }
-    }, [searchM])
+    }, [searchM]);
 
     useEffect(() => {
         if (filter && filter[filterSearchKey] && filter[filterSearchKey].length > 0) {
@@ -88,11 +85,10 @@ const ListPagesHeader = ({
     }, [filter, filterSearchKey]);
 
     return (
-        <View style={styles.container}>
+        <div style={styles.container}>
             {searchMode ? (
                 <>
-                    <View style={styles.left}>
-
+                    <div style={styles.left}>
                         <IconButton size={40} onPress={() => {
                             setSearchMode(false);
                             let myFilter = { ...filter };
@@ -100,42 +96,39 @@ const ListPagesHeader = ({
                             myFilter.pg = 1;
                             setFilter(myFilter);
                         }}>
-                            <Ionicons name='arrow-back' size={20} color={theme.stable.white} />
+                            <IoArrowBack size={20} color={theme.stable.white} />
                         </IconButton>
 
-                        <TextInput
-                            value={filter[filterSearchKey]}
-                            onChangeText={(e) => {
+                        <input
+                            value={filter[filterSearchKey] || ''}
+                            onChange={(e) => {
                                 let myFilter = { ...filter };
-                                myFilter[filterSearchKey] = e;
+                                myFilter[filterSearchKey] = e.target.value;
                                 myFilter.pg = 1;
                                 setFilter(myFilter);
                             }}
                             ref={inputRef}
-                            placeholderTextColor={theme.whiteGrey}
-                            cursorColor={theme.stable.white}
                             placeholder='Axtarış...'
                             style={styles.input}
                         />
-                    </View>
+                    </div>
 
-                    <View style={styles.right_active}>
-                        {
-                            isFilter &&
+                    <div style={styles.right_active}>
+                        {isFilter &&
                             <IconButton size={40}>
-                                <Ionicons name='filter' size={20} color={theme.stable.white} />
+                                <IoFilter size={20} color={theme.stable.white} />
                             </IconButton>
                         }
-                    </View>
+                    </div>
                 </>
             ) : (
                 <>
-                    <Text style={styles.text}>{header}</Text>
+                    <span style={styles.text}>{header}</span>
 
-                    <View style={styles.right}>
+                    <div style={styles.right}>
                         {isSearch && (
                             <IconButton onPress={() => setSearchMode(true)} size={40}>
-                                <Ionicons name='search' size={20} color={theme.stable.white} />
+                                <IoSearch size={20} color={theme.stable.white} />
                             </IconButton>
                         )}
 
@@ -143,21 +136,20 @@ const ListPagesHeader = ({
                             <IconButton size={40} onPress={() => {
                                 processFilterClick();
                             }}>
-                                <Ionicons name='filter' size={20} color={theme.stable.white} />
+                                <IoFilter size={20} color={theme.stable.white} />
                             </IconButton>
                         )}
 
                         {processScannerClick && (
                             <IconButton onPress={processScannerClick} size={40}>
-                                <MaterialCommunityIcon name='line-scan' size={20} color={theme.stable.white} />
+                                <IoScan size={20} color={theme.stable.white} />
                             </IconButton>
                         )}
-                    </View>
+                    </div>
                 </>
             )}
-
-        </View>
+        </div>
     );
-}
+};
 
 export default ListPagesHeader;

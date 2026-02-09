@@ -1,15 +1,14 @@
-import { Text, View } from 'react-native'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from 'react';
 import ManageCard from './../../../shared/ui/ManageCard';
 import Input from '../../../shared/ui/Input';
 import useTheme from '../../../shared/theme/useTheme';
 import SelectionDate from '../../../shared/ui/SelectionDate';
 import { CustomerOrderGlobalContext } from '../../../shared/data/CustomerOrderGlobalState';
 import CustomSelection from '../../../shared/ui/CustomSelection';
-import paymethdemo from './../../../../paymethdem';
+import paymethdemo from '../../../paymethdem';
 import Button from '../../../shared/ui/Button';
 import api from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 
 const MainCard = ({ changeInput, changeSelection }) => {
 
@@ -24,7 +23,7 @@ const MainCard = ({ changeInput, changeSelection }) => {
     setIsImplementLoading(true);
     await api(`customerorders/todemand.php`, {
       documentid: document.Id,
-      token: await AsyncStorage.getItem('token')
+      token: await AsyncStorageWrapper.getItem('token')
     })
 
     setIsImplementLoading(false);
@@ -32,17 +31,20 @@ const MainCard = ({ changeInput, changeSelection }) => {
 
   return (
     <ManageCard>
-      <View style={{
+      <div style={{
         width: '100%',
         padding: 15,
+        display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        boxSizing: 'border-box'
       }}>
-        <Text style={{
+        <span style={{
           fontSize: 20,
-          color: theme.primary
-        }}>Sifariş</Text>
+          color: theme.primary,
+          fontWeight: 'bold'
+        }}>Sifariş</span>
 
         {document && document.Id && (
           <Button
@@ -54,11 +56,14 @@ const MainCard = ({ changeInput, changeSelection }) => {
             Təstiqlə
           </Button>
         )}
-      </View>
-      <View style={{
+      </div>
+      <div style={{
         marginTop: 20,
         gap: 20,
-        alignItems: 'center'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingBottom: 20
       }}>
         <Input
           placeholder={'Ad'}
@@ -78,7 +83,7 @@ const MainCard = ({ changeInput, changeSelection }) => {
           setModalVisible={setMomentModal}
         />
 
-        <View style={{
+        <div style={{
           width: '70%'
         }}>
           <CustomSelection
@@ -90,11 +95,11 @@ const MainCard = ({ changeInput, changeSelection }) => {
             placeholder={'Sifariş novü'}
             title={'Sifariş növü'}
           />
-        </View>
-      </View>
+        </div>
+      </div>
 
     </ManageCard>
   )
 }
 
-export default MainCard
+export default MainCard;

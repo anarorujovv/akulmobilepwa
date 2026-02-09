@@ -1,12 +1,10 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import MyModal from './../MyModal';
 import api from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
 import Line from '../Line';
-import { ActivityIndicator, Pressable } from '@react-native-material/core';
 
 const StockModal = ({
   modalVisible,
@@ -20,7 +18,7 @@ const StockModal = ({
 
   const fetchingStocks = async () => {
     await api('stocks/get.php', {
-      token: await AsyncStorage.getItem('token'),
+      token: await AsyncStorageWrapper.getItem('token'),
     }).then((element) => {
       if (element != null) {
         if (element.List[0]) {
@@ -34,26 +32,34 @@ const StockModal = ({
     })
   }
 
-  const renderItem = ({ item, index }) => {
+  const renderItem = (item, index) => {
     return (
-      <>
-        <Pressable onPress={() => {
+      <div key={item.Id || index} style={{ width: '100%' }}>
+        <div onClick={() => {
           setProduct(rel => ({ ...rel, ['StockName']: item.Name }))
           setProduct(rel => ({ ...rel, ['StockId']: item.Id }));
           setModalVisible(false);
-        }} pressEffectColor={theme.input.grey} style={{
-          width: '100%',
-          height: 55,
-          paddingLeft: 20,
-          justifyContent: 'center',
-        }}>
-          <Text style={{
+        }}
+          style={{
+            width: '100%',
+            height: 55,
+            paddingLeft: 20,
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          <span style={{
             color: theme.black,
             fontSize: 13
-          }}>{item.Name}</Text>
-        </Pressable>
+          }}>{item.Name}</span>
+        </div>
         <Line width={'90%'} />
-      </>
+      </div>
     )
   }
 
@@ -71,47 +77,48 @@ const StockModal = ({
     fetchingStocks();
   }, [])
 
+  const styles = {
+    noDataContainer: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    listContainer: {
+      width: '100%',
+      height: '100%',
+      overflowY: 'auto'
+    }
+  }
+
   return (
     <MyModal
       modalVisible={modalVisible}
       setModalVisible={setModalVisible}
       width={'100%'}
-      height={"100%"}
     >
       {
         stocks == null ?
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{
+          <div style={styles.noDataContainer}>
+            <span style={{
               fontSize: 16,
               color: theme.primary
-            }}>Məlumat tapılmadı...</Text>
-          </View>
+            }}>Məlumat tapılmadı...</span>
+          </div>
           :
-          <View style={{
-            width: '100%',
-            height: '100%'
-          }}>
+          <div style={styles.listContainer}>
             {
               stocks[0] ?
-                <FlatList
-                  data={stocks}
-                  renderItem={renderItem}
-                />
+                stocks.map((item, index) => renderItem(item, index))
                 :
-                <View style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}>
-                  <ActivityIndicator size={40} color={theme.primary} />
-                </View>
+                <div style={styles.noDataContainer}>
+                  <div className="spinner"></div>
+                </div>
             }
-          </View>
+          </div>
       }
     </MyModal>
   )
 }
 
-export default StockModal
-
-const styles = StyleSheet.create({})
+export default StockModal;

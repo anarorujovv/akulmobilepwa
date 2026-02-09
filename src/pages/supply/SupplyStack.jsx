@@ -1,37 +1,25 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import SupplyManageProvider from './SupplyManageProvider';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import SupplyList from './SupplyList';
+import SupplyManageProvider from './SupplyManageProvider';
 import PositionManage from './../../shared/ui/PositionManage';
 import DocumentProductList from './../../shared/ui/DocumentProductList';
 import ProductScanner from './../product/ProductScanner';
 import PaymentManageProvider from './../payment/PaymentManageProvider';
 import SupplyReturnManageProvider from './../supplyreturn/SupplyReturnManageProvider';
 
-
 const SupplyStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation:'fade'
-            }}
-        >
-            <Stack.Screen name="supply-list" component={SupplyList} />
-            <Stack.Screen name="supply-manage" component={SupplyManageProvider} />
-            <Stack.Screen name='product-position' component={PositionManage} />
-            <Stack.Screen name='product-list' component={DocumentProductList}/>
-            <Stack.Screen name='product-scanner' component={ProductScanner}/>
-            <Stack.Screen name='payment' component={PaymentManageProvider}/>
-            <Stack.Screen name='return' component={SupplyReturnManageProvider}/>
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<SupplyList />} />
+            <Route path="/supply-manage" element={<SupplyManageProvider />} />
+            <Route path="/product-position" element={<PositionManage />} />
+            <Route path="/product-list" element={<DocumentProductList />} />
+            <Route path="/product-scanner" element={<ProductScanner />} />
+            <Route path="/payment" element={<PaymentManageProvider />} />
+            <Route path="/return" element={<SupplyReturnManageProvider />} />
+        </Routes>
+    );
+};
 
-export default SupplyStack
-
-const styles = StyleSheet.create({})
+export default SupplyStack;

@@ -1,17 +1,18 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import getDateByIndex from '../../services/report/getDateByIndex';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
 import ListItem from '../../shared/ui/list/ListItem';
 import DocumentInfo from '../../shared/ui/DocumentInfo';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const CreditTransactionManage = ({ route, navigation }) => {
-
-    let { id } = route.params;
+const CreditTransactionManage = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    let { id } = location.state || {}; // Get ID from state
 
     let theme = useTheme();
 
@@ -25,11 +26,32 @@ const CreditTransactionManage = ({ route, navigation }) => {
     const [sum, setSum] = useState(null);
     const [dateByIndex, setDateByIndex] = useState(4)
 
+    const styles = {
+        container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
+        },
+        listContainer: {
+            flex: 1,
+            overflowY: 'auto'
+        },
+        loadingContainer: {
+            width: '100%',
+            height: 50,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }
+    };
+
     const makeApiRequest = async () => {
         let obj = {
             ...filter,
             cus: id,
-            token: await AsyncStorage.getItem('token')
+            token: await AsyncStorageWrapper.getItem('token')
         }
 
         await api('documents/get.php', obj)
@@ -46,17 +68,15 @@ const CreditTransactionManage = ({ route, navigation }) => {
             })
 
     }
-    
+
     useEffect(() => {
-        makeApiRequest();
+        if (id) {
+            makeApiRequest();
+        }
     }, [id])
 
     return (
-        <View style={{
-            flex: 1,
-            backgroundColor: theme.bg
-        }}>
-
+        <div style={styles.container}>
 
             <DocumentTimes
                 filter={filter}
@@ -64,67 +84,59 @@ const CreditTransactionManage = ({ route, navigation }) => {
                 selected={dateByIndex}
                 setSelected={setDateByIndex}
             />
-            
+
             {
                 sum == null ?
-                    <View style={{
-                        width: '100%',
-                        height: 50,
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
-                        <ActivityIndicator size={30} color={theme.primary} />
-                    </View>
+                    <div style={styles.loadingContainer}>
+                        <div className="spinner" style={{ width: 20, height: 20 }}></div>
+                    </div>
                     :
-                   <>
-                    <DocumentInfo
-                        data={[
-                            {
-                                title: "İlkin borc",
-                                value: sum.InSum
-                            },
-                            {
-                                title: "Alınıb",
-                                value: Math.abs(sum.Debits)
-                            },
-                            {
-                                title:"Verilib",
-                                value:sum.Credits
-                            },
-                            {
-                                title:'Yekun borc',
-                                value:sum.AllSum
-                            }
-                        ]}
-                    />
-                   </>
+                    <div>
+                        <DocumentInfo
+                            data={[
+                                {
+                                    title: "İlkin borc",
+                                    value: sum.InSum
+                                },
+                                {
+                                    title: "Alınıb",
+                                    value: Math.abs(sum.Debits)
+                                },
+                                {
+                                    title: "Verilib",
+                                    value: sum.Credits
+                                },
+                                {
+                                    title: 'Yekun borc',
+                                    value: sum.AllSum
+                                }
+                            ]}
+                        />
+                    </div>
             }
 
-            <FlatList
-                data={list}
-                renderItem={({ item, index }) => {
-                    return (
+            <div style={styles.listContainer}>
+                {list && list.map((item, index) => (
+                    <div key={index}>
                         <ListItem
                             onPress={() => {
-                                navigation.navigate('credit-transaction-manage', {
-                                    id: item.Id
+                                navigate('/creditTransaction/credit-transaction-manage', {
+                                    state: { id: item.Id }
                                 })
                             }}
                             centerText={item.CustomerName}
                             endText={item.Moment}
-                            firstText={<Text style={{
+                            firstText={<span style={{
                                 color: theme.primary
-                            }}>{item.SalePoint}</Text>}
+                            }}>{item.SalePoint}</span>}
                             notIcon={true}
                             index={index + 1}
                         />
-                    );
-                }}
-            />
-        </View>
+                    </div>
+                ))}
+            </div>
+        </div>
     )
 }
 
-export default CreditTransactionManage
-
-const styles = StyleSheet.create({})
+export default CreditTransactionManage;

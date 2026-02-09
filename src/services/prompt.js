@@ -1,21 +1,17 @@
-import { Alert } from "react-native";
-
+/**
+ * Web-compatible prompt function
+ * Shows a confirmation dialog to the user
+ * @param {string} message - The message to display
+ * @param {function} onPress - Callback to execute if user confirms
+ */
 const prompt = (message, onPress) => {
-    Alert.alert(
-        'Diqqət',
-        message,
-        [
-            {
-                text: 'İmtina et',
-                style: 'cancel',
-            },
-            {
-                text: 'Təsdiqlə',
-                onPress: onPress,
-            },
-        ],
-        { cancelable: true }
-    );
+    // Use native browser confirm dialog
+    // Returns true if user clicks OK, false if Cancel
+    const confirmed = window.confirm(message);
+
+    if (confirmed && onPress) {
+        onPress();
+    }
 }
 
-export default prompt
+export default prompt;

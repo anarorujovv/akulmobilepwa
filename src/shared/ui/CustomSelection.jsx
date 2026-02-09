@@ -1,58 +1,64 @@
 import React, { useState } from 'react';
-import { FlatList, Text, View, StyleSheet } from 'react-native';
 import MyModal from './MyModal';
 import Input from './Input';
 import useTheme from '../theme/useTheme';
 import Line from './Line';
-import { Pressable } from '@react-native-material/core';
 
 const CustomSelection = ({ options, value, onChange, title, placeholder, disabled }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const theme = useTheme();
-    
-    const styles = StyleSheet.create({
+
+    const styles = {
         inputWrapper: {
             width: '100%',
+            cursor: !disabled ? 'pointer' : 'default'
         },
         modalTitle: {
             fontSize: 18,
             fontWeight: 'bold',
             marginBottom: 10,
             textAlign: 'center',
-            color:theme.primary
+            color: theme.primary
         },
         option: {
             padding: 15,
+            cursor: 'pointer',
+            backgroundColor: theme.stable.white,
+            transition: 'background-color 0.2s'
         },
         optionText: {
             fontSize: 16,
             color: '#000',
         },
-    });
+        container: {
+            width: '100%',
+            height: '100%',
+            overflowY: 'auto'
+        }
+    };
 
-    const renderItem = ({ item }) => (
-        <>
-            <Pressable
+    const renderItem = (item) => (
+        <div key={item.key}>
+            <div
                 style={styles.option}
-                onPress={() => {
+                onClick={() => {
                     onChange(item.key);
                     setModalVisible(false);
                 }}
-                disabled={disabled}
             >
-                <Text style={styles.optionText}>{item.value}</Text>
-            </Pressable>
-            <Line width={'95%'}/>
-        </>
+                <span style={styles.optionText}>{item.value}</span>
+            </div>
+            <Line width={'95%'} />
+        </div>
     );
 
     const selectedValue = options.find((option) => option.key === value)?.value || '';
 
     return (
-        <View style={{ width: '100%' }}>
-            <Pressable
+        <div style={{ width: '100%' }}>
+            <div
                 style={styles.inputWrapper}
-                onPress={() => !disabled && setModalVisible(true)}
+                onClick={() => !disabled && setModalVisible(true)}
             >
                 <Input
                     value={selectedValue}
@@ -60,7 +66,7 @@ const CustomSelection = ({ options, value, onChange, title, placeholder, disable
                     placeholder={placeholder || title}
                     disabled={true}
                 />
-            </Pressable>
+            </div>
 
             <MyModal
                 modalVisible={modalVisible}
@@ -69,17 +75,13 @@ const CustomSelection = ({ options, value, onChange, title, placeholder, disable
                 height="50%"
                 center
             >
-                <Text style={styles.modalTitle}>{title}</Text>
-                <FlatList
-                    data={options}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.key}
-                />
+                <div style={styles.modalTitle}>{title}</div>
+                <div style={styles.container}>
+                    {options.map(renderItem)}
+                </div>
             </MyModal>
-        </View>
+        </div>
     );
 };
-
-
 
 export default CustomSelection;

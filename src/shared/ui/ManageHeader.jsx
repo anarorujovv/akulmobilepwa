@@ -1,78 +1,39 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Modal, TouchableOpacity } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigate } from 'react-router-dom';
+import { IoArrowBack, IoEllipsisVertical, IoPrint, IoCash } from 'react-icons/io5';
+import { MdInsertDriveFile } from 'react-icons/md';
 import useTheme from '../theme/useTheme';
 import IconButton from './IconButton';
-import { Pressable } from '@react-native-material/core';
 import TempsModal from './modals/TempsModal';
 import prompt from '../../services/prompt';
 
-const ManageHeader = ({ navigation, document, print, hasUnsavedChanges, isExcel, isPriceList, onSubmit, type,
+const ManageHeader = ({
+  document,
+  print,
+  hasUnsavedChanges,
+  isExcel,
+  isPriceList,
+  onSubmit,
+  type,
   customMenu
 }) => {
-
   const theme = useTheme();
+  const navigate = useNavigate();
   const [menuVisible, setMenuVisible] = useState(false);
   const [tempModal, setTempModal] = useState(false);
   const [priceListModal, setPriceListModal] = useState(false);
 
-  const styles = StyleSheet.create({
-    top: {
-      width: '100%',
-      height: 55,
-      backgroundColor: theme.primary,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 10,
-    },
-    modalContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    menuContainer: {
-      backgroundColor: theme.stable.white,
-      padding: 20,
-      borderRadius: 8,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4,
-      elevation: 5,
-      width: '80%',
-    },
-    paymentOption: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.input.greyWhite,
-      padding: 15,
-      marginVertical: 10,
-      borderRadius: 8,
-    },
-    paymentIcon: {
-      marginRight: 10,
-    },
-    paymentText: {
-      fontSize: 18,
-      color: theme.textColor,
-      fontWeight: '600',
-    },
-  });
-
   const handleMenuClick = async (action) => {
-
-    let id = null
+    let id = null;
     if (document.Id && !hasUnsavedChanges) {
-      id = document.Id
+      id = document.Id;
     } else {
       if (onSubmit) {
         id = await onSubmit();
       }
       if (id == null) {
         setMenuVisible(false);
+        return;
       }
     }
 
@@ -83,101 +44,128 @@ const ManageHeader = ({ navigation, document, print, hasUnsavedChanges, isExcel,
           setMenuVisible(false);
           break;
         case 'Excel':
+          setMenuVisible(false);
           break;
         case 'PriceList':
           setPriceListModal(true);
           setMenuVisible(false);
           break;
+        default:
+          setMenuVisible(false);
       }
     }
   };
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
-      prompt('Çıxmağa əminsiniz ?', () => {
-        navigation.goBack();
-      });
+      // Web için window.confirm kullanılabilir veya custom prompt
+      if (window.confirm('Çıxmağa əminsiniz ?')) {
+        navigate(-1);
+      }
     } else {
-      navigation.goBack();
+      navigate(-1);
+    }
+  };
+
+  const styles = {
+    top: {
+      width: '100%',
+      height: 55,
+      backgroundColor: theme.primary,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '0 10px',
+      boxSizing: 'border-box',
+      position: 'relative'
+    },
+    dropdown: {
+      position: 'absolute',
+      top: 55,
+      right: 10,
+      backgroundColor: theme.stable.white,
+      borderRadius: 8,
+      boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+      zIndex: 1000,
+      minWidth: 150,
+      padding: 10
+    },
+    menuItem: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: '10px 15px',
+      cursor: 'pointer',
+      borderBottom: `1px solid ${theme.input.greyWhite}`,
+      gap: 10
+    },
+    menuText: {
+      fontSize: 16,
+      color: theme.textColor,
+      fontWeight: 500
+    },
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 999
     }
   };
 
   return (
-    <View style={styles.top}>
+    <div style={styles.top}>
       <IconButton onPress={handleBack} size={40}>
-        <Ionicons name="arrow-back" size={25} color={theme.stable.white} />
+        <IoArrowBack size={25} color={theme.stable.white} />
       </IconButton>
 
-      <IconButton onPress={() => setMenuVisible(true)} size={40}>
-        <Ionicons name="ellipsis-vertical" size={25} color={theme.stable.white} />
+      <IconButton onPress={() => setMenuVisible(!menuVisible)} size={40}>
+        <IoEllipsisVertical size={25} color={theme.stable.white} />
       </IconButton>
 
-      {/* Ana Menu */}
-
-      <Modal
-        visible={menuVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => setMenuVisible(false)}
-          style={styles.modalContainer}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.menuContainer}>
+      {menuVisible && (
+        <>
+          <div style={styles.overlay} onClick={() => setMenuVisible(false)} />
+          <div style={styles.dropdown}>
             {isExcel && (
-              <Pressable
-                pressEffectColor={theme.input.greyWhite}
-                style={styles.paymentOption}
-                onPress={() => handleMenuClick('Excel')}
-              >
-                <MaterialCommunityIcon name="microsoft-excel" size={20} color={theme.green} />
-                <Text style={styles.paymentText}>Excel</Text>
-              </Pressable>
+              <div style={styles.menuItem} onClick={() => handleMenuClick('Excel')}>
+                <MdInsertDriveFile size={20} color={theme.green} />
+                <span style={styles.menuText}>Excel</span>
+              </div>
             )}
 
             {print && (
-              <Pressable
-                pressEffectColor={theme.input.greyWhite}
-                style={styles.paymentOption}
-                onPress={() => handleMenuClick('Print')}
-              >
-                <Ionicons name="print" size={20} color={theme.primary} />
-                <Text style={styles.paymentText}>Print</Text>
-              </Pressable>
-            )}
-            {isPriceList && (
-              <Pressable
-                pressEffectColor={theme.input.greyWhite}
-                style={styles.paymentOption}
-                onPress={() => handleMenuClick('PriceList')}
-              >
-                <Ionicons name="cash" size={20} color={theme.primary} />
-                <Text style={styles.paymentText}>Price List</Text>
-              </Pressable>
+              <div style={styles.menuItem} onClick={() => handleMenuClick('Print')}>
+                <IoPrint size={20} color={theme.primary} />
+                <span style={styles.menuText}>Print</span>
+              </div>
             )}
 
-            {customMenu && customMenu.map((item) => {
-              return (
-                <Pressable
-                  pressEffectColor={theme.input.greyWhite}
-                  style={styles.paymentOption}
-                  onPress={() => item.onPress()}
-                >
-                  <Ionicons name={item.icon} size={20} color={theme.primary} />
-                  <Text style={styles.paymentText}>{item.name}</Text>
-                </Pressable>
-              )
-            })}
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+            {isPriceList && (
+              <div style={styles.menuItem} onClick={() => handleMenuClick('PriceList')}>
+                <IoCash size={20} color={theme.primary} />
+                <span style={styles.menuText}>Price List</span>
+              </div>
+            )}
+
+            {customMenu && customMenu.map((item, index) => (
+              <div key={index} style={styles.menuItem} onClick={() => {
+                item.onPress();
+                setMenuVisible(false);
+              }}>
+                {/* İkonu dinamik render etmek gerekebilir, şimdilik basit tuttum */}
+                <span style={styles.menuText}>{item.name}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <TempsModal
         modalVisible={tempModal}
         setModalVisible={setTempModal}
-        navigation={navigation}
         document={document}
         name={print}
         type={type}
@@ -186,12 +174,11 @@ const ManageHeader = ({ navigation, document, print, hasUnsavedChanges, isExcel,
       <TempsModal
         modalVisible={priceListModal}
         setModalVisible={setPriceListModal}
-        navigation={navigation}
         document={document}
         name={'products'}
         priceList={true}
       />
-    </View>
+    </div>
   );
 };
 

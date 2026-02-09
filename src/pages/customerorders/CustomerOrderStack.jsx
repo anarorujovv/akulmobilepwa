@@ -1,37 +1,23 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import CustomerOrderList from './CustomerOrderList';
 import CustomerOrderManageProvider from './CustomerOrderManageProvider';
 import PositionManage from '../../shared/ui/PositionManage';
 import DocumentProductList from '../../shared/ui/DocumentProductList';
-import Filter from '../../shared/ui/Filter';
-import PaymentManageProvider from '../payment/PaymentManageProvider';
 import ProductScanner from '../product/ProductScanner';
+import PaymentManageProvider from '../payment/PaymentManageProvider';
 
 const CustomerOrderStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation: 'fade'
-            }}
-        >
-            <Stack.Screen name="customer-order-list" component={CustomerOrderList} initialParams={{
-                type: "product"
-            }} />
-            <Stack.Screen name="customer-order-manage" component={CustomerOrderManageProvider} />
-            <Stack.Screen name='product-position' component={PositionManage} />
-            <Stack.Screen name='product-list' component={DocumentProductList} />
-            <Stack.Screen name='product-scanner' component={ProductScanner} />
-            <Stack.Screen name='payment' component={PaymentManageProvider} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<CustomerOrderList />} />
+            <Route path="/customer-order-manage" element={<CustomerOrderManageProvider />} />
+            <Route path="/product-position" element={<PositionManage />} />
+            <Route path="/product-list" element={<DocumentProductList />} />
+            <Route path="/product-scanner" element={<ProductScanner />} />
+            <Route path="/payment" element={<PaymentManageProvider />} />
+        </Routes>
+    );
+};
 
-export default CustomerOrderStack
-
-const styles = StyleSheet.create({})
+export default CustomerOrderStack;

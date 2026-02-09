@@ -1,19 +1,19 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import MyPagination from '../../shared/ui/MyPagination';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
 import moment from 'moment';
 import DateRangePicker from '../../shared/ui/DateRangePicker';
-import { useFocusEffect } from '@react-navigation/native';
 import CardItem from '../../shared/ui/list/CardItem';
+import { useNavigate } from 'react-router-dom';
 
-const ProductTransactionsList = ({ route, navigation }) => {
+const ProductTransactionsList = () => {
+    const navigate = useNavigate();
     let theme = useTheme();
 
     const [selectedTime, setSelectedTime] = useState(4);
@@ -35,72 +35,64 @@ const ProductTransactionsList = ({ route, navigation }) => {
         mome: moment(new Date()).format('YYYY-MM-DD 23:59:59'),
         momb: moment(new Date()).format('YYYY-MM-DD 00:00:00')
     })
-    
+
     const [documents, setDocuments] = useState([]);
     const [documentsInfo, setDocumentsInfo] = useState(null);
     const [itemSize, setItemSize] = useState(0);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
-            backgroundColor: theme.bg,            // Using theme's background color
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
         },
-        deleteButton: {
-            backgroundColor: theme.red,           // Using theme's red for delete button
+        listContainer: {
+            flex: 1,
+            overflowY: 'auto',
+            padding: 10
+        },
+        emptyContainer: {
+            flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            width: 100,
-            height: '100%',
+            display: 'flex',
+            paddingTop: 50
         },
-        deleteText: {
-            color: theme.stable.white,            // Using theme's white for delete text
-            fontWeight: 'bold',
-            fontSize: 16,
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
         },
         section: {
             marginBottom: 15,
             borderRadius: 8,
             overflow: 'hidden',
-            backgroundColor: theme.stable.white,  // Using theme's white for section background
-            borderColor: theme.grey,              // Using theme's grey for section border
+            backgroundColor: theme.stable.white,
+            borderColor: theme.grey,
             borderWidth: 1,
             marginLeft: 10,
             marginRight: 10,
         },
         sectionTitle: {
-            backgroundColor: theme.primary,       // Using theme's primary color for section title background
+            backgroundColor: theme.primary,
             padding: 10,
             fontSize: 16,
             fontWeight: 'bold',
-            color: theme.bg,                      // Using theme's background color for section title text
+            color: theme.bg,
         },
-        itemsContainer: {
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-        },
-        itemRow: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingVertical: 4,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.whiteGrey,    // Using theme's whiteGrey for row separators
-        },
-        itemKey: {
-            fontSize: 14,
-            color: theme.black,                   // Using theme's black for item key text
-        },
-        itemValue: {
-            fontSize: 14,
-            color: theme.black,                   // Using theme's black for item value text
-            fontWeight: 'bold',
-        },
-    });
+        dateRangeContainer: {
+            width: '100%',
+            padding: 10
+        }
+    };
 
     const fetchingDocumentData = async () => {
         setIsRefreshing(true);
-        let obj = { ...filter, token: await AsyncStorage.getItem('token') }
+        let obj = { ...filter, token: await AsyncStorageWrapper.getItem('token') }
         obj.pg = obj.pg - 1;
 
         try {
@@ -112,7 +104,7 @@ const ProductTransactionsList = ({ route, navigation }) => {
                 }
                 setDocuments([...element.List]);
             }
-    } catch (err) {
+        } catch (err) {
             ErrorMessage(err);
         } finally {
             setIsRefreshing(false);
@@ -138,44 +130,46 @@ const ProductTransactionsList = ({ route, navigation }) => {
         )
     }
 
-        useEffect(() => {
-            setDocuments(null);
-            let time = setTimeout(() => {
-                fetchingDocumentData();
-            }, 300);
+    useEffect(() => {
+        setDocuments(null);
+        let time = setTimeout(() => {
+            fetchingDocumentData();
+        }, 300);
 
-            return () => clearTimeout(time);
-            
-        }, [filter])
+        return () => clearTimeout(time);
 
-    const renderItem = ({ item }) => (
-        <CardItem
-            title={item.ProductName}
-            valueFormatPrice={true}
-            items={[
-                {
-                    key: "Anbar qalığı(ilk)",
-                    value: `${formatPrice(item.StartQuantity)} əd x ${formatPrice(item.StartCost)}₼`
-                },
-                {
-                    key: 'Alınıb',
-                    value: `${formatPrice(item.IncomeQuantity)} əd x ${formatPrice(item.IncomeCost)}₼`
-                },
-                {
-                    key: 'Verilib',
-                    value: `${formatPrice(item.OutcomeQuantity)} əd x ${formatPrice(item.OutcomeCost)}₼`
-                },
-                {
-                    key: 'Anbar qalığı(Son)',
-                    value: `${formatPrice(item.EndQuantity)} əd x ${formatPrice(item.EndCost)}₼`
-                }
-            ]}
-        />
+    }, [filter])
+
+    const renderItem = (item) => (
+        <div key={item.Id || Math.random()}>
+            <CardItem
+                title={item.ProductName}
+                valueFormatPrice={true}
+                items={[
+                    {
+                        key: "Anbar qalığı(ilk)",
+                        value: `${formatPrice(item.StartQuantity)} əd x ${formatPrice(item.StartCost)}₼`
+                    },
+                    {
+                        key: 'Alınıb',
+                        value: `${formatPrice(item.IncomeQuantity)} əd x ${formatPrice(item.IncomeCost)}₼`
+                    },
+                    {
+                        key: 'Verilib',
+                        value: `${formatPrice(item.OutcomeQuantity)} əd x ${formatPrice(item.OutcomeCost)}₼`
+                    },
+                    {
+                        key: 'Anbar qalığı(Son)',
+                        value: `${formatPrice(item.EndQuantity)} əd x ${formatPrice(item.EndCost)}₼`
+                    }
+                ]}
+            />
+        </div>
     );
 
     return (
-        <View style={styles.container}>
-            
+        <div style={styles.container}>
+
             <ListPagesHeader
                 header={"Dövriyyə"}
                 filter={filter}
@@ -184,41 +178,38 @@ const ProductTransactionsList = ({ route, navigation }) => {
                 isSearch={true}
                 isFilter={true}
                 processFilterClick={() => {
-                    navigation.navigate('filter',{
-                        filter:filter,
-                        setFilter:setFilter,
-                        searchParams:[
-                            'groups',
-                            'product',
-                            'stocks',
-                            'customers',
-                            'owners'
-                        ],
-                        customFields:{
-                            groups:{
-                                title:"Məhsul qrupu",
-                                name:'gp',
-                                type:'select',
-                                api:'productfolders'
+                    navigate('/filter', {
+                        state: {
+                            filter: filter,
+                            // setFilter:setFilter,
+                            searchParams: [
+                                'groups',
+                                'product',
+                                'stocks',
+                                'customers',
+                                'owners'
+                            ],
+                            customFields: {
+                                groups: {
+                                    title: "Məhsul qrupu",
+                                    name: 'gp',
+                                    type: 'select',
+                                    api: 'productfolders'
+                                }
                             }
                         }
                     })
                 }}
             />
 
-            <View style={{
-                width: '100%',
-                padding: 10
-            }}>
-
+            <div style={styles.dateRangeContainer}>
                 <DateRangePicker
                     submit={true}
                     width={'100%'}
                     filter={filter}
                     setFilter={setFilter}
                 />
-
-            </View>
+            </div>
 
             <DocumentTimes
                 selected={selectedTime}
@@ -228,42 +219,22 @@ const ProductTransactionsList = ({ route, navigation }) => {
             />
 
             {documents == null ? (
-                <View>
-                    <ActivityIndicator size={30} color={theme.primary} />
-                </View>
+                <div style={styles.loadingContainer}>
+                    <div className="spinner"></div> // Web spinner
+                </div>
             ) : (
-                <View style={{
-                    flex: 1,
-                    padding: 10
-                }}>
-                    <FlatList
-                        data={documents}
-                        renderItem={renderItem}
-                        refreshing={isRefreshing}
-                        ListEmptyComponent={() => (
-                            <View style={{
-                                flex: 1,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                paddingTop: 50
-                            }}>
-                                {documents === null ? (
-                                    <ActivityIndicator size={30} color={theme.primary} />
-                                ) : (
-                                    <Text style={{ color: theme.text }}>List boşdur</Text>
-                                )}
-                            </View>
-                        )}
-                        onRefresh={() => {
-                            let filterData = { ...filter };
-                            filterData.agrigate = 1;
-                            setFilter(filterData);
-                        }}
-                        ListFooterComponent={RenderFooter}
-                    />
-                </View>
+                <div style={styles.listContainer}>
+                    {documents.length === 0 ? (
+                        <div style={styles.emptyContainer}>
+                            <span style={{ color: theme.text }}>List boşdur</span>
+                        </div>
+                    ) : (
+                        documents.map((item) => renderItem(item))
+                    )}
+                    <RenderFooter />
+                </div>
             )}
-        </View>
+        </div>
     );
 };
 

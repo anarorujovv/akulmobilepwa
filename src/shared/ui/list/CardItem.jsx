@@ -1,76 +1,74 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import useTheme from '../../theme/useTheme'
+import React from 'react';
+import useTheme from '../../theme/useTheme';
 import { formatPrice } from '../../../services/formatPrice';
 
 const CardItem = ({ title, items, valueFormatPrice }) => {
 
     let theme = useTheme();
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
             flex: 1,
             padding: 10,
-            backgroundColor: theme.bg,            // Using theme background color
+            backgroundColor: theme.bg,
         },
         section: {
             marginBottom: 15,
             borderRadius: 8,
             overflow: 'hidden',
-            backgroundColor: theme.whiteGrey,     // Using theme's whiteGrey for section background
-            borderColor: theme.grey,              // Using theme grey for border color
-            borderWidth: 1,
+            backgroundColor: theme.whiteGrey,
+            border: `1px solid ${theme.grey}`,
         },
         sectionTitle: {
-            backgroundColor: theme.primary,       // Using theme primary color for title background
+            backgroundColor: theme.primary,
             padding: 10,
             fontSize: 16,
             fontWeight: 'bold',
-            color: theme.bg,                      // Using theme bg color for text to ensure contrast
+            color: theme.bg,
+            margin: 0
         },
         itemsContainer: {
-            paddingHorizontal: 10,
-            paddingVertical: 5,
+            padding: '5px 10px',
         },
         itemRow: {
+            display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
-            paddingVertical: 4,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.whiteGrey,   // Using theme whiteGrey for row divider
+            padding: '4px 0',
+            borderBottom: `1px solid ${theme.whiteGrey}`,
         },
         itemKey: {
             fontSize: 14,
-            color: theme.black,                   // Using theme black for item key text
+            color: theme.black,
         },
         itemValue: {
             fontSize: 14,
-            color: theme.black,                   // Using theme black for item value text
+            color: theme.black,
         },
-    })
+    };
+
     return (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{title}</Text>
-            <View style={styles.itemsContainer}>
+        <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>{title}</h3>
+            <div style={styles.itemsContainer}>
                 {items.map((item, itemIndex) => (
                     item.value == null ?
-                    ""
-                    :
-                    
-                    <View key={itemIndex} style={styles.itemRow}>
-                        <Text style={styles.itemKey}>{item.key}:</Text>
-                        {
-                            valueFormatPrice ?
-                                <Text style={[styles.itemValue, { fontWeight: item.isBold && 'bold' }]}>{formatPrice(item.value)}</Text>
-                                :
-                                <Text style={[styles.itemValue, { fontWeight: item.isBold && 'bold' }]}>{item.value}</Text>
+                        ""
+                        :
+                        <div key={itemIndex} style={styles.itemRow}>
+                            <span style={styles.itemKey}>{item.key}:</span>
+                            {
+                                valueFormatPrice ?
+                                    <span style={{ ...styles.itemValue, fontWeight: item.isBold ? 'bold' : 'normal' }}>{formatPrice(item.value)}</span>
+                                    :
+                                    <span style={{ ...styles.itemValue, fontWeight: item.isBold ? 'bold' : 'normal' }}>{item.value}</span>
 
-                        }
-                    </View>
+                            }
+                        </div>
                 ))}
-            </View>
-        </View>
-    )
-}
+            </div>
+        </div>
+    );
+};
 
-export default CardItem
+export default CardItem;

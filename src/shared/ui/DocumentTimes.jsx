@@ -1,6 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
 import React, { useEffect } from 'react';
-import { Pressable } from '@react-native-material/core';
 import useTheme from '../theme/useTheme';
 import moment from 'moment';
 
@@ -16,7 +14,7 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
 
   let theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
     container: {
       display: 'flex',
       flexDirection: 'row',
@@ -28,11 +26,15 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
       minWidth: 60,
       height: 25,
       overflow: 'hidden',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.primary,
+      border: `1px solid ${theme.primary}`,
       borderRadius: 3,
+      cursor: 'pointer',
+      backgroundColor: 'transparent',
+      transition: 'all 0.2s',
+      margin: '0 2px'
     },
     text: {
       color: theme.primary,
@@ -45,11 +47,13 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
       minWidth: 60,
       height: 25,
       overflow: 'hidden',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 3,
-      borderWidth: 1,
-      borderColor: theme.primary,
+      border: `1px solid ${theme.primary}`,
+      cursor: 'pointer',
+      margin: '0 2px'
     },
     textActive: {
       color: theme.stable.white,
@@ -57,7 +61,7 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
       marginLeft: 10,
       marginRight: 10,
     },
-  });
+  };
 
   useEffect(() => {
     const updateDate = () => {
@@ -81,7 +85,7 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
           filterInfo.momb = moment(firstDayOfMonth).format('YYYY-MM-DD 00:00:00');
           filterInfo.mome = moment(today).format("YYYY-MM-DD 23:59:59");
           break;
-          
+
         // case '30':
         //   const thirtyDaysAgo = new Date(today);
         //   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -113,20 +117,17 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
 
 
   return (
-    <View style={styles.container}>
+    <div style={styles.container}>
       {data.map((element, index) => (
-        <Pressable
-          onPress={() => setSelected(index)}
-          style={{}}
-          pressEffectColor={theme.input.grey}
+        <button
+          onClick={() => setSelected(index)}
           key={element.value}
+          style={index === selected ? styles.buttonActive : styles.button}
         >
-          <View style={index === selected ? styles.buttonActive : styles.button}>
-            <Text style={index === selected ? styles.textActive : styles.text}>{element.title}</Text>
-          </View>
-        </Pressable>
+          <span style={index === selected ? styles.textActive : styles.text}>{element.title}</span>
+        </button>
       ))}
-    </View>
+    </div>
   );
 };
 

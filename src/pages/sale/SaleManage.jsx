@@ -1,28 +1,53 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from '../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
 import BuyerCard from './manageLayouts/BuyerCard';
 import ProductCard from './manageLayouts/ProductCard';
 import DestinationCard from '../../shared/ui/DestinationCard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import api from '../../services/api';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const SaleManage = ({ route, navigation }) => {
-
+const SaleManage = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     let theme = useTheme();
-    let { id } = route.params;
+    let { id } = location.state || {}; // Get ID from state
 
     const [document, setDocument] = useState(null);
+
+    const styles = {
+        container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
+        },
+        content: {
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '10px'
+        },
+        loading: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }
+    };
 
     const makeApiRequest = async () => {
         let obj = {
             id: id,
-            token: await AsyncStorage.getItem("token")
+            token: await AsyncStorageWrapper.getItem("token")
         }
-        
+
         await api('sales/get.php', obj)
             .then(element => {
                 if (element != null) {
@@ -35,45 +60,36 @@ const SaleManage = ({ route, navigation }) => {
     }
 
     useEffect(() => {
-        makeApiRequest();
+        if (id) {
+            makeApiRequest();
+        }
     }, [id])
 
     return (
-        <View style={{
-            flex: 1,
-            backgroundColor: theme.bg
-        }}>
+        <div style={styles.container}>
 
             <ManageHeader
                 document={document}
-                navigation={navigation}
+                // navigation={navigation}
                 hasUnsavedChanges={false}
             />
 
             {
                 document == null
                     ?
-                    <View style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
-                        <ActivityIndicator size={30} color={theme.primary} />
-                    </View>
+                    <div style={styles.loading}>
+                        <div className="spinner"></div> // Web spinner
+                    </div>
                     :
-                    <ScrollView style={{
-                        flex: 1,
-                    }}>
+                    <div style={styles.content}>
                         <MainCard document={document} />
                         <BuyerCard document={document} />
                         <ProductCard document={document} setDocument={setDocument} />
                         <DestinationCard isAllDisabled={true} changeInput={() => { }} changeSelection={() => { }} document={document} setDocument={() => { }} />
-                    </ScrollView>
+                    </div>
             }
-        </View>
+        </div>
     )
 }
 
-export default SaleManage
-
-const styles = StyleSheet.create({})
+export default SaleManage;

@@ -1,18 +1,15 @@
-import { ActivityIndicator, BackHandler, ScrollView, StyleSheet, View } from 'react-native'
-import React, { useCallback, useContext, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
-import api from '../../services/api'
-import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import ProductCard from './manageLayouts/ProductCard'
-import pricingUtils from '../../services/pricingUtils'
+import api from '../../services/api';
+import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import ProductCard from './manageLayouts/ProductCard';
+import pricingUtils from '../../services/pricingUtils';
 import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import Button from '../../shared/ui/Button';
-import prompt from '../../services/prompt';
-import { useFocusEffect } from '@react-navigation/native';
 import DestinationCard from './../../shared/ui/DestinationCard';
 import moment from 'moment';
 import calculateUnit from './../../services/report/calculateUnit';
@@ -20,23 +17,44 @@ import BuyerCard from './manageLayouts/BuyerCard';
 import { LossGlobalContext } from '../../shared/data/LossGlobalState';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ModificationsCard from '../../shared/ui/ModificationsCard';
-import playSound from '../../services/playSound';
+// import playSound from '../../services/playSound';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const LossManage = ({ route, navigation }) => {
-
+const LossManage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.whiteGrey
-    }
-  })
 
-  let { id } = route.params;
+  const styles = {
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: theme.whiteGrey,
+      overflow: 'hidden'
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+      padding: '10px'
+    },
+    loading: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }
+  }
+
+  let { id } = location.state || {};
 
   const { document, setDocument, units, setUnits } = useContext(LossGlobalContext);
   const [loading, setLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   const fetchingDocument = async (id) => {
     if (id == null) {
       let obj = {
@@ -52,14 +70,14 @@ const LossManage = ({ route, navigation }) => {
         Status: true,
         Amount: 0,
         Discount: 0,
-        OwnerId: await AsyncStorage.getItem("ownerId") == null ? "" : await AsyncStorage.getItem('ownerId'),
-        DepartmentId: await AsyncStorage.getItem("depId") == null ? "" : await AsyncStorage.getItem('depId'),
+        OwnerId: await AsyncStorageWrapper.getItem("ownerId") == null ? "" : await AsyncStorageWrapper.getItem('ownerId'),
+        DepartmentId: await AsyncStorageWrapper.getItem("depId") == null ? "" : await AsyncStorageWrapper.getItem('depId'),
         Description: ""
       }
 
       await api('losses/newname.php', {
         n: "",
-        token: await AsyncStorage.getItem("token")
+        token: await AsyncStorageWrapper.getItem("token")
       }).then(element => {
         if (element != null) {
           obj.Name = element.ResponseService;
@@ -71,7 +89,7 @@ const LossManage = ({ route, navigation }) => {
     } else {
       let obj = {
         id: id,
-        token: await AsyncStorage.getItem('token')
+        token: await AsyncStorageWrapper.getItem('token')
       }
       await api('losses/get.php', obj)
         .then(async element => {
@@ -105,7 +123,7 @@ const LossManage = ({ route, navigation }) => {
       if (info.name == "") {
         await api('losses/newname.php', {
           n: "",
-          token: await AsyncStorage.getItem("token")
+          token: await AsyncStorageWrapper.getItem("token")
         }).then(element => {
           if (element != null) {
             info.name = element.ResponseService;
@@ -116,13 +134,13 @@ const LossManage = ({ route, navigation }) => {
       }
 
       info.modifications = await buildModificationsPayload(info.modifications[0], 'loss');
-      info.token = await AsyncStorage.getItem("token")
+      info.token = await AsyncStorageWrapper.getItem("token")
       await api('losses/put.php', info).then(element => {
         if (element != null) {
           SuccessMessage("Yadda saxlanıldı.");
           fetchingDocument(element.ResponseService);
           setHasUnsavedChanges(false);
-          playSound('success');
+          //   playSound('success');
         }
       }).catch(err => {
         ErrorMessage(err)
@@ -149,83 +167,63 @@ const LossManage = ({ route, navigation }) => {
     hasUnsavedChangesFunction();
   }
 
-  useFocusEffect(
-
-    useCallback(() => {
-      const onBackPress = async () => {
-        navigation.setParams({ shouldGoToSpecificPage: false });
-        hasUnsavedChanges ? prompt('Çıxmağa əminsiniz ?', () => navigation.goBack()) : (navigation.goBack());
-        return true;
-      };
-
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () =>
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    }, [hasUnsavedChanges]))
-
   useEffect(() => {
     fetchingDocument(id);
   }, [])
 
-
-
   return (
 
-    <View style={styles.container}>
+    <div style={styles.container}>
       {
         document == null ?
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size={40} color={theme.primary} />
-          </View>
+          <div style={styles.loading}>
+            <div className="spinner"></div> // Web spinner
+          </div>
           :
           <>
             <ManageHeader
-              navigation={navigation}
+              //   navigation={navigation}
               document={document}
               hasUnsavedChanges={hasUnsavedChanges}
             />
 
-            <ScrollView>
-              <View style={{
-                gap: 20
-              }}>
+            <div style={styles.content}>
 
-                <MainCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} navigation={navigation} id={id} />
-                <BuyerCard changeSelection={handleChangeSelection} />
-                <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} navigation={navigation} />
-                <DestinationCard
-                  document={document}
-                  setDocument={setDocument}
-                  changeInput={handleChangeInput}
-                  changeSelection={handleChangeSelection}
-                />
-                <ModificationsCard
-                  target={'loss'}
-                  hasUnsavedChanged={setHasUnsavedChanges}
-                  setState={setDocument}
-                  state={document}
-                />
-
-              </View>
-            </ScrollView>
+              <MainCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} id={id} />
+              <BuyerCard changeSelection={handleChangeSelection} />
+              <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} />
+              <DestinationCard
+                document={document}
+                setDocument={setDocument}
+                changeInput={handleChangeInput}
+                changeSelection={handleChangeSelection}
+              />
+              <ModificationsCard
+                target={'loss'}
+                hasUnsavedChanged={setHasUnsavedChanges}
+                setState={setDocument}
+                state={document}
+              />
+            </div>
             {
               hasUnsavedChanges ?
-                <Button
-                  bg={theme.green}
-                  disabled={loading}
-                  isLoading={loading}
-                  onClick={handleSave}
-                >
-                  Yadda Saxla
-                </Button>
+                <div style={{ padding: '10px' }}>
+                  <Button
+                    bg={theme.green}
+                    disabled={loading}
+                    isLoading={loading}
+                    onClick={handleSave}
+                  >
+                    Yadda Saxla
+                  </Button>
+                </div>
                 :
                 ""
             }
           </>
       }
-    </View>
+    </div>
   )
 }
 
-export default LossManage
+export default LossManage;

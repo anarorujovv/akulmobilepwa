@@ -1,27 +1,24 @@
-import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useCallback, useEffect, useState } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
-import NoData from './../../shared/ui/NoData';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from '../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import ListItem from '../../shared/ui/list/ListItem';
-import { useFocusEffect } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const DebtList = ({ route, navigation }) => {
-
+const DebtList = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     let theme = useTheme();
 
     let permissions = useGlobalStore(state => state.permissions);
 
-    const [input, setinput] = useState("");
     const [documents, setDocuments] = useState(null);
     const [documentsInfo, setDocumentsInfo] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -37,124 +34,87 @@ const DebtList = ({ route, navigation }) => {
     });
     const [itemSize, setItemSize] = useState(0);
     const selectionData = [
-        {
-            name: '0 olanlar',
-            value: '4'
-        },
-        {
-            name: '0 olmayanlar',
-            value: '3'
-        },
-        {
-            name: 'Borc (verəcək)',
-            value: '2'
-        },
-        {
-            name: 'Borc (alacaq)',
-            value: '1'
-        },
-        {
-            name: 'Bütün borclar',
-            value: 'all'
-        }
-    ]
+        { name: '0 olanlar', value: '4' },
+        { name: '0 olmayanlar', value: '3' },
+        { name: 'Borc (verəcək)', value: '2' },
+        { name: 'Borc (alacaq)', value: '1' },
+        { name: 'Bütün borclar', value: 'all' }
+    ];
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
-            backgroundColor: theme.bg
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
         },
-        deleteButton: {
-            backgroundColor: theme.red,
+        listContainer: {
+            flex: 1,
+            overflowY: 'auto'
+        },
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        emptyContainer: {
+            flex: 1,
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            width: 100,
-            height: '100%',
+            paddingTop: 50
         },
-        deleteText: {
-            color: 'white',
-            fontWeight: 'bold',
-            fontSize: 16
+        picker: {
+            width: '100%',
+            padding: 10,
+            backgroundColor: theme.bg,
+            color: theme.black,
+            border: 'none',
+            fontSize: 16,
+            outline: 'none',
+            cursor: 'pointer'
         }
-    })
+    };
 
     const fetchingDocumentData = async () => {
-
         let obj = {
             ...filter,
             pg: filter.pg - 1,
             zeros: filter.zeros == 'all' ? '' : filter.zeros,
-            token: await AsyncStorage.getItem('token')
-        }
-
-
-        console.log(obj);
+            token: await AsyncStorageWrapper.getItem('token')
+        };
         await api('settlements/get.php', obj)
             .then((element) => {
                 if (element != null) {
-                    setItemSize(element.Count)
+                    setItemSize(element.Count);
                     setDocumentsInfo(element);
-                    setDocuments([...element.List])
-
+                    setDocuments([...element.List]);
                 }
             })
             .catch((err) => {
-                ErrorMessage(err)
-            })
-    }
+                ErrorMessage(err);
+            });
+    };
 
-    const renderItem = ({ item, index }) => (
-        <>
-            <ListItem
-                index={index + 1}
-                centerText={item.CustomerName}
-                priceText={formatPrice(item.Amount)}
-                onPress={() => {
-                    if (permission_ver(permissions, 'page_debts', 'R')) {
-                        navigation.navigate('debt-manage', {
-                            id: item.CustomerId
-                        })
-                    } else {
-                        ErrorMessage('İcazəniz yoxdur!')
-                    }
-                }}
-            />
-        </>
-    )
+    useEffect(() => {
+        setDocuments(null);
+        let time = setTimeout(() => {
+            fetchingDocumentData();
+        }, 300);
+        return () => clearTimeout(time);
+    }, [filter]);
 
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-        await fetchingDocumentData();
-        setIsRefreshing(false);
-    }
-
-    let renderFooter = () => {
-        return (
-            <MyPagination
-                pageSize={100}
-                itemSize={itemSize}
-                page={filter.pg}
-                setPage={(e) => {
-                    setFilter(rel => ({ ...rel, ['pg']: e }));
-                }}
-            />
-        )
-    }
-
-    useFocusEffect(
-        useCallback(() => {
-            setDocuments(null);
-            let time = setTimeout(() => {
-                fetchingDocumentData();
-            }, 300);
-
-            return () => clearTimeout(time);
-        }, [filter])
-    )
+    useEffect(() => {
+        if (location.state?.appliedFilter) {
+            setFilter(location.state.appliedFilter);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     return (
-
-        <View style={styles.container}>
+        <div style={styles.container}>
             <ListPagesHeader
                 header={"Borclar"}
                 filter={filter}
@@ -163,91 +123,89 @@ const DebtList = ({ route, navigation }) => {
                 filterSearchKey={'docNumber'}
                 isFilter={true}
                 processFilterClick={() => {
-                    navigation.navigate('filter', {
-                        filter: filter,
-                        setFilter: setFilter,
-                        searchParams: [
-                            'customers',
-                            'customerGroups',
-                            'owners',
-                            'departments'
-                        ]
-                    })
+                    navigate('/filter', {
+                        state: {
+                            filter: filter,
+                            searchParams: [
+                                'customers',
+                                'customerGroups',
+                                'owners',
+                                'departments'
+                            ]
+                        }
+                    });
                 }}
             />
 
-            <Picker
-                selectedValue={filter.zeros}
-                onValueChange={(e) => {
+            <select
+                style={styles.picker}
+                value={filter.zeros}
+                onChange={(e) => {
+                    let val = e.target.value;
                     let filterData = { ...filter };
                     filterData.pg = 1;
                     filterData.agrigate = 1;
-                    filterData.zeros = e;
+                    filterData.zeros = val;
                     setFilter(filterData);
                 }}
             >
-                {
-                    selectionData.map((element, index) => {
-                        return (
-                            <Picker.Item key={element.value} value={element.value} color={theme.black} label={element.name} />
-                        )
-                    })
-                }
-            </Picker>
+                {selectionData.map((element) => (
+                    <option key={element.value} value={element.value}>{element.name}</option>
+                ))}
+            </select>
 
-            {documents == null ?
-                <View style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <ActivityIndicator size={30} color={theme.primary} />
-                </View>
-                :
-                <>
-
+            {documents == null ? (
+                <div style={styles.loadingContainer}>
+                    <div className="spinner"></div> // Assuming global spinner class
+                </div>
+            ) : (
+                <div style={styles.listContainer}>
                     <DocumentInfo
                         data={[
-                            {
-                                title: "Alacaq",
-                                value: formatPrice(documentsInfo.AllInSum)
-                            },
-                            {
-                                title: "Verəcək",
-                                value: formatPrice(documentsInfo.AllOutSum)
-                            },
-                            {
-                                title: 'Borclar (ümumi)',
-                                value: formatPrice(documentsInfo.AllSum)
-                            }
+                            { title: "Alacaq", value: formatPrice(documentsInfo.AllInSum) },
+                            { title: "Verəcək", value: formatPrice(documentsInfo.AllOutSum) },
+                            { title: 'Borclar (ümumi)', value: formatPrice(documentsInfo.AllSum) }
                         ]}
                     />
-                    <FlatList
-                        data={documents}
-                        renderItem={renderItem}
-                        keyExtractor={(item) => item.CustomerId.toString()}
-                        refreshing={isRefreshing}
-                        onRefresh={handleRefresh}
-                        ListFooterComponent={renderFooter}
-                        ListEmptyComponent={() => (
-                            <View style={{
-                                flex: 1,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                paddingTop: 50
-                            }}>
-                                {documents === null ? (
-                                    <ActivityIndicator size={30} color={theme.primary} />
-                                ) : (
-                                    <Text style={{ color: theme.text }}>List boşdur</Text>
-                                )}
-                            </View>
-                        )}
-                    />
-                </>
-            }
-        </View>
-    )
-}
 
-export default DebtList
+                    {documents.length === 0 ? (
+                        <div style={styles.emptyContainer}>
+                            <span style={{ color: theme.text }}>List boşdur</span>
+                        </div>
+                    ) : (
+                        <>
+                            {documents.map((item, index) => (
+                                <div key={item.CustomerId}>
+                                    <ListItem
+                                        index={index + 1}
+                                        centerText={item.CustomerName}
+                                        priceText={formatPrice(item.Amount)}
+                                        onPress={() => {
+                                            if (permission_ver(permissions, 'page_debts', 'R')) {
+                                                navigate('/debt/debt-manage', {
+                                                    state: { id: item.CustomerId }
+                                                });
+                                            } else {
+                                                ErrorMessage('İcazəniz yoxdur!');
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                            <MyPagination
+                                pageSize={100}
+                                itemSize={itemSize}
+                                page={filter.pg}
+                                setPage={(e) => {
+                                    setFilter(rel => ({ ...rel, ['pg']: e }));
+                                }}
+                            />
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default DebtList;

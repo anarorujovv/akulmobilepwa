@@ -1,25 +1,15 @@
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import ReturnList from './ReturnList';
 import ReturnManage from './ReturnManage';
-import Filter from '../../shared/ui/Filter';
 
 const ReturnStack = () => {
-
-  const Stack = createNativeStackNavigator();
-
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animation: 'fade'
-      }}
-    >
-        
-      <Stack.Screen name="return-list" component={ReturnList} />
-      <Stack.Screen name="return-manage" component={ReturnManage} />
-    </Stack.Navigator>
-  )
-}
+    <Routes>
+      <Route path="/" element={<ReturnList />} />
+      <Route path="/return-manage" element={<ReturnManage />} />
+    </Routes>
+  );
+};
 
-export default ReturnStack
+export default ReturnStack;

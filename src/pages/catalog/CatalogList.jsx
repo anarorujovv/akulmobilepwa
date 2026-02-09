@@ -1,9 +1,8 @@
-import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native'
-import React, { useState, useCallback } from 'react'
-import useTheme from '../../shared/theme/useTheme'
+import React, { useState, useCallback, useEffect } from 'react';
+import useTheme from '../../shared/theme/useTheme';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
@@ -12,13 +11,13 @@ import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
-import prompt from '../../services/prompt';
 import ListItem from '../../shared/ui/list/ListItem';
 import Line from '../../shared/ui/Line';
-import { useFocusEffect } from '@react-navigation/native';
 import translatePayed from './../../services/report/translatePayed';
+import { useNavigate } from 'react-router-dom';
 
-const CatalogList = ({ route, navigation }) => {
+const CatalogList = () => {
+    const navigate = useNavigate();
     let theme = useTheme();
 
     let permissions = useGlobalStore(state => state.permissions);
@@ -38,28 +37,36 @@ const CatalogList = ({ route, navigation }) => {
     const [itemSize, setItemSize] = useState(0)
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
-            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
             backgroundColor: theme.bg,
+            overflow: 'hidden'
         },
-        deleteButton: {
-            backgroundColor: theme.red,
+        listContainer: {
+            flex: 1,
+            overflowY: 'auto'
+        },
+        loadingContainer: {
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            width: 100,
-            height: '100%',
+            flex: 1
         },
-        deleteText: {
-            color: theme.stable.white,
-            fontWeight: 'bold',
-            fontSize: 16,
-        },
-    });
+        emptyContainer: {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
+            paddingTop: 50
+        }
+    };
 
     const fetchingDocumentData = useCallback(async () => {
         setIsRefreshing(true);
-        let obj = { ...filter, token: await AsyncStorage.getItem('token') }
+        let obj = { ...filter, token: await AsyncStorageWrapper.getItem('token') }
         obj.pg = obj.pg - 1;
 
         try {
@@ -81,7 +88,7 @@ const CatalogList = ({ route, navigation }) => {
     const handleDelete = async (id) => {
         if (permission_ver(permissions, 'catalog', 'D')) {
             await api('catalogs/del.php?id=' + id, {
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             }).then(element => {
                 if (element != null) {
                     setDocuments([]);
@@ -115,51 +122,17 @@ const CatalogList = ({ route, navigation }) => {
         )
     }
 
-    const renderItem = ({ item, index }) => (
-        <>
-            <ListItem
-                index={index + 1}
-                onLongPress={() => {
-                    prompt('Kataloqu silməyə əminsiniz?', () => {
-                        handleDelete(item.Id);
-                    })
-                }}
-                {...translatePayed(item.Payed)}
-                markId={item.Mark}
-                centerText={item.OwnerName}
-                firstText={item.Name}
-                endText={item.Moment}
-                notIcon={true}
-                priceText={formatPrice(item.Amount)}
-                onPress={() => {
-                    if (permission_ver(permissions, 'catalog', 'R')) {
-                        navigation.navigate('catalog-manage', {
-                            id: item.Id
-                        })
-                    } else {
-                        ErrorMessage('İcazəniz yoxdur!')
-                    }
-                }}
-            />
-        </>
-    );
+    useEffect(() => {
+        setDocuments(null);
+        let time = setTimeout(() => {
+            fetchingDocumentData();
+        }, 300);
 
-
-    useFocusEffect(
-        useCallback(() => {
-            setDocuments(null);
-
-            let time = setTimeout(() => {
-                fetchingDocumentData();
-            }, 300);
-
-            return () => clearTimeout(time);
-
-        }, [filter])
-    )
+        return () => clearTimeout(time);
+    }, [filter]);
 
     return (
-        <View style={styles.container}>
+        <div style={styles.container}>
 
             <ListPagesHeader
                 isSearch={true}
@@ -169,46 +142,48 @@ const CatalogList = ({ route, navigation }) => {
                 filterSearchKey={'docNumber'}
                 isFilter={true}
                 processFilterClick={() => {
-                    navigation.navigate('filter', {
-                        filter: filter,
-                        setFilter: setFilter,
-                        searchParams: [
-                            'product',
-                            'stocks',
-                            'owners',
-                            'documentName',
-                            'departments'
-                        ],
-                        sortList: [
-                            {
-                                id: '1',
-                                label: 'Tarix',
-                                value: "Moment"
-                            },
-                            {
-                                id: '2',
-                                label: 'Anbar',
-                                value: 'StockName'
-                            },
-                            {
-                                id: '3',
-                                label: "Məbləğə görə",
-                                value: 'Amount'
-                            },
-                            {
-                                id: '4',
-                                label: 'Status',
-                                value: "Mark"
-                            }
-                        ],
-                        customFields: {
-                            product: {
-                                title: "Məhsul",
-                                api: 'products',
-                                name: "productName",
-                                type: 'select',
-                                searchApi: 'products/getfast.php',
-                                searchKey: 'fast'
+                    navigate('/filter', {
+                        state: {
+                            filter: filter,
+                            // setFilter: setFilter, 
+                            searchParams: [
+                                'product',
+                                'stocks',
+                                'owners',
+                                'documentName',
+                                'departments'
+                            ],
+                            sortList: [
+                                {
+                                    id: '1',
+                                    label: 'Tarix',
+                                    value: "Moment"
+                                },
+                                {
+                                    id: '2',
+                                    label: 'Anbar',
+                                    value: 'StockName'
+                                },
+                                {
+                                    id: '3',
+                                    label: "Məbləğə görə",
+                                    value: 'Amount'
+                                },
+                                {
+                                    id: '4',
+                                    label: 'Status',
+                                    value: "Mark"
+                                }
+                            ],
+                            customFields: {
+                                product: {
+                                    title: "Məhsul",
+                                    api: 'products',
+                                    name: "productName",
+                                    type: 'select',
+                                    searchApi: 'products/getfast.php',
+                                    searchKey: 'fast'
+                                }
                             }
                         }
                     });
@@ -230,73 +205,76 @@ const CatalogList = ({ route, navigation }) => {
                     }
                 ]} />
             ) : (
-                <View style={{
+                <div style={{
                     width: '100%',
                     height: 20,
+                    display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center'
                 }}>
-                    <ActivityIndicator size={15} color={theme.primary} />
+                    <div className="spinner" style={{ width: 15, height: 15 }}></div>
                     <Line width={'100%'} />
-                </View>
+                </div>
             )}
 
-            <>
+            <div style={styles.listContainer}>
                 {
                     documents == null ?
-                        <View style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                        }}>
-                            <ActivityIndicator size={30} color={theme.primary} />
-                        </View>
+                        <div style={styles.loadingContainer}>
+                            <div className="spinner"></div> // Global spinner
+                        </div>
                         :
-                        <FlatList
-                            data={documents}
-                            renderItem={renderItem}
-                            keyExtractor={item => item.Id.toString()}
-                            refreshing={isRefreshing}
-                            ListEmptyComponent={() => (
-                                <View style={{
-                                    flex: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    paddingTop: 50
-                                }}>
-                                    {documents === null ? (
-                                        <ActivityIndicator size={30} color={theme.primary} />
-                                    ) : (
-                                        <Text style={{ color: theme.text }}>List boşdur</Text>
-                                    )}
-                                </View>
+                        <>
+                            {documents.length === 0 ? (
+                                <div style={styles.emptyContainer}>
+                                    <span style={{ color: theme.text }}>List boşdur</span>
+                                </div>
+                            ) : (
+                                documents.map((item, index) => (
+                                    <div key={item.Id}>
+                                        <ListItem
+                                            index={index + 1}
+                                            onLongPress={() => {
+                                                if (window.confirm('Kataloqu silməyə əminsiniz?')) {
+                                                    handleDelete(item.Id);
+                                                }
+                                            }}
+                                            {...translatePayed(item.Payed)}
+                                            markId={item.Mark}
+                                            centerText={item.OwnerName}
+                                            firstText={item.Name}
+                                            endText={item.Moment}
+                                            notIcon={true}
+                                            priceText={formatPrice(item.Amount)}
+                                            onPress={() => {
+                                                if (permission_ver(permissions, 'catalog', 'R')) {
+                                                    navigate('/catalog/catalog-manage', {
+                                                        state: { id: item.Id }
+                                                    })
+                                                } else {
+                                                    ErrorMessage('İcazəniz yoxdur!')
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                ))
                             )}
-                            onRefresh={() => {
-                                if (selectedTime != null) {
-                                    setSelectedTime(null);
-                                    let filterData = { ...filter };
-                                    delete filterData.momb;
-                                    delete filterData.mome;
-                                    filterData.agrigate = 1;
-                                    setFilter(filterData);
-                                }
-                            }}
-                            ListFooterComponent={RenderFooter}
-                        />
+                            <RenderFooter />
+                        </>
                 }
-            </>
+            </div>
 
             <FabButton
                 onPress={() => {
                     if (permission_ver(permissions, 'catalog', 'C')) {
-                        navigation.navigate('catalog-manage', {
-                            id: null
+                        navigate('/catalog/catalog-manage', {
+                            state: { id: null }
                         })
                     }
                 }}
             />
-        </View>
+        </div>
     )
 }
 
-export default CatalogList
+export default CatalogList;

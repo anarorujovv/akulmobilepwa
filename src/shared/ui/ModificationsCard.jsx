@@ -1,13 +1,11 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import ManageCard from './ManageCard'
+import React, { useEffect, useState } from 'react';
+import ManageCard from './ManageCard';
 import useTheme from '../theme/useTheme';
 import fetchModifications from '../../services/fetchModifications';
-import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import { Pressable } from '@react-native-material/core';
+import { MdFormatListBulleted } from 'react-icons/md';
+import { AiOutlineDown, AiOutlineUp, AiFillEdit, AiOutlineEdit } from 'react-icons/ai';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import CustomSelection from './CustomSelection';
 import MyModal from './MyModal';
 import Input from './Input';
@@ -15,26 +13,76 @@ import Button from './Button';
 
 const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
 
-  const styles = StyleSheet.create({
+  const theme = useTheme();
+
+  const styles = {
     header: {
       width: '100%',
       padding: 15,
       gap: 10,
+      display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'space-between'
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      cursor: 'pointer',
+      boxSizing: 'border-box'
+    },
+    headerContent: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 10
+    },
+    headerText: {
+      color: theme.grey
+    },
+    row: {
+      width: '70%',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 10
+    },
+    editButton: {
+      width: 30,
+      height: 30,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      cursor: 'pointer',
+      background: 'none',
+      border: 'none',
+      padding: 0
+    },
+    loadingContainer: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20
+    },
+    modalContent: {
+      width: '100%',
+      height: 200,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 10
     }
-  })
+  };
 
-  const theme = useTheme();
 
   const [modifications, setModifications] = useState([]);
   const [isCollapse, setIsCollapse] = useState(false);
   const [refs, setRefs] = useState(null);
   const [isEditMod, setIsEditMod] = useState({
-    visible:false,
-    target:null
+    visible: false,
+    target: null
   });
-  const [isEditModValue,setIsEditModValue] = useState('');
+  const [isEditModValue, setIsEditModValue] = useState('');
 
 
   const initializeApp = async () => {
@@ -56,7 +104,7 @@ const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
         column: element.Column,
         target: element.Target,
         modification: "",
-        token: await AsyncStorage.getItem('token')
+        token: await AsyncStorageWrapper.getItem('token')
       }).then(res => {
         obj[element.Column] = res.List.filter(item => item != null);
       })
@@ -90,38 +138,27 @@ const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
         paddingBottom: 10
       }}
     >
-      <Pressable
-        onPress={() => {
+      <div
+        onClick={() => {
           setIsCollapse(rel => !rel);
         }}
         style={styles.header}>
-        <View style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'row',
-          gap: 10
-        }}>
-          <MaterialCommunityIcon size={20} color={theme.grey} name='format-list-text' />
-          <Text style={{
-            color: theme.grey
-          }}>Modifikasiylar</Text>
-        </View>
-        <AntDesign name={isCollapse ? 'up' : 'down'} color={theme.primary} size={20} />
-      </Pressable>
+        <div style={styles.headerContent}>
+          <MdFormatListBulleted size={20} color={theme.grey} />
+          <span style={styles.headerText}>Modifikasiylar</span>
+        </div>
+        {isCollapse ?
+          <AiOutlineUp color={theme.primary} size={20} /> :
+          <AiOutlineDown color={theme.primary} size={20} />
+        }
+      </div>
       {
         isCollapse ?
           refs != null ?
             modifications[0] ?
               modifications.map((element, index) => {
                 return (
-                  <View style={{
-                    width: '70%',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
+                  <div key={index} style={styles.row}>
                     <CustomSelection
                       options={refs[element.Column].map(rel => ({ key: rel || "", value: rel || "" }))}
                       onChange={(e) => {
@@ -131,35 +168,25 @@ const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
                       title={"Modifikasiya"}
                       value={state.Modifications[0][element.Column] || ''}
                     />
-                    <TouchableOpacity style={{
-                      width: 30,
-                      height: 30,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                      onPress={() => {
+                    <button style={styles.editButton}
+                      onClick={() => {
                         setIsEditMod({
-                          visible:true,
-                          target:element.Column
+                          visible: true,
+                          target: element.Column
                         })
                         setIsEditModValue(state.Modifications[0][element.Column] || '')
                       }}
                     >
-                      <MaterialCommunityIcon name='lead-pencil' size={25} color={theme.primary} />
-                    </TouchableOpacity>
-                  </View>
+                      <AiOutlineEdit size={25} color={theme.primary} />
+                    </button>
+                  </div>
                 )
               })
 
               :
-              <View style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}>
-                <ActivityIndicator size={30} color={theme.primary} />
-              </View>
+              <div style={styles.loadingContainer}>
+                <div className="spinner"></div>
+              </div>
             :
             ""
           :
@@ -172,42 +199,35 @@ const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
         height={200}
         width={'70%'}
         setModalVisible={(e) => {
-          setIsEditMod(_ => ({target:null,visible:e}))
+          setIsEditMod(_ => ({ target: null, visible: e }))
           setIsEditModValue('');
         }}
       >
-        <View style={{
-          width:'100%',
-          height:200,
-          display:'flex',
-          justifyContent:'center',
-          alignItems:'center'
-        }}>
+        <div style={styles.modalContent}>
           <Input
-          width={'70%'}
+            width={'70%'}
             placeholder={isEditMod.target}
             value={isEditModValue}
             onChange={(e) => {
               setIsEditModValue(e)
             }}
           />
-          <View style={{margin:5}}/>
           <Button width={'70%'} onClick={() => {
-            let targetState = {...refs};
+            let targetState = { ...refs };
             let index = targetState[isEditMod.target].findIndex(rel => rel == isEditModValue);
-            if(index == -1){
+            if (index == -1) {
               targetState[isEditMod.target].push(isEditModValue);
             }
-            handleChangeModification(isEditModValue,isEditMod.target);
+            handleChangeModification(isEditModValue, isEditMod.target);
             setRefs(targetState);
             setIsEditMod({
-              visible:false,
-              target:null
+              visible: false,
+              target: null
             })
           }}>
             Yadda Saxla
           </Button>
-        </View>
+        </div>
       </MyModal>
     </ManageCard>
   )

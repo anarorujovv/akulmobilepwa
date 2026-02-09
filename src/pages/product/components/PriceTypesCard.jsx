@@ -1,10 +1,9 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import ManageCard from '../../../shared/ui/ManageCard'
-import useTheme from '../../../shared/theme/useTheme'
-import Input from '../../../shared/ui/Input'
-import { formatPrice } from '../../../services/formatPrice'
+import React from 'react';
+import { IoPricetag } from 'react-icons/io5';
+import ManageCard from '../../../shared/ui/ManageCard';
+import useTheme from '../../../shared/theme/useTheme';
+import Input from '../../../shared/ui/Input';
+import { formatPrice } from '../../../services/formatPrice';
 
 /**
  * Fiyat Tipleri Kartı Komponenti
@@ -18,29 +17,34 @@ import { formatPrice } from '../../../services/formatPrice'
 const PriceTypesCard = ({ priceTypes, productPrices, changePriceType }) => {
   const theme = useTheme();
 
-  const styles = StyleSheet.create({
+  const styles = {
     header: {
       width: '100%',
       padding: 15,
       gap: 10,
+      display: 'flex',
       flexDirection: 'row',
-      alignItems: 'center'
+      alignItems: 'center',
+      boxSizing: 'border-box'
     },
     content: {
       width: '100%',
       paddingLeft: 15,
       paddingRight: 15,
-      gap: 15
+      gap: 15,
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box'
     },
     title: {
       color: theme.grey
     }
-  })
+  }
 
   // Ürünün belirli bir fiyat tipi için değerini bulma
   const getPriceValue = (priceTypeId) => {
     if (!productPrices || productPrices.length === 0) return "";
-    
+
     const priceInfo = productPrices.find(price => price.PriceType === priceTypeId);
     if (priceInfo) {
       return String(formatPrice(priceInfo.Price));
@@ -50,11 +54,11 @@ const PriceTypesCard = ({ priceTypes, productPrices, changePriceType }) => {
 
   return (
     <ManageCard>
-      <View style={styles.header}>
-        <Ionicons size={23} color={theme.grey} name='pricetag' />
-        <Text style={styles.title}>Qiymət tipləri</Text>
-      </View>
-      <View style={styles.content}>
+      <div style={styles.header}>
+        <IoPricetag size={23} color={theme.grey} />
+        <span style={styles.title}>Qiymət tipləri</span>
+      </div>
+      <div style={styles.content}>
         {priceTypes && priceTypes.length > 0 ? (
           priceTypes.map(priceType => (
             <Input
@@ -67,11 +71,11 @@ const PriceTypesCard = ({ priceTypes, productPrices, changePriceType }) => {
             />
           ))
         ) : (
-          <Text style={{ color: theme.grey, textAlign: 'center', padding: 10 }}>Fiyat tipi bulunamadı</Text>
+          <span style={{ color: theme.grey, textAlign: 'center', padding: 10, display: 'block' }}>Fiyat tipi bulunamadı</span>
         )}
-      </View>
+      </div>
     </ManageCard>
   )
 }
 
-export default PriceTypesCard 
+export default PriceTypesCard;

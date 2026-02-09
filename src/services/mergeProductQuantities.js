@@ -1,9 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageWrapper from "./AsyncStorageWrapper";
 import api from "./api";
 import { formatPrice } from "./formatPrice";
 import ErrorMessage from "../shared/ui/RepllyMessage/ErrorMessage";
 
-const mergeProductQuantities = async (document,id) => {
+const mergeProductQuantities = async (document, id) => {
 
     let info = { ...document };
 
@@ -14,7 +14,7 @@ const mergeProductQuantities = async (document,id) => {
     let obj = {
         moment: info.Moment,
         stockid: id,
-        token: await AsyncStorage.getItem('token')
+        token: await AsyncStorageWrapper.getItem('token')
     }
 
     info.StockId = id;

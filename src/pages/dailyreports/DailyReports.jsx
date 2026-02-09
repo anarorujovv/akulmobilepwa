@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import useTheme from '../../shared/theme/useTheme';
 import MySelection from '../../shared/ui/MySelection';
 import api from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
-import { Pressable } from '@react-native-material/core';
 import Line from '../../shared/ui/Line';
 import CardItem from './../../shared/ui/list/CardItem';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
 
 const DailyProfits = () => {
-
     let theme = useTheme();
     const [selectionData, setSelectionData] = useState([]);
     const [info, setInfo] = useState(null);
@@ -23,78 +20,84 @@ const DailyProfits = () => {
     let [data, setData] = useState([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
 
-    const styles = StyleSheet.create({
+    const styles = {
         container: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: theme.bg,
+            overflow: 'hidden'
+        },
+        content: {
             flex: 1,
             padding: 10,
-            backgroundColor: theme.bg,            // Using theme background color
+            overflowY: 'auto'
         },
         section: {
             marginBottom: 15,
             borderRadius: 8,
             overflow: 'hidden',
-            backgroundColor: theme.whiteGrey,     // Using theme's whiteGrey for section background
-            borderColor: theme.grey,              // Using theme grey for border color
+            backgroundColor: theme.whiteGrey,
+            borderColor: theme.grey,
             borderWidth: 1,
         },
-        sectionTitle: {
-            backgroundColor: theme.primary,       // Using theme primary color for title background
-            padding: 10,
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: theme.bg,                      // Using theme bg color for text to ensure contrast
-        },
-        itemsContainer: {
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-        },
         itemRow: {
+            display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
-            paddingVertical: 4,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.whiteGrey,   // Using theme whiteGrey for row divider
+            padding: '12px 20px',
+            alignItems: 'center',
+            cursor: 'pointer',
+            borderBottom: `1px solid ${theme.whiteGrey}`
         },
-        itemKey: {
-            fontSize: 14,
-            color: theme.black,                   // Using theme black for item key text
+        itemText: {
+            color: theme.black,
+            fontSize: 13
         },
-        itemValue: {
-            fontSize: 14,
-            color: theme.black,                   // Using theme black for item value text
-            fontWeight: 'bold',
+        selectionContainer: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10
         },
-    });
-
+        loadingContainer: {
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        },
+        infoText: {
+            textAlign: 'center',
+            color: theme.primary,
+            fontWeight: 'bold'
+        }
+    };
 
     let fetchingData = async () => {
-
         setInfo(null);
 
         if (!selectionData[0]) {
             await api('salepoints/get.php', {
-                token: await AsyncStorage.getItem('token')
+                token: await AsyncStorageWrapper.getItem('token')
             })
                 .then((element) => {
                     if (element != null) {
                         setSelectionData([...element.List]);
                     }
                 }).catch(err => {
-                    ErrorMessage(err)
-                })
+                    ErrorMessage(err);
+                });
         }
-        
+
         if (filter.salepointid !== 'not') {
             let obj = {
                 ...filter,
-                token: await AsyncStorage.getItem('token')
-            }
+                token: await AsyncStorageWrapper.getItem('token')
+            };
 
             await api('dailyreports/salepoints.php', obj)
                 .then((item) => {
                     if (item != null) {
                         let list = [
-
                             {
                                 title: 'SATIŞLAR (MƏHSUL)',
                                 items: [
@@ -143,7 +146,6 @@ const DailyProfits = () => {
                                 title: 'ANBAR QALIĞI',
                                 items: [
                                     { key: 'Maya', value: item.stock_cost_price || '-' },
-
                                     { key: 'Cəm satış qiyməti', value: item.stock_sale_price || '-' },
                                     { key: 'Cəm alış qiyməti', value: item.stock_buy_price || '-' },
                                     { key: 'Miqdar', value: item.stock_quantity || '-' },
@@ -158,70 +160,50 @@ const DailyProfits = () => {
                     }
                 })
                 .catch(err => {
-                    ErrorMessage(err)
-                })
+                    ErrorMessage(err);
+                });
         }
-
-    }
+    };
 
     const changeFilter = (e) => {
-        setFilter(rel => ({ ...rel, ['salepointid']: e }))
-    }
+        setFilter(rel => ({ ...rel, ['salepointid']: e }));
+    };
 
     useEffect(() => {
         fetchingData();
-    }, [filter])
+    }, [filter]);
 
     return (
-        <>
+        <div style={styles.container}>
             <ListPagesHeader
                 header={'Gündəlik hesabat'}
             />
 
-            {
-                filter.salepointid == 'not' ?
-                    <View style={{ flex: 1, backgroundColor: theme.bg }}>
-                        {
-                            selectionData[0] ?
-                                selectionData.map((item) => {
-                                    return (
-                                        <>
-                                            <Pressable onPress={() => {
-                                                changeFilter(item.Id)
-                                            }} pressEffectColor={theme.input.grey} style={{
-                                                width: '100%',
-                                                height: 55,
-                                                paddingLeft: 20,
-                                                justifyContent: 'center',
-                                            }}>
-                                                <Text style={{
-                                                    color: theme.black,
-                                                    fontSize: 13
-                                                }}>{item.Name}</Text>
-                                            </Pressable>
-                                            <Line width={'90%'} />
-                                        </>
-                                    )
-                                })
-                                :
-                                <View style={{
-                                    flex: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'center'
-                                }}>
-                                    <ActivityIndicator size={40} color={theme.primary} />
-                                </View>
-                        }
-                    </View>
-                    :
-                    <View style={{
-                        flex: 1,
-                        backgroundColor: theme.bg,
-                        padding: 10,
-                        gap: 10
-                    }}>
-
-                        {selectionData[0] ?
+            {filter.salepointid === 'not' ? (
+                <div style={styles.content}>
+                    {selectionData[0] ? (
+                        selectionData.map((item) => (
+                            <div key={item.Id}>
+                                <div
+                                    onClick={() => changeFilter(item.Id)}
+                                    style={styles.itemRow}
+                                    className="hover-bg" // Assuming a hover class exists or inline hover can be added
+                                >
+                                    <span style={styles.itemText}>{item.Name}</span>
+                                </div>
+                                <Line width={'95%'} />
+                            </div>
+                        ))
+                    ) : (
+                        <div style={styles.loadingContainer}>
+                            <div className="spinner"></div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div style={styles.content}>
+                    <div style={styles.selectionContainer}>
+                        {selectionData[0] ? (
                             <MySelection
                                 list={selectionData}
                                 labelName={'Name'}
@@ -231,42 +213,39 @@ const DailyProfits = () => {
                                 onValueChange={(e) => changeFilter(e)}
                                 label={'Satış şöbəsi'}
                             />
-                            : ""}
+                        ) : ""}
 
+                        <DocumentTimes
+                            filter={filter}
+                            setFilter={setFilter}
+                            selected={selectedIndex}
+                            setSelected={setSelectedIndex}
+                        />
 
-
-                        <>
-                            <DocumentTimes
-                                filter={filter}
-                                setFilter={setFilter}
-                                selected={selectedIndex}
-                                setSelected={setSelectedIndex}
-                            />
-                            {info == null ?
-                                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                                    <ActivityIndicator size={40} color={theme.primary} />
-                                </View>
-                                : info == 'not' ?
-                                    <View style={{ flex: 1, justifyContent: 'center', alignItems: "center" }}>
-                                        <Text style={{ textAlign: 'center', color: theme.primary, fontWeight: 'bold' }}>Məlumat tapılmadı!</Text>
-                                    </View>
-                                    :
-                                    <ScrollView style={styles.container}>
-                                        {data.map((section, index) => (
-                                            <CardItem
-                                                key={index + 1}
-                                                title={section.title}
-                                                items={section.items}
-                                                valueFormatPrice={true}
-                                            />
-
-                                        ))}
-                                    </ScrollView>
-                            }
-                        </>
-                    </View>
-            }
-        </>
+                        {info == null ? (
+                            <div style={styles.loadingContainer}>
+                                <div className="spinner"></div>
+                            </div>
+                        ) : info === 'not' ? (
+                            <div style={styles.loadingContainer}>
+                                <span style={styles.infoText}>Məlumat tapılmadı!</span>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 20 }}>
+                                {data.map((section, index) => (
+                                    <CardItem
+                                        key={index + 1}
+                                        title={section.title}
+                                        items={section.items}
+                                        valueFormatPrice={true}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

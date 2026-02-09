@@ -1,9 +1,8 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
+import React from 'react';
 import { SupplyGlobalProvider } from '../../shared/data/SupplyGlobalState';
 import SupplyManage from './SupplyManage';
 
-const SupplyManageProvider = ({route,navigation}) => {
+const SupplyManageProvider = ({ route, navigation }) => {
     return (
         <SupplyGlobalProvider>
             <SupplyManage route={route} navigation={navigation} />
@@ -12,6 +11,4 @@ const SupplyManageProvider = ({route,navigation}) => {
 }
 
 
-export default SupplyManageProvider
-
-const styles = StyleSheet.create({})
+export default SupplyManageProvider;

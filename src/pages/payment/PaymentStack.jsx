@@ -1,27 +1,15 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import PaymentList from './PaymentList';
 import PaymentManageProvider from './PaymentManageProvider';
 
-
-const DemandStack = () => {
-
-    const Stack = createNativeStackNavigator();
-
+const PaymentStack = () => {
     return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-                animation:'fade'
-            }}
-        >
-            <Stack.Screen name="payment-list" component={PaymentList} />
-            <Stack.Screen name="payment-manage" component={PaymentManageProvider} />
-        </Stack.Navigator>
-    )
-}
+        <Routes>
+            <Route path="/" element={<PaymentList />} />
+            <Route path="/payment-manage" element={<PaymentManageProvider />} />
+        </Routes>
+    );
+};
 
-export default DemandStack
-
-const styles = StyleSheet.create({})
+export default PaymentStack;

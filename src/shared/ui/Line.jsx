@@ -1,26 +1,23 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import useTheme from '../theme/useTheme'
+import React from 'react';
+import useTheme from '../theme/useTheme';
 
-const Line = ({width}) => {
-
-    const theme = useTheme();
+const Line = ({ width }) => {
+  const theme = useTheme();
 
   return (
-    <View style={{
-        width:'100%',
-        justifyContent:'center',
-        alignItems:'center'
+    <div style={{
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     }}>
-        <View style={{
-            width,
-            height:0.8,
-            backgroundColor:theme.whiteGrey
-        }}/>
-    </View>
-  )
-}
+      <div style={{
+        width,
+        height: 0.8,
+        backgroundColor: theme.whiteGrey
+      }} />
+    </div>
+  );
+};
 
-export default Line
-
-const styles = StyleSheet.create({})
+export default Line;

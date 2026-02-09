@@ -1,24 +1,22 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import useTheme from '../../../../../shared/theme/useTheme'
+import React from 'react';
+import useTheme from '../../../../../shared/theme/useTheme';
 
 const SpendItemManage = () => {
+  const theme = useTheme();
 
-  let theme = useTheme();
-
-  const styles = StyleSheet.create({
-    container:{
-      flex:1,
-      backgroundColor:theme.bg
-    },
-  })
+  const styles = {
+    container: {
+      flex: 1,
+      backgroundColor: theme.bg,
+      minHeight: '100vh'
+    }
+  };
 
   return (
-    <View style={styles.container}>
+    <div style={styles.container}>
+      {/* Placeholder for manage functionality if needed outside of modal */}
+    </div>
+  );
+};
 
-    </View>
-  )
-}
-
-export default SpendItemManage
-
+export default SpendItemManage;

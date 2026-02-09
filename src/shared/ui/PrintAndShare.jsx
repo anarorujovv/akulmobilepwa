@@ -1,11 +1,6 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import React, { useRef } from 'react'
-import ViewShot from 'react-native-view-shot';
-import WebView from 'react-native-webview';
-import Entypo from 'react-native-vector-icons/Entypo';
-import Share from 'react-native-share'
-import RNPrint from 'react-native-print';
+import React from 'react';
 import useTheme from '../theme/useTheme';
+import { IoPrint, IoShareSocial } from 'react-icons/io5';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
 
 const PrintAndShare = ({ navigation, route }) => {
@@ -13,82 +8,92 @@ const PrintAndShare = ({ navigation, route }) => {
     const { html } = route.params;
     let theme = useTheme();
 
-    const ref = useRef();
-
-    const getShare = () => {
-        try {
-            ref.current.capture().then(async (uri) => {
-
-                const shareOptions = {
-                    title: "Share PNG",
-                    url: `file://${uri}`,
-                    type: 'application/png',
-                }
-
-                Share.open(shareOptions).catch(err => {
-                    throw err;
-                })
-
-            })
-        } catch (err) {
-            ErrorMessage(err);
-        }
-    }
-
-    const getPrint = async () => {
-        try{
-            await RNPrint.print({
-                html: html,
-                fileName: 'PrintDocument',
-            });
-        }catch(err){
-            ErrorMessage(err);
-        }
-    }
-
-    const styles = StyleSheet.create({
+    const styles = {
+        container: {
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+        },
         button: {
-            position: 'absolute',
+            position: 'fixed',
             bottom: 40,
             right: 20,
             width: 60,
             height: 60,
             borderRadius: 60,
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.primary,
-            shadowColor: theme.primary,
-            elevation: 10
+            boxShadow: `0 4px 10px ${theme.primary}66`,
+            cursor: 'pointer',
+            border: 'none',
+            zIndex: 100
         },
         buttonPrint: {
-            position: 'absolute',
+            position: 'fixed',
             bottom: 40,
             left: 20,
             width: 60,
             height: 60,
             borderRadius: 60,
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.primary,
-            shadowColor: theme.primary,
-            elevation: 10
+            boxShadow: `0 4px 10px ${theme.primary}66`,
+            cursor: 'pointer',
+            border: 'none',
+            zIndex: 100
+        },
+        iframeContainer: {
+            width: '100%',
+            height: '100vh',
+            overflow: 'hidden'
         }
-    })
+    };
+
+    const getShare = async () => {
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'Sənəd',
+                    text: 'Sənədi paylaşıram',
+                    url: window.location.href, // Veya uygun bir URL
+                });
+            } else {
+                ErrorMessage("Tarayıcınız paylaşımı desteklemiyor.");
+            }
+        } catch (err) {
+            ErrorMessage(err);
+        }
+    }
+
+    const getPrint = () => {
+        try {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        } catch (err) {
+            ErrorMessage(err);
+        }
+    }
 
     return (
-        <View style={{ flex: 1, }}>
-            <ViewShot style={{ flex: 1 }} ref={ref} options={{ fileName: 'screen', format: 'png', quality: 0.9 }}>
-                <WebView source={{ html }} style={{ flex: 1 }} />
-            </ViewShot>
-            <TouchableOpacity onPress={getShare} style={styles.button}>
-                <Entypo name='share' size={25} color={'white'} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={getPrint} style={styles.buttonPrint}>
-                <Entypo name='print' size={25} color={'white'} />
-            </TouchableOpacity>
+        <div style={styles.container}>
+            <div style={styles.iframeContainer} dangerouslySetInnerHTML={{ __html: html }} />
 
-        </View>
-    )
-}
+            <button onClick={getShare} style={styles.button}>
+                <IoShareSocial size={25} color={'white'} />
+            </button>
+            <button onClick={getPrint} style={styles.buttonPrint}>
+                <IoPrint size={25} color={'white'} />
+            </button>
 
-export default PrintAndShare
+        </div>
+    );
+};
+
+export default PrintAndShare;
