@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../shared/ui/Input';
-import Button from '../shared/ui/Button';
-import { IoLockOpenOutline, IoPersonCircleOutline, IoTrash, IoClose, IoCheckboxOutline, IoSquareOutline } from 'react-icons/io5';
-import { AiOutlineCloud } from 'react-icons/ai';
+import {
+  Form,
+  Input,
+  Button,
+  Checkbox,
+  Card,
+  List,
+  Popup,
+  SpinLoading,
+  Space,
+  ActionSheet
+} from 'antd-mobile';
+import {
+  UserOutlined,
+  LockOutlined,
+  DeleteOutlined,
+  CloudOutlined,
+  LoginOutlined
+} from '@ant-design/icons';
 import axios from 'axios';
-import useTheme from '../shared/theme/useTheme';
 import ErrorMessage from './../shared/ui/RepllyMessage/ErrorMessage';
 import SuccessMessage from './../shared/ui/RepllyMessage/SuccessMessage';
 import AsyncStorage from './../services/AsyncStorageWrapper';
@@ -14,16 +28,14 @@ import api from './../services/api';
 const Login = () => {
   const navigate = useNavigate();
 
-  const [login, setLogin] = useState("");
-  const [password, setPassword] = useState("");
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [savedUsers, setSavedUsers] = useState([]);
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [apiServerModalVisible, setApiServerModalVisible] = useState(false);
+  const [showUserPopup, setShowUserPopup] = useState(false);
+  const [serverActionVisible, setServerActionVisible] = useState(false);
   const [currentApiServer, setCurrentApiServer] = useState('Azerbaycan');
-
-  const theme = useTheme();
 
   useEffect(() => {
     loadSavedUsers();
@@ -54,7 +66,7 @@ const Login = () => {
         setCurrentApiServer('Rusiya');
         SuccessMessage('Rusiya serveri seçildi.');
       }
-      setApiServerModalVisible(false);
+      setServerActionVisible(false);
     } catch (error) {
       ErrorMessage('API server ayarları kaydedilirken hata oluştu');
     }
@@ -65,7 +77,7 @@ const Login = () => {
       const users = await AsyncStorage.getItem('savedUsers');
       if (users) {
         setSavedUsers(JSON.parse(users));
-        setShowUserModal(true);
+        setShowUserPopup(true);
       }
     } catch (error) {
       ErrorMessage('Qeydiyyatlı istifadəçilər yüklənərkən xəta baş verdi');
@@ -88,13 +100,14 @@ const Login = () => {
   };
 
   const selectSavedUser = (user) => {
-    setShowUserModal(false);
+    setShowUserPopup(false);
     setLogin(user.login);
     setPassword(user.password);
     fetchingAuthApi(user.login, user.password);
   };
 
-  const deleteSavedUser = async (user) => {
+  const deleteSavedUser = async (user, e) => {
+    e.stopPropagation();
     try {
       const users = savedUsers.filter(savedUser => savedUser.login !== user.login);
       setSavedUsers(users);
@@ -117,16 +130,15 @@ const Login = () => {
         Login: loginParam,
         Password: passwordParam
       }).then(async (response) => {
-        console.log(response.data);
         if (response.data.Headers.ResponseStatus == 0) {
           if (rememberMe) {
             await saveUser();
           }
 
           await AsyncStorage.setItem('refreshToken', '');
-          await AsyncStorage.setItem("token", response.data.Body.Token);
-          await AsyncStorage.setItem("publicMode", response.data.Body.PublicMode);
-          await AsyncStorage.setItem("login_info", JSON.stringify(response.data.Body));
+          await AsyncStorage.setItem('token', response.data.Body.Token);
+          await AsyncStorage.setItem('publicMode', response.data.Body.PublicMode);
+          await AsyncStorage.setItem('login_info', JSON.stringify(response.data.Body));
           await AsyncStorage.setItem('local_per', JSON.stringify({
             demands: {
               demand: {
@@ -166,14 +178,13 @@ const Login = () => {
             if (element != null) {
               let permissions = element.Permissions;
               await AsyncStorage.setItem('ownerId', element.OwnerId);
-              await AsyncStorage.setItem("depId", element.DepartmentId);
+              await AsyncStorage.setItem('depId', element.DepartmentId);
               await AsyncStorage.setItem('perlist', JSON.stringify(permissions));
             }
           }).catch(err => {
             ErrorMessage(err);
           });
 
-          // React Native'deki RNRestart yerine window.location.reload() kullanıyoruz
           window.location.reload();
         } else {
           ErrorMessage(response.data.Body);
@@ -189,297 +200,217 @@ const Login = () => {
     }
   };
 
-  const styles = {
-    container: {
-      flex: 1,
-      padding: 10,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: theme.stable.white,
-      minHeight: '100vh'
+  const serverActions = [
+    {
+      text: 'Azerbaycan Server',
+      key: 'az',
+      onClick: () => handleSelectApiServer('Azerbaycan'),
+      description: currentApiServer === 'Azerbaycan' ? '✓ Aktiv' : undefined
     },
-    titleContainer: {
-      marginBottom: 30,
-    },
-    titleText: {
-      fontSize: 32,
-      fontWeight: 'bold',
-      color: theme.stable.black
-    },
-    optionsRow: {
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      width: '90%',
-      maxWidth: 400
-    },
-    rememberMeContainer: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      cursor: 'pointer',
-      background: 'none',
-      border: 'none',
-      padding: 0
-    },
-    rememberMeText: {
-      marginLeft: 8,
-      color: theme.stable.black
-    },
-    serverSelectButton: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: '5px 10px',
-      borderRadius: 5,
-      backgroundColor: '#f0f0f0',
-      border: 'none',
-      cursor: 'pointer'
-    },
-    serverSelectText: {
-      marginLeft: 8,
-      color: theme.stable.black
-    },
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000,
-      padding: 20
-    },
-    modalContent: {
-      width: '100%',
-      maxWidth: 400,
-      maxHeight: '80%',
-      borderRadius: 15,
-      backgroundColor: theme.stable.white,
-      overflow: 'hidden',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-    },
-    apiModalContent: {
-      width: '80%',
-      maxWidth: 350,
-      padding: 20,
-      borderRadius: 10,
-      backgroundColor: theme.stable.white,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-    },
-    serverButton: {
-      width: '100%',
-      padding: 15,
-      borderRadius: 5,
-      margin: '10px 0',
-      border: 'none',
-      cursor: 'pointer',
-      color: '#ffffff',
-      fontSize: 16,
-      textAlign: 'center'
-    },
-    modalHeader: {
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 15,
-      borderBottom: '1px solid #C8C8C8'
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: theme.stable.black
-    },
-    closeButton: {
-      padding: 5,
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer'
-    },
-    userList: {
-      maxHeight: 300,
-      overflowY: 'auto'
-    },
-    userItem: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 15,
-      borderBottom: `1px solid ${theme.input.grey}`,
-      cursor: 'pointer'
-    },
-    userItemContent: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center'
-    },
-    userName: {
-      fontSize: 16,
-      marginLeft: 10,
-      color: theme.stable.black
-    },
-    emptyContainer: {
-      padding: 30,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    emptyText: {
-      marginTop: 10,
-      fontSize: 16,
-      textAlign: 'center',
-      color: theme.stable.black
-    },
-    deleteButton: {
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      padding: 5
+    {
+      text: 'Rusiya Server',
+      key: 'ru',
+      onClick: () => handleSelectApiServer('Rusiya'),
+      description: currentApiServer === 'Rusiya' ? '✓ Aktiv' : undefined
     }
-  };
-
-  const renderSavedUserModal = () => {
-    if (!showUserModal) return null;
-
-    return (
-      <div style={styles.modalOverlay} onClick={() => setShowUserModal(false)}>
-        <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
-          <div style={styles.modalHeader}>
-            <span style={styles.modalTitle}>Qeydiyyatlı istifadəçilər</span>
-            <button onClick={() => setShowUserModal(false)} style={styles.closeButton}>
-              <IoClose size={24} color={theme.stable.black} />
-            </button>
-          </div>
-
-          {savedUsers.length === 0 ? (
-            <div style={styles.emptyContainer}>
-              <IoPersonCircleOutline size={50} color={theme.stable.black} />
-              <span style={styles.emptyText}>Qeydiyyatlı istifadəçi tapılmadı</span>
-            </div>
-          ) : (
-            <div style={styles.userList}>
-              {savedUsers.map((item, index) => (
-                <div key={index} style={styles.userItem} onClick={() => selectSavedUser(item)}>
-                  <div style={styles.userItemContent}>
-                    <IoPersonCircleOutline size={24} color={theme.stable.black} />
-                    <span style={styles.userName}>{item.login}</span>
-                  </div>
-                  <button style={styles.deleteButton} onClick={(e) => { e.stopPropagation(); deleteSavedUser(item); }}>
-                    <IoTrash size={24} color={theme.stable.black} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderApiServerModal = () => {
-    if (!apiServerModalVisible) return null;
-
-    return (
-      <div style={styles.modalOverlay} onClick={() => setApiServerModalVisible(false)}>
-        <div style={styles.apiModalContent} onClick={e => e.stopPropagation()}>
-          <span style={{ fontSize: 18, marginBottom: 20, color: theme.stable.black }}>Server seçin:</span>
-          <button
-            style={{
-              ...styles.serverButton,
-              backgroundColor: currentApiServer === 'Azerbaycan' ? theme.pink : theme.primary
-            }}
-            onClick={() => handleSelectApiServer('Azerbaycan')}
-          >
-            Azerbaycan Server
-          </button>
-          <button
-            style={{
-              ...styles.serverButton,
-              backgroundColor: currentApiServer === 'Rusiya' ? theme.pink : theme.primary
-            }}
-            onClick={() => handleSelectApiServer('Rusiya')}
-          >
-            Rusiya Server
-          </button>
-        </div>
-      </div>
-    );
-  };
+  ];
 
   return (
-    <div style={styles.container}>
-      {renderSavedUserModal()}
-      {renderApiServerModal()}
-
-      <div style={styles.titleContainer}>
-        <span style={styles.titleText}>BeinAZ</span>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'var(--adm-color-background)',
+      padding: 20
+    }}>
+      {/* Logo / Title */}
+      <div style={{ marginBottom: 40, textAlign: 'center' }}>
+        <h1 style={{
+          fontSize: 36,
+          fontWeight: 700,
+          color: 'var(--adm-color-primary)',
+          margin: 0
+        }}>
+          BeinAZ
+        </h1>
+        <p style={{
+          fontSize: 14,
+          color: 'var(--adm-color-weak)',
+          marginTop: 8
+        }}>
+          İdarəetmə sisteminə xoş gəlmisiniz
+        </p>
       </div>
 
-      <Input
-        width={'90%'}
-        value={login}
-        onChange={(txt) => {
-          setLogin(txt);
-        }}
-        placeholder={'Login'}
-      />
+      {/* Login Form Card */}
+      <Card style={{
+        width: '100%',
+        maxWidth: 400,
+        borderRadius: 16,
+        padding: 8
+      }}>
+        <Form layout='vertical'>
+          <Form.Item>
+            <Input
+              placeholder='Login'
+              value={login}
+              onChange={setLogin}
+              clearable
+              style={{ '--font-size': '16px' }}
+            />
+          </Form.Item>
 
-      <div style={{ margin: 5 }} />
+          <Form.Item>
+            <Input
+              placeholder='Şifrə'
+              type='password'
+              value={password}
+              onChange={setPassword}
+              clearable
+              style={{ '--font-size': '16px' }}
+            />
+          </Form.Item>
 
-      <Input
-        password={true}
-        width={'90%'}
-        value={password}
-        onChange={(txt) => {
-          setPassword(txt);
-        }}
-        placeholder={'Şifrə'}
-      />
+          <Form.Item>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Checkbox
+                checked={rememberMe}
+                onChange={setRememberMe}
+                style={{ '--icon-size': '20px', '--font-size': '14px' }}
+              >
+                Xatırla
+              </Checkbox>
 
-      <div style={{ margin: 10 }} />
+              <Button
+                size='small'
+                fill='none'
+                onClick={() => setServerActionVisible(true)}
+              >
+                <Space align='center' style={{ '--gap': '4px' }}>
+                  <CloudOutlined />
+                  <span>{currentApiServer}</span>
+                </Space>
+              </Button>
+            </div>
+          </Form.Item>
 
-      <div style={styles.optionsRow}>
-        <button
-          style={styles.rememberMeContainer}
-          onClick={() => setRememberMe(!rememberMe)}
+          <Form.Item>
+            <Button
+              block
+              color='primary'
+              size='large'
+              loading={isLoading}
+              onClick={() => fetchingAuthApi(login, password)}
+              style={{
+                '--border-radius': '8px',
+                fontWeight: 600
+              }}
+            >
+              <Space align='center' style={{ '--gap': '8px' }}>
+                <LoginOutlined />
+                <span>Daxil ol</span>
+              </Space>
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+
+      {/* Saved Users Button */}
+      {savedUsers.length > 0 && (
+        <Button
+          fill='none'
+          style={{ marginTop: 20, color: 'var(--adm-color-primary)' }}
+          onClick={() => setShowUserPopup(true)}
         >
-          {rememberMe ? (
-            <IoCheckboxOutline size={24} color={theme.stable.black} />
-          ) : (
-            <IoSquareOutline size={24} color={theme.stable.black} />
-          )}
-          <span style={styles.rememberMeText}>Xatırla</span>
-        </button>
+          <Space align='center' style={{ '--gap': '6px' }}>
+            <UserOutlined />
+            <span>Yadda saxlanmış istifadəçilər ({savedUsers.length})</span>
+          </Space>
+        </Button>
+      )}
 
-        <button
-          style={styles.serverSelectButton}
-          onClick={() => setApiServerModalVisible(true)}
-        >
-          <AiOutlineCloud size={20} color={theme.stable.black} />
-          <span style={styles.serverSelectText}>{currentApiServer}</span>
-        </button>
-      </div>
-
-      <div style={{ margin: 10 }} />
-
-      <Button
-        icon={<IoLockOpenOutline size={15} color="white" />}
-        width={'70%'}
-        onClick={() => {
-          fetchingAuthApi(login, password);
+      {/* Saved Users Popup */}
+      <Popup
+        visible={showUserPopup}
+        onMaskClick={() => setShowUserPopup(false)}
+        bodyStyle={{
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          maxHeight: '60vh'
         }}
-        isLoading={isLoading}
-      >Daxil ol</Button>
+      >
+        <div style={{ padding: '16px 16px 0 16px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12
+          }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: 18,
+              fontWeight: 600,
+              color: 'var(--adm-color-text)'
+            }}>
+              Qeydiyyatlı istifadəçilər
+            </h3>
+            <Button
+              fill='none'
+              size='small'
+              onClick={() => setShowUserPopup(false)}
+            >
+              Bağla
+            </Button>
+          </div>
+        </div>
+
+        {savedUsers.length === 0 ? (
+          <div style={{
+            padding: 40,
+            textAlign: 'center',
+            color: 'var(--adm-color-weak)'
+          }}>
+            <UserOutlined style={{ fontSize: 48, marginBottom: 12 }} />
+            <p>Qeydiyyatlı istifadəçi tapılmadı</p>
+          </div>
+        ) : (
+          <List>
+            {savedUsers.map((user, index) => (
+              <List.Item
+                key={index}
+                prefix={<UserOutlined style={{ fontSize: 20, color: 'var(--adm-color-primary)' }} />}
+                extra={
+                  <Button
+                    fill='none'
+                    size='small'
+                    onClick={(e) => deleteSavedUser(user, e)}
+                  >
+                    <DeleteOutlined style={{ color: 'var(--adm-color-danger)' }} />
+                  </Button>
+                }
+                onClick={() => selectSavedUser(user)}
+                arrow={false}
+              >
+                {user.login}
+              </List.Item>
+            ))}
+          </List>
+        )}
+      </Popup>
+
+      {/* Server Selection ActionSheet */}
+      <ActionSheet
+        visible={serverActionVisible}
+        actions={serverActions}
+        onClose={() => setServerActionVisible(false)}
+        cancelText='Ləğv et'
+      />
     </div>
   );
 };

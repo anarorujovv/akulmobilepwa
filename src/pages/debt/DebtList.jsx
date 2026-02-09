@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading, CapsuleTabs } from 'antd-mobile';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
@@ -15,7 +15,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const DebtList = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    let theme = useTheme();
 
     let permissions = useGlobalStore(state => state.permissions);
 
@@ -41,44 +40,8 @@ const DebtList = () => {
         { name: 'Bütün borclar', value: 'all' }
     ];
 
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto'
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        emptyContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingTop: 50
-        },
-        picker: {
-            width: '100%',
-            padding: 10,
-            backgroundColor: theme.bg,
-            color: theme.black,
-            border: 'none',
-            fontSize: 16,
-            outline: 'none',
-            cursor: 'pointer'
-        }
-    };
-
     const fetchingDocumentData = async () => {
+        setIsRefreshing(true);
         let obj = {
             ...filter,
             pg: filter.pg - 1,
@@ -95,6 +58,9 @@ const DebtList = () => {
             })
             .catch((err) => {
                 ErrorMessage(err);
+            })
+            .finally(() => {
+                setIsRefreshing(false);
             });
     };
 
@@ -104,6 +70,7 @@ const DebtList = () => {
             fetchingDocumentData();
         }, 300);
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     useEffect(() => {
@@ -114,7 +81,13 @@ const DebtList = () => {
     }, [location.state]);
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 header={"Borclar"}
                 filter={filter}
@@ -122,44 +95,43 @@ const DebtList = () => {
                 isSearch={true}
                 filterSearchKey={'docNumber'}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            searchParams: [
-                                'customers',
-                                'customerGroups',
-                                'owners',
-                                'departments'
-                            ]
-                        }
-                    });
+                filterParams={{
+                    searchParams: [
+                        'customers',
+                        'customerGroups',
+                        'owners',
+                        'departments'
+                    ]
                 }}
             />
 
-            <select
-                style={styles.picker}
-                value={filter.zeros}
-                onChange={(e) => {
-                    let val = e.target.value;
-                    let filterData = { ...filter };
-                    filterData.pg = 1;
-                    filterData.agrigate = 1;
-                    filterData.zeros = val;
-                    setFilter(filterData);
-                }}
-            >
-                {selectionData.map((element) => (
-                    <option key={element.value} value={element.value}>{element.name}</option>
-                ))}
-            </select>
+            <div style={{ padding: '0 12px', marginTop: 10 }}>
+                <CapsuleTabs
+                    activeKey={filter.zeros.toString()}
+                    onChange={(key) => {
+                        let filterData = { ...filter };
+                        filterData.pg = 1;
+                        filterData.agrigate = 1;
+                        filterData.zeros = key;
+                        setFilter(filterData);
+                    }}
+                >
+                    {selectionData.map((element) => (
+                        <CapsuleTabs.Tab title={element.name} key={element.value} />
+                    ))}
+                </CapsuleTabs>
+            </div>
 
             {documents == null ? (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner"></div> // Assuming global spinner class
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <SpinLoading color='primary' style={{ '--size': '40px' }} />
                 </div>
             ) : (
-                <div style={styles.listContainer}>
+                <div style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '0 12px 0 12px'
+                }}>
                     <DocumentInfo
                         data={[
                             { title: "Alacaq", value: formatPrice(documentsInfo.AllInSum) },
@@ -169,13 +141,20 @@ const DebtList = () => {
                     />
 
                     {documents.length === 0 ? (
-                        <div style={styles.emptyContainer}>
-                            <span style={{ color: theme.text }}>List boşdur</span>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '100%',
+                            color: 'var(--adm-color-weak)',
+                            paddingTop: 50
+                        }}>
+                            <span>List boşdur</span>
                         </div>
                     ) : (
                         <>
                             {documents.map((item, index) => (
-                                <div key={item.CustomerId}>
+                                <React.Fragment key={item.CustomerId}>
                                     <ListItem
                                         index={index + 1}
                                         centerText={item.CustomerName}
@@ -190,7 +169,7 @@ const DebtList = () => {
                                             }
                                         }}
                                     />
-                                </div>
+                                </React.Fragment>
                             ))}
                             <MyPagination
                                 pageSize={100}

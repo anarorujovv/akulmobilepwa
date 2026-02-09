@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "antd-mobile": "^5.42.3",
     "axios": "^1.13.5",
     "cra-template-pwa": "2.0.0",
     "moment": "^2.30.1",

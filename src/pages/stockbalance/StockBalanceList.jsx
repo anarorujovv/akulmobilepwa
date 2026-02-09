@@ -1,19 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading, CapsuleTabs } from 'antd-mobile';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import MyPagination from '../../shared/ui/MyPagination';
 import { formatPrice } from '../../services/formatPrice';
-import Line from '../../shared/ui/Line';
 import DocumentInfo from '../../shared/ui/DocumentInfo';
 import ListItem from '../../shared/ui/list/ListItem';
 import { useNavigate } from 'react-router-dom';
 
 const StockBalanceList = () => {
     const navigate = useNavigate();
-    let theme = useTheme();
 
     let selectionData = [
         { label: "Hamısı", value: "all" },
@@ -27,7 +25,7 @@ const StockBalanceList = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [itemSize, setItemSize] = useState(0);
     const [stockInfo, setStockInfo] = useState(null);
-    const [selectedTime, setSelectedTime] = useState(null); // kept for logic consistency, though usage in onRefresh is tricky in web
+    const [selectedTime, setSelectedTime] = useState(null);
 
     let [filter, setFilter] = useState({
         pg: 1,
@@ -41,43 +39,6 @@ const StockBalanceList = () => {
         quick: "",
         agrigate: 1
     });
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto'
-        },
-        loadingContainer: {
-            width: '100%',
-            height: 100,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        picker: {
-            width: '100%',
-            padding: 10,
-            backgroundColor: theme.bg,
-            color: theme.black,
-            border: 'none',
-            fontSize: 16,
-            outline: 'none',
-            cursor: 'pointer'
-        },
-        fullLoading: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }
-    };
 
     const fetchingStockBalance = useCallback(async () => {
         setIsRefreshing(true);
@@ -112,28 +73,25 @@ const StockBalanceList = () => {
         }, 300);
 
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const handleScanner = () => {
-        navigate('/product-scanner', { // Assuming global route
+        navigate('/product-scanner', {
             state: {
-                returnPath: '/stockbalance', // Or handle via callback if architecture supports
-                // setData not really supported via state strictly, usually use context or URL param
-                // For now, assuming scanner updates a global state or we use a different approach.
-                // But following the React Native logic: passed callback.
-                // React Router doesn't support passing functions in state.
-                // We might need a global store for scanner result.
+                returnPath: '/stockbalance',
             }
         });
-        // Workaround for scanner callback:
-        // In a real app, use a Context or Zustand store for 'scannedResult'.
-        // For this conversion, I'll assume the scanner might not work fully as intended with callback pattern.
-        // But the user mentioned 'product-scanner' navigation issue previously.
-        // I will just navigate for now.
     };
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 processScannerClick={handleScanner}
                 header={"Anbar qalığı"}
@@ -142,64 +100,56 @@ const StockBalanceList = () => {
                 filterSearchKey={'quick'}
                 isSearch={true}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter: setFilter, // Removing function from state
-                            searchParams: [
-                                'product',
-                                'groups',
-                                'stocks',
-                                'customers',
-                            ],
-                            customFields: {
-                                groups: {
-                                    title: "Qrup",
-                                    name: 'gp',
-                                    type: 'select',
-                                    api: 'productfolders'
-                                },
-                                product: {
-                                    title: "Məhsul",
-                                    name: 'nmId',
-                                    type: 'select',
-                                    api: "products",
-                                    searchApi: 'products/getfast.php',
-                                    searchKey: 'fast'
-                                }
-                            },
-                            sortList: [
-                                { id: 1, label: "Məhsulun adı", value: 'ProductName' },
-                                { id: 2, label: 'Barkod', value: 'BarCode' },
-                                { id: 3, label: 'Ümumi qalığ', value: "Quantity" },
-                                { id: 4, label: 'Alış qiyməti', value: 'BuyPrice' },
-                                { id: 5, label: 'Satış qiyməti', value: 'Price' },
-                                { id: 6, label: 'Cəm satış', value: 'SumSalePrice' }
-                            ]
+                filterParams={{
+                    searchParams: [
+                        'product',
+                        'groups',
+                        'stocks',
+                        'customers',
+                    ],
+                    customFields: {
+                        groups: {
+                            title: "Qrup",
+                            name: 'gp',
+                            type: 'select',
+                            api: 'productfolders'
+                        },
+                        product: {
+                            title: "Məhsul",
+                            name: 'nmId',
+                            type: 'select',
+                            api: "products",
+                            searchApi: 'products/getfast.php',
+                            searchKey: 'fast'
                         }
-                    });
+                    },
+                    sortList: [
+                        { id: 1, label: "Məhsulun adı", value: 'ProductName' },
+                        { id: 2, label: 'Barkod', value: 'BarCode' },
+                        { id: 3, label: 'Ümumi qalığ', value: "Quantity" },
+                        { id: 4, label: 'Alış qiyməti', value: 'BuyPrice' },
+                        { id: 5, label: 'Satış qiyməti', value: 'Price' },
+                        { id: 6, label: 'Cəm satış', value: 'SumSalePrice' }
+                    ]
                 }}
             />
 
-            <select
-                style={styles.picker}
-                value={filter.zeros}
-                onChange={(e) => {
-                    let val = e.target.value;
-                    let filterData = { ...filter };
-                    filterData.zeros = val;
-                    filterData.pg = 1;
-                    filterData.agrigate = 1;
-                    setFilter(filterData);
-                }}
-            >
-                {selectionData.map(element => (
-                    <option key={element.value} value={element.value}>{element.label}</option>
-                ))}
-            </select>
-
-            <Line width={'100%'} />
+            <div style={{ padding: '0 12px', marginTop: 10 }}>
+                <CapsuleTabs
+                    activeKey={filter.zeros.toString()}
+                    onChange={(key) => {
+                        let filterData = { ...filter };
+                        filterData.zeros = key;
+                        filterData.pg = 1;
+                        filterData.agrigate = 1;
+                        setFilter(filterData);
+                    }}
+                >
+                    {selectionData.map(element => (
+                        <CapsuleTabs.Tab title={element.label} key={element.value} />
+                    ))}
+                </CapsuleTabs>
+            </div>
 
             {stockInfo != null ? (
                 <DocumentInfo
@@ -210,25 +160,33 @@ const StockBalanceList = () => {
                     ]}
                 />
             ) : (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner" style={{ width: 20, height: 20 }}></div>
-                    <Line width={'100%'} />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '10px 0',
+                    borderBottom: '1px solid var(--adm-color-border)'
+                }}>
+                    <SpinLoading color='primary' style={{ '--size': '20px' }} />
                 </div>
             )}
 
-            <div style={styles.listContainer}>
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '0 12px 0 12px'
+            }}>
                 {stocks == null || stocks.length === 0 ? (
-                    <div style={styles.fullLoading}>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                         {stocks == null ? (
-                            <div className="spinner"></div> // List loading
+                            <SpinLoading color='primary' style={{ '--size': '40px' }} />
                         ) : (
-                            <span style={{ color: theme.text }}>List boşdur</span>
+                            <span style={{ color: 'var(--adm-color-weak)' }}>List boşdur</span>
                         )}
                     </div>
                 ) : (
                     <>
                         {stocks.map((item, index) => (
-                            <div key={item.ProductId}>
+                            <React.Fragment key={item.ProductId}>
                                 <ListItem
                                     onPress={() => {
                                         navigate("/stockbalance/stock-manage", {
@@ -244,7 +202,7 @@ const StockBalanceList = () => {
                                     priceText={formatPrice(item.Price)}
                                     index={index + 1}
                                 />
-                            </div>
+                            </React.Fragment>
                         ))}
                         {(stocks.length === 100 || filter.pg !== 0) && (
                             <MyPagination
@@ -257,7 +215,7 @@ const StockBalanceList = () => {
                                     setStocks([]);
                                     setFilter(filterData);
                                 }}
-                                pageSize={21000} // This seems unusually high page size, checking original... yes 21000.
+                                pageSize={21000} // Preserving original page size logic
                             />
                         )}
                     </>

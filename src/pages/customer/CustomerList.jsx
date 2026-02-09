@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import React, { useEffect, useState } from 'react';
+import { SpinLoading, FloatingBubble } from 'antd-mobile';
+import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import MyPagination from '../../shared/ui/MyPagination';
-import FabButton from '../../shared/ui/FabButton';
 import ListItem from '../../shared/ui/list/ListItem';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,36 +23,6 @@ const CustomerList = () => {
         ar: 0,
         fast: ""
     });
-
-    let theme = useTheme();
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: 80 // Space for FabButton
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        emptyContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingTop: 50
-        }
-    };
 
     const fetchingCustomers = async () => {
         setIsRefreshing(true);
@@ -102,10 +72,11 @@ const CustomerList = () => {
         }
 
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const renderItem = (item, index) => (
-        <div key={item.Id}>
+        <React.Fragment key={item.Id}>
             <ListItem
                 index={index + 1}
                 onPress={() => {
@@ -118,11 +89,17 @@ const CustomerList = () => {
                 endText={item.Card}
                 notIcon={true}
             />
-        </div>
+        </React.Fragment>
     );
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 header={"Tərəf-müqabilləri"}
                 filter={filter}
@@ -131,14 +108,25 @@ const CustomerList = () => {
                 filterSearchKey={'fast'}
             />
             {customers == null ? (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner"></div> // Assuming global spinner class
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <SpinLoading color='primary' style={{ '--size': '40px' }} />
                 </div>
             ) : (
-                <div style={styles.listContainer}>
+                <div style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    paddingBottom: 80,
+                    padding: '0 12px 80px 12px'
+                }}>
                     {customers.length === 0 ? (
-                        <div style={styles.emptyContainer}>
-                            <span style={{ color: theme.text }}>List boşdur</span>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '100%',
+                            color: 'var(--adm-color-weak)'
+                        }}>
+                            <span>List boşdur</span>
                         </div>
                     ) : (
                         <>
@@ -157,13 +145,22 @@ const CustomerList = () => {
                 </div>
             )}
 
-            <FabButton
-                onPress={() => {
+            <FloatingBubble
+                style={{
+                    '--initial-position-bottom': '24px',
+                    '--initial-position-right': '24px',
+                    '--edge-distance': '24px',
+                    '--background': 'var(--adm-color-primary)',
+                    '--size': '56px'
+                }}
+                onClick={() => {
                     navigate("/customer/customer-manage", {
                         state: { id: null }
                     });
                 }}
-            />
+            >
+                <AddOutline fontSize={28} color='#fff' />
+            </FloatingBubble>
         </div>
     );
 };

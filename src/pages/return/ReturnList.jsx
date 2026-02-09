@@ -1,5 +1,5 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import React, { useState, useEffect } from 'react';
+import { SpinLoading, Divider } from 'antd-mobile';
 import getDateByIndex from '../../services/report/getDateByIndex';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
@@ -13,7 +13,6 @@ import { useNavigate } from 'react-router-dom';
 
 const ReturnsList = () => {
     const navigate = useNavigate();
-    let theme = useTheme();
     let [filter, setFilter] = useState({
         dr: 1,
         lm: 100,
@@ -25,35 +24,6 @@ const ReturnsList = () => {
     const [returns, setReturns] = useState([]);
     const [returnsSum, setReturnsSum] = useState(null);
     const [selectedTime, setSelectedTime] = useState(4)
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: 80
-        },
-        loadingContainer: {
-            width: '100%',
-            height: 50,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        emptyContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            display: 'flex',
-            paddingTop: 50
-        }
-    };
 
     const makeApiRequest = async () => {
         let obj = {
@@ -77,7 +47,7 @@ const ReturnsList = () => {
 
     const renderItem = (item, index) => {
         return (
-            <div key={item.Id}>
+            <React.Fragment key={item.Id}>
                 <ListItem
                     centerText={item.CustomerName}
                     firstText={item.SalePointName}
@@ -91,16 +61,23 @@ const ReturnsList = () => {
                         })
                     }}
                 />
-            </div>
+            </React.Fragment>
         )
     }
 
     useEffect(() => {
         makeApiRequest();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 filter={filter}
                 setFilter={setFilter}
@@ -108,52 +85,22 @@ const ReturnsList = () => {
                 isSearch={true}
                 filterSearchKey={'docNumber'}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter:setFilter,
-                            searchParams: [
-                                'documentName',
-                                'product',
-                                'stocks',
-                                'salePoint',
-                                'customers',
-                            ],
-                            sortList: [
-                                {
-                                    id: 1,
-                                    label: 'Ad',
-                                    value: 'Name'
-                                },
-                                {
-                                    id: 2,
-                                    label: 'Satış nöqtəsi',
-                                    value: 'SalePointName'
-                                },
-                                {
-                                    id: 3,
-                                    label: 'Tarix',
-                                    value: 'Moment'
-                                },
-                                {
-                                    id: 4,
-                                    label: "Tərəf-Müqabil",
-                                    value: 'customers'
-                                },
-                                {
-                                    id: 5,
-                                    label: 'Nağd',
-                                    value: 'Amount'
-                                },
-                                {
-                                    id: 6,
-                                    label: 'Nağdsız',
-                                    value: 'Bank'
-                                }
-                            ]
-                        }
-                    })
+                filterParams={{
+                    searchParams: [
+                        'documentName',
+                        'product',
+                        'stocks',
+                        'salePoint',
+                        'customers',
+                    ],
+                    sortList: [
+                        { id: 1, label: 'Ad', value: 'Name' },
+                        { id: 2, label: 'Satış nöqtəsi', value: 'SalePointName' },
+                        { id: 3, label: 'Tarix', value: 'Moment' },
+                        { id: 4, label: "Tərəf-Müqabil", value: 'customers' },
+                        { id: 5, label: 'Nağd', value: 'Amount' },
+                        { id: 6, label: 'Nağdsız', value: 'Bank' }
+                    ]
                 }}
             />
 
@@ -166,8 +113,13 @@ const ReturnsList = () => {
 
             {
                 returnsSum == null ?
-                    <div style={styles.loadingContainer}>
-                        <div className="spinner" style={{ width: 20, height: 20 }}></div>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        padding: '10px 0',
+                        borderBottom: '1px solid var(--adm-color-border)'
+                    }}>
+                        <SpinLoading color='primary' style={{ '--size': '20px' }} />
                     </div>
                     :
                     <DocumentInfo
@@ -180,13 +132,24 @@ const ReturnsList = () => {
                     />
             }
 
-            <div style={styles.listContainer}>
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                paddingBottom: 80,
+                padding: '0 12px 80px 12px'
+            }}>
                 {returns === null || returns.length === 0 ? (
-                    <div style={styles.emptyContainer}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100%',
+                        color: 'var(--adm-color-weak)'
+                    }}>
                         {returns === null ? (
-                            <div className="spinner"></div>
+                            <SpinLoading color='primary' style={{ '--size': '40px' }} />
                         ) : (
-                            <span style={{ color: theme.text }}>List boşdur</span>
+                            <span>List boşdur</span>
                         )}
                     </div>
                 ) : (

@@ -1,97 +1,13 @@
 import React from 'react';
-import useTheme from '../../theme/useTheme';
-import { FaCube, FaShoppingBasket } from 'react-icons/fa';
+import { Space, Tag } from 'antd-mobile';
+import { AppstoreOutlined, ShoppingOutlined } from '@ant-design/icons';
 import Avatar from '../Avatar';
 import { formatPrice } from '../../../services/formatPrice';
 
 /**
- * index prop'u eklendi.
+ * ProductListItem - Ant Design Mobile uyumlu ürün listesi öğesi
  */
 const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, marginBottom, type, isActive, priceType, index }) => {
-
-  const theme = useTheme();
-
-  const styles = {
-    itemContainer: {
-      width: '100%',
-      minHeight: 65,
-      backgroundColor: isActive ? theme.whiteGrey : theme.bg,
-      cursor: 'pointer',
-      boxSizing: 'border-box'
-    },
-    itemChildContainer: {
-      width: '100%',
-      minHeight: 65,
-      display: 'flex',
-      flexDirection: 'row',
-      marginTop: marginTop,
-      marginBottom: marginBottom,
-      position: 'relative'
-    },
-    left: {
-      width: '18%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    center: {
-      width: '57%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-evenly',
-      alignItems: 'flex-start'
-    },
-    header: {
-      color: theme.black,
-      margin: 0
-    },
-    subHeader: {
-      margin: 0,
-      fontSize: 13,
-      color: "grey"
-    },
-    footerTextContainer: {
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 10,
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    iconContainer: {
-      width: 15,
-      height: 15,
-      borderRadius: '50%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: formatPrice(product.StockBalance) < 0 ? theme.red : theme.green
-    },
-    right: {
-      width: '15%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-end'
-    },
-    indexContainer: {
-      position: 'absolute',
-      left: 5,
-      top: 5,
-      backgroundColor: theme.bg,
-      borderRadius: 8,
-      padding: '2px 6px',
-      zIndex: 2,
-      minWidth: 22,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-    },
-    indexText: {
-      color: theme.black,
-      fontWeight: 'bold',
-      fontSize: 12
-    }
-  };
 
   const getImageUrl = () => {
     if (product.Pic) {
@@ -100,13 +16,22 @@ const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, m
       }
     }
 
-    // Eğer ürünün Images dizisi varsa, ilk resmi kullan
     if (product.Images && product.Images.length > 0) {
       const image = product.Images[0];
       return `${image.Path || image.path}${image.UniqName || image.uniqname}.${image.Ext || image.ext}`;
     }
 
     return null;
+  };
+
+  const stockBalance = formatPrice(product.StockBalance ? product.StockBalance : 0);
+  const isNegativeStock = formatPrice(product.StockBalance) < 0;
+
+  const getPrice = () => {
+    if (priceType !== undefined && priceType !== 9998 && product.SelectedTypePrice !== undefined) {
+      return formatPrice(product.SelectedTypePrice);
+    }
+    return type === 1 ? formatPrice(product.BuyPrice) : formatPrice(product.Price);
   };
 
   return (
@@ -116,56 +41,95 @@ const ProductListItem = ({ product, onPress, onLongPress, iconCube, marginTop, m
         e.preventDefault();
         if (onLongPress) onLongPress();
       }}
-      style={styles.itemContainer}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '12px 0',
+        backgroundColor: isActive ? 'var(--adm-color-fill-content)' : 'transparent',
+        cursor: 'pointer',
+        marginTop: marginTop,
+        marginBottom: marginBottom,
+        position: 'relative'
+      }}
     >
-      <div style={styles.itemChildContainer}>
-        {/* Index gösterimi */}
-        <div style={styles.indexContainer}>
-          <span style={styles.indexText}>{index || 'not'}</span>
+      {/* Index Badge */}
+      {index && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          top: 4,
+          backgroundColor: 'var(--adm-color-background)',
+          borderRadius: 6,
+          padding: '2px 6px',
+          fontSize: 11,
+          fontWeight: 600,
+          color: 'var(--adm-color-text)',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+          zIndex: 2
+        }}>
+          {index}
         </div>
-        <div style={styles.left}>
-          <Avatar
-            txt={product.Name}
-            size={35}
-            imageUrl={getImageUrl()}
-          />
+      )}
+
+      {/* Avatar */}
+      <div style={{ marginRight: 12, flexShrink: 0 }}>
+        <Avatar
+          txt={product.Name}
+          size={44}
+          imageUrl={getImageUrl()}
+        />
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div style={{
+          fontSize: 15,
+          fontWeight: 500,
+          color: 'var(--adm-color-text)',
+          marginBottom: 4,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
+          {product.Name}
         </div>
-        <div style={styles.center}>
-          <h4 style={styles.header}>{product.Name}</h4>
-          <span style={styles.subHeader}>{product.BarCode}</span>
-          <div style={styles.footerTextContainer}>
-            <>
-              <div style={styles.iconContainer}>
-                {
-                  iconCube ?
-                    <FaCube size={8} color={theme.stable.white} />
-                    :
-                    <FaShoppingBasket size={8} color={theme.stable.white} />
-                }
-              </div>
-
-              <span>{formatPrice(product.StockBalance ? product.StockBalance : 0)}</span>
-            </>
-          </div>
-
+        <div style={{
+          fontSize: 13,
+          color: 'var(--adm-color-weak)',
+          marginBottom: 6
+        }}>
+          {product.BarCode}
         </div>
-        {
-          priceType != undefined &&
-            priceType != 9998 || 0 &&
-            product.SelectedTypePrice != undefined ?
-            <div style={styles.right}>
-              <span style={{
-                color: theme.black
-              }}>{type == 1 ? formatPrice(product.SelectedTypePrice) : formatPrice(product.SelectedTypePrice)}₼</span>
-            </div>
-            :
-            <div style={styles.right}>
-              <span style={{
-                color: theme.black
-              }}>{type == 1 ? formatPrice(product.BuyPrice) : formatPrice(product.Price)}₼</span>
-            </div>
-        }
+        <Space align='center' style={{ '--gap': '6px' }}>
+          <Tag
+            color={isNegativeStock ? 'danger' : 'success'}
+            style={{
+              '--border-radius': '4px',
+              fontSize: 11,
+              padding: '2px 6px'
+            }}
+          >
+            <Space align='center' style={{ '--gap': '4px' }}>
+              {iconCube ? (
+                <AppstoreOutlined style={{ fontSize: 10 }} />
+              ) : (
+                <ShoppingOutlined style={{ fontSize: 10 }} />
+              )}
+              <span>{stockBalance}</span>
+            </Space>
+          </Tag>
+        </Space>
+      </div>
 
+      {/* Price */}
+      <div style={{
+        fontSize: 15,
+        fontWeight: 600,
+        color: 'var(--adm-color-primary)',
+        flexShrink: 0,
+        marginLeft: 8
+      }}>
+        {getPrice()}₼
       </div>
     </div>
   );

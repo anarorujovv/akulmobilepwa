@@ -1,21 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading, FloatingBubble } from 'antd-mobile';
+import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
-import FabButton from '../../shared/ui/FabButton';
 import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import ListItem from '../../shared/ui/list/ListItem';
-import Line from '../../shared/ui/Line';
 import { useNavigate } from 'react-router-dom';
 
 const CasheList = () => {
-  const theme = useTheme();
   const permissions = useGlobalStore(state => state.permissions);
   const navigate = useNavigate();
 
@@ -31,34 +29,6 @@ const CasheList = () => {
   const [documentsInfo, setDocumentsInfo] = useState(null);
   const [itemSize, setItemSize] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const styles = {
-    container: {
-      flex: 1,
-      backgroundColor: theme.bg,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      overflow: 'hidden'
-    },
-    listContainer: {
-      flex: 1,
-      overflowY: 'auto'
-    },
-    loadingContainer: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20
-    },
-    emptyContainer: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100%',
-      flex: 1
-    }
-  };
 
   const fetchingDocumentData = useCallback(async () => {
     setIsRefreshing(true);
@@ -122,14 +92,15 @@ const CasheList = () => {
     }, 300);
 
     return () => clearTimeout(time);
-  }, [filter, fetchingDocumentData]);
+  }, [filter]);
 
   const renderItem = (item, index) => (
-    <div key={item.Id}>
+    <React.Fragment key={item.Id}>
       <ListItem
         index={index + 1}
         firstText={item.Name}
         priceText={formatPrice(item.Balance)}
+        notIcon={true}
         onPress={() => {
           if (permission_ver(permissions, 'cashes', 'R')) {
             navigate('/cashes/cashe-manage', { state: { id: item.Id, name: item.Name, balance: item.Balance } });
@@ -143,17 +114,24 @@ const CasheList = () => {
           }
         }}
       />
-    </div>
+    </React.Fragment>
   );
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: 'var(--adm-color-background)',
+      overflow: 'hidden'
+    }}>
       <ListPagesHeader
         isSearch={true}
         filter={filter}
         setFilter={setFilter}
         filterSearchKey={'docNumber'}
         header={'Hesablar'}
+        isFilter={false} // CasheList usually doesn't have many filters, or I can add basic sorting if needed? The original code had no filter params.
       />
 
       {documentsInfo != null ? (
@@ -166,38 +144,64 @@ const CasheList = () => {
           ]}
         />
       ) : (
-        <div style={{ width: '100%', height: 20, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div className="spinner" style={{ width: 15, height: 15 }}></div>
-          <Line width={'100%'} />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '10px 0',
+          borderBottom: '1px solid var(--adm-color-border)'
+        }}>
+          <SpinLoading color='primary' style={{ '--size': '20px' }} />
         </div>
       )}
 
-      {documents == null ? (
-        <div style={styles.loadingContainer}>
-          <div className="spinner"></div>
-        </div>
-      ) : (
-        <div style={styles.listContainer}>
-          {documents.length === 0 ? (
-            <div style={styles.emptyContainer}>
-              <span style={{ color: theme.text }}>List boşdur</span>
-            </div>
-          ) : (
-            <>
-              {documents.map((item, index) => renderItem(item, index))}
-              <RenderFooter />
-            </>
-          )}
-        </div>
-      )}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        paddingBottom: 80,
+        padding: '0 12px 80px 12px'
+      }}>
+        {documents == null ? (
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <SpinLoading color='primary' style={{ '--size': '40px' }} />
+          </div>
+        ) : (
+          <>
+            {documents.length === 0 ? (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                color: 'var(--adm-color-weak)'
+              }}>
+                <span>List boşdur</span>
+              </div>
+            ) : (
+              <>
+                {documents.map((item, index) => renderItem(item, index))}
+                <RenderFooter />
+              </>
+            )}
+          </>
+        )}
+      </div>
 
-      <FabButton
-        onPress={() => {
+      <FloatingBubble
+        style={{
+          '--initial-position-bottom': '24px',
+          '--initial-position-right': '24px',
+          '--edge-distance': '24px',
+          '--background': 'var(--adm-color-primary)',
+          '--size': '56px'
+        }}
+        onClick={() => {
           if (permission_ver(permissions, 'cashes', 'C')) {
             navigate('/cashes/cashe-create');
           }
         }}
-      />
+      >
+        <AddOutline fontSize={28} color='#fff' />
+      </FloatingBubble>
     </div>
   );
 };

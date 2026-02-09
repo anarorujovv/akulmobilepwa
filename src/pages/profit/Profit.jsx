@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { SpinLoading } from 'antd-mobile';
+import { DownOutline, UpOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
-import useTheme from '../../shared/theme/useTheme';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import { formatPrice } from './../../services/formatPrice';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
-import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 import getDateByIndex from './../../services/report/getDateByIndex';
 
 const Profit = () => {
-  let theme = useTheme();
   const [expandedItem, setExpandedItem] = useState(0);
   let [profit, setProfit] = useState(null);
   let [selectedTime, setSelectedTime] = useState(2);
@@ -24,77 +23,6 @@ const Profit = () => {
   });
   let [loading, setLoading] = useState(true);
 
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      backgroundColor: theme.bg,
-      overflow: 'hidden'
-    },
-    content: {
-      flex: 1,
-      overflowY: 'auto'
-    },
-    header: {
-      display: 'flex',
-      flexDirection: 'row',
-      backgroundColor: theme.primary,
-      padding: 12,
-      justifyContent: 'space-between',
-      borderTopLeftRadius: 10,
-      borderTopRightRadius: 10
-    },
-    headerText: {
-      color: theme.bg,
-      fontWeight: 'bold',
-      fontSize: 16,
-      flex: 1,
-      textAlign: 'center',
-    },
-    row: {
-      display: 'flex',
-      flexDirection: 'row',
-      padding: '10px 0',
-      borderBottom: `1px solid ${theme.whiteGrey}`,
-      backgroundColor: theme.whiteGrey,
-      alignItems: 'center',
-      cursor: 'pointer'
-    },
-    cell: {
-      flex: 1,
-      textAlign: 'left',
-      fontSize: 14,
-      color: theme.black,
-      paddingLeft: 10,
-    },
-    subRow: {
-      display: 'flex',
-      flexDirection: 'row',
-      padding: '8px 0 8px 20px',
-      borderBottom: `1px solid ${theme.whiteGrey}`,
-      backgroundColor: theme.whiteGrey,
-    },
-    subCell: {
-      flex: 1,
-      textAlign: 'left',
-      fontSize: 13,
-      color: theme.grey,
-    },
-    tableContainer: {
-      margin: 10,
-      borderRadius: 12,
-      border: `2px solid ${theme.primary}`,
-      overflow: 'hidden'
-    },
-    loadingContainer: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20
-    }
-  };
-
   const handleExpandItem = () => {
     setExpandedItem(rel => rel == 3 ? 0 : 3);
   };
@@ -104,40 +32,92 @@ const Profit = () => {
   const renderItem = (item, index) => {
     let answer = isBold.findIndex(rel => rel == item.id);
     const isBoldStyle = answer != -1 ? { fontWeight: 'bold' } : {};
-    const isNegativeStyle = formatPrice(item.value).includes('-') ? { color: theme.red } : {}; // formatPrice might return string with currency, assume negative check based on value being passed
-
-    // Quick check if value is logically negative, but formatPrice usually returns string. 
-    // If formatPrice handles negative formatting, we just check style.
-    // Replicating original logic: formatPrice(item.value) < 0 ? ... which is numeric comparison on string? no.
-    // Assuming item.value is number here.
+    // const isNegativeStyle = formatPrice(item.value).includes('-') ? { color: 'var(--adm-color-danger)' } : {};
 
     if (item.isExpandable) {
       return (
         <div key={index}>
-          <div onClick={handleExpandItem} style={styles.row}>
-            <span style={styles.cell}>
-              {item.key} <span style={{ marginLeft: 5 }}>{expandedItem === index ? <FaAngleUp /> : <FaAngleDown />}</span>
+          <div onClick={handleExpandItem} style={{
+            display: 'flex',
+            flexDirection: 'row',
+            padding: '12px 0 12px 12px',
+            borderBottom: '1px solid var(--adm-color-border)',
+            backgroundColor: 'var(--adm-color-background)',
+            alignItems: 'center',
+            cursor: 'pointer'
+          }}>
+            <span style={{
+              flex: 1,
+              textAlign: 'left',
+              fontSize: 14,
+              color: 'var(--adm-color-text)',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              {item.key} <span style={{ marginLeft: 8, display: 'flex' }}>{expandedItem === index ? <UpOutline /> : <DownOutline />}</span>
             </span>
-            <span style={{ ...styles.cell, ...styles.valueCell }}>{item.value}</span>
+            <span style={{
+              flex: 1,
+              textAlign: 'left',
+              fontSize: 14,
+              color: 'var(--adm-color-text)',
+              fontWeight: 'bold',
+              paddingLeft: 10
+            }}>{item.value}</span>
           </div>
 
           {expandedItem === index && item.subItems.map((subItem, subIndex) => (
-            <div key={subIndex} style={styles.subRow}>
-              <span style={styles.subCell}>{subItem.Name}</span>
-              <span style={{ ...styles.subCell, ...styles.valueCell }}>{formatPrice(subItem.Amount)}</span>
+            <div key={subIndex} style={{
+              display: 'flex',
+              flexDirection: 'row',
+              padding: '10px 0 10px 32px',
+              borderBottom: '1px solid var(--adm-color-border)',
+              backgroundColor: 'var(--adm-color-background)',
+            }}>
+              <span style={{
+                flex: 1,
+                textAlign: 'left',
+                fontSize: 13,
+                color: 'var(--adm-color-weak)',
+              }}>{subItem.Name}</span>
+              <span style={{
+                flex: 1,
+                textAlign: 'left',
+                fontSize: 13,
+                color: 'var(--adm-color-text)',
+                fontWeight: 'bold',
+                paddingLeft: 10
+              }}>{formatPrice(subItem.Amount)}</span>
             </div>
           ))}
         </div>
       );
     } else {
       return (
-        <div key={index} style={styles.row}>
-          <span style={{ ...styles.cell, ...isBoldStyle }}>{item.key}</span>
+        <div key={index} style={{
+          display: 'flex',
+          flexDirection: 'row',
+          padding: '12px 0 12px 12px',
+          borderBottom: '1px solid var(--adm-color-border)',
+          backgroundColor: 'var(--adm-color-background)',
+          alignItems: 'center',
+        }}>
           <span style={{
-            ...styles.cell,
-            ...styles.valueCell,
+            flex: 1,
+            textAlign: 'left',
+            fontSize: 14,
+            color: 'var(--adm-color-text)',
+            ...isBoldStyle
+          }}>{item.key}</span>
+          <span style={{
+            flex: 1,
+            textAlign: 'left',
+            fontSize: 14,
+            color: 'var(--adm-color-text)',
+            fontWeight: 'bold',
+            paddingLeft: 10,
             ...isBoldStyle,
-            ...(item.id === 5 && parseFloat(item.raw_value || 0) < 0 ? { color: theme.red } : {})
+            ...(item.id === 5 && parseFloat(item.raw_value || 0) < 0 ? { color: 'var(--adm-color-danger)' } : {})
           }}>
             {item.value}
           </span>
@@ -180,14 +160,24 @@ const Profit = () => {
 
   useEffect(() => {
     fetchingProfit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: 'var(--adm-color-background)',
+      overflow: 'hidden'
+    }}>
       <ListPagesHeader
         header={'Mənfəət və Zərər'}
       />
-      <div style={styles.content}>
+      <div style={{
+        flex: 1,
+        overflowY: 'auto'
+      }}>
         <DocumentTimes
           filter={filter}
           setFilter={setFilter}
@@ -195,15 +185,44 @@ const Profit = () => {
           setSelected={setSelectedTime}
         />
 
-        <div style={styles.tableContainer}>
-          <div style={styles.header}>
-            <span style={styles.headerText}>Maddə</span>
-            <span style={styles.headerText}>Mənfəət/Zərər</span>
+        <div style={{
+          margin: 16,
+          borderRadius: 12,
+          border: '1px solid var(--adm-color-primary)',
+          overflow: 'hidden',
+          backgroundColor: 'var(--adm-color-background)'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            backgroundColor: 'var(--adm-color-primary)',
+            padding: 12,
+            justifyContent: 'space-between',
+          }}>
+            <span style={{
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 16,
+              flex: 1,
+              textAlign: 'center',
+            }}>Maddə</span>
+            <span style={{
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 16,
+              flex: 1,
+              textAlign: 'center',
+            }}>Mənfəət/Zərər</span>
           </div>
 
           {loading ? (
-            <div style={styles.loadingContainer}>
-              <div className="spinner"></div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 20
+            }}>
+              <SpinLoading color='primary' />
             </div>
           ) : (
             <div>

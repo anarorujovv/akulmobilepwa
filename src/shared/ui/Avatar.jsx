@@ -1,15 +1,12 @@
 import React from 'react';
-import useTheme from '../theme/useTheme';
 
 const Avatar = ({ size, txt, imageUrl }) => {
-  let theme = useTheme();
-
   const styles = {
     container: {
       width: size,
       height: size,
-      borderRadius: 3,
-      backgroundColor: theme.primary,
+      borderRadius: 6,
+      backgroundColor: 'var(--adm-color-primary)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -21,8 +18,9 @@ const Avatar = ({ size, txt, imageUrl }) => {
       objectFit: 'cover'
     },
     text: {
-      fontSize: 16,
-      color: 'white',
+      fontSize: size ? size * 0.4 : 16,
+      color: '#fff',
+      fontWeight: 600,
       margin: 0
     }
   };
@@ -36,7 +34,7 @@ const Avatar = ({ size, txt, imageUrl }) => {
           alt="Avatar"
         />
       ) : (
-        <span style={styles.text}>{txt ? txt[0] : ""}</span>
+        <span style={styles.text}>{txt ? txt[0].toUpperCase() : ''}</span>
       )}
     </div>
   );

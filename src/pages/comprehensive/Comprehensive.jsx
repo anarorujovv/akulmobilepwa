@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading } from 'antd-mobile';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
@@ -10,7 +10,6 @@ import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
 
 const Comprehensive = () => {
-    let theme = useTheme();
     const [info, setInfo] = useState(null);
     const [filter, setFilter] = useState({
         dr: 1,
@@ -24,62 +23,6 @@ const Comprehensive = () => {
     });
     let [data, setData] = useState([]);
     const [selectedTime, setSelectedTime] = useState(4);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        content: {
-            flex: 1,
-            padding: 10,
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10
-        },
-        section: {
-            marginBottom: 15,
-            borderRadius: 8,
-            overflow: 'hidden',
-            backgroundColor: theme.whiteGrey,
-            border: `1px solid ${theme.grey}`,
-        },
-        sectionTitle: {
-            backgroundColor: theme.primary,
-            padding: 10,
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: theme.bg,
-        },
-        itemsContainer: {
-            padding: '5px 10px',
-        },
-        itemRow: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '4px 0',
-            borderBottom: `1px solid ${theme.whiteGrey}`,
-        },
-        itemKey: {
-            fontSize: 14,
-            color: theme.black,
-        },
-        itemValue: {
-            fontSize: 14,
-            color: theme.black,
-            fontWeight: 'bold',
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }
-    };
 
     let fetchingData = async () => {
         setInfo(null);
@@ -166,6 +109,7 @@ const Comprehensive = () => {
 
     useEffect(() => {
         fetchingData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [customer]);
 
     useEffect(() => {
@@ -174,10 +118,17 @@ const Comprehensive = () => {
         }, 300);
 
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter])
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 header={'Təchizatçı hesabatı'}
                 filter={filter}
@@ -185,7 +136,14 @@ const Comprehensive = () => {
                 isSearch={true}
                 filterSearchKey={'docNumber'}
             />
-            <div style={styles.content}>
+            <div style={{
+                flex: 1,
+                padding: 10,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10
+            }}>
 
                 <CustomersModal
                     width={'100%'}
@@ -203,12 +161,22 @@ const Comprehensive = () => {
                 />
 
                 {info == null ? (
-                    <div style={styles.loadingContainer}>
-                        <div className="spinner"></div> // Web spinner
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
+                        <SpinLoading color='primary' style={{ '--size': '40px' }} />
                     </div>
                 ) : info == 'not' ? (
-                    <div style={styles.loadingContainer}>
-                        <span style={{ textAlign: 'center', color: theme.primary, fontWeight: 'bold' }}>Məlumat tapılmadı!</span>
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
+                        <span style={{ textAlign: 'center', color: 'var(--adm-color-primary)', fontWeight: 'bold' }}>Məlumat tapılmadı!</span>
                     </div>
                 ) : (
                     <div>

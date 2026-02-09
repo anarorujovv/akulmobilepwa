@@ -1,25 +1,22 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading, FloatingBubble, Divider } from 'antd-mobile';
+import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
-import FabButton from '../../shared/ui/FabButton';
 import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
-// import prompt from '../../services/prompt'; // Web's window.confirm is enough or custom modal
 import ListItem from '../../shared/ui/list/ListItem';
-import Line from '../../shared/ui/Line';
 import translatePayed from './../../services/report/translatePayed';
 import { useNavigate } from 'react-router-dom';
 
 const CustomerOrderList = () => {
     const navigate = useNavigate();
-    let theme = useTheme();
     let permissions = useGlobalStore(state => state.permissions);
     const [selectedTime, setSelectedTime] = useState(null);
 
@@ -35,35 +32,6 @@ const CustomerOrderList = () => {
     const [documentsInfo, setDocumentsInfo] = useState(null);
     const [itemSize, setItemSize] = useState(0)
     const [isRefreshing, setIsRefreshing] = useState(false);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: '80px' // Space for FabButton
-        },
-        loadingContainer: {
-            width: '100%',
-            height: 20,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        emptyContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingTop: 50
-        }
-    };
 
     const fetchingDocumentData = useCallback(async () => {
         setIsRefreshing(true);
@@ -128,10 +96,11 @@ const CustomerOrderList = () => {
             fetchingDocumentData();
         }, 300);
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const renderItem = (item, index) => (
-        <div key={item.Id}>
+        <React.Fragment key={item.Id}>
             <ListItem
                 index={index + 1}
                 onLongPress={() => {
@@ -155,11 +124,17 @@ const CustomerOrderList = () => {
                     }
                 }}
             />
-        </div>
+        </React.Fragment>
     );
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
 
             <ListPagesHeader
                 isSearch={true}
@@ -168,41 +143,19 @@ const CustomerOrderList = () => {
                 setFilter={setFilter}
                 filterSearchKey={'docNumber'}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter: setFilter,
-                            searchParams: [
-                                'product',
-                                'stocks',
-                                'owners',
-                                'documentName'
-                            ],
-                            sortList: [
-                                {
-                                    id: '1',
-                                    label: 'Tarix',
-                                    value: "Moment"
-                                },
-                                {
-                                    id: '2',
-                                    label: 'Anbar',
-                                    value: 'StockName'
-                                },
-                                {
-                                    id: '3',
-                                    label: "Məbləğə görə",
-                                    value: 'Amount'
-                                },
-                                {
-                                    id: '4',
-                                    label: 'Status',
-                                    value: "Mark"
-                                }
-                            ],
-                        }
-                    });
+                filterParams={{
+                    searchParams: [
+                        'product',
+                        'stocks',
+                        'owners',
+                        'documentName'
+                    ],
+                    sortList: [
+                        { id: '1', label: 'Tarix', value: "Moment" },
+                        { id: '2', label: 'Anbar', value: 'StockName' },
+                        { id: '3', label: "Məbləğə görə", value: 'Amount' },
+                        { id: '4', label: 'Status', value: "Mark" }
+                    ]
                 }}
             />
 
@@ -221,13 +174,22 @@ const CustomerOrderList = () => {
                     },
                 ]} />
             ) : (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner" style={{ width: 15, height: 15 }}></div>
-                    <Line width={'100%'} />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '10px 0',
+                    borderBottom: '1px solid var(--adm-color-border)'
+                }}>
+                    <SpinLoading color='primary' style={{ '--size': '20px' }} />
                 </div>
             )}
 
-            <div style={styles.listContainer}>
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                paddingBottom: 80,
+                padding: '0 12px 80px 12px'
+            }}>
                 {
                     documents == null ?
                         <div style={{
@@ -236,13 +198,19 @@ const CustomerOrderList = () => {
                             alignItems: 'center',
                             display: 'flex'
                         }}>
-                            <div className="spinner"></div> // List loading
+                            <SpinLoading color='primary' style={{ '--size': '40px' }} />
                         </div>
                         :
                         <>
                             {documents.length === 0 ? (
-                                <div style={styles.emptyContainer}>
-                                    <span style={{ color: theme.text }}>List boşdur</span>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                    color: 'var(--adm-color-weak)'
+                                }}>
+                                    <span>List boşdur</span>
                                 </div>
                             ) : (
                                 documents.map((item, index) => renderItem(item, index))
@@ -252,15 +220,24 @@ const CustomerOrderList = () => {
                 }
             </div>
 
-            <FabButton
-                onPress={() => {
+            <FloatingBubble
+                style={{
+                    '--initial-position-bottom': '24px',
+                    '--initial-position-right': '24px',
+                    '--edge-distance': '24px',
+                    '--background': 'var(--adm-color-primary)',
+                    '--size': '56px'
+                }}
+                onClick={() => {
                     if (permission_ver(permissions, 'customerorders', 'C')) {
                         navigate('/customerorders/customer-order-manage', {
                             state: { id: null }
                         })
                     }
                 }}
-            />
+            >
+                <AddOutline fontSize={28} color='#fff' />
+            </FloatingBubble>
         </div>
     )
 }

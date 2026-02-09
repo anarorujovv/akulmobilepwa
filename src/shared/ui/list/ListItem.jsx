@@ -1,211 +1,171 @@
 import React from 'react';
-import useTheme from "../../theme/useTheme";
-import { FaCube, FaShoppingBasket } from 'react-icons/fa';
-import Line from '../Line';
+import { Space, Tag } from 'antd-mobile';
+import { CheckCircleFill, CloseCircleFill, AppstoreOutline, KoubeiOutline } from 'antd-mobile-icons';
 import useGlobalStore from '../../data/zustand/useGlobalStore';
 
-const ListItem = ({ firstText, centerText, endText, notIcon, priceText, priceBottomText, iconBasket, notPriceIcon, statusText, status, onPress, onLongPress, index, markId, indexIsButtonIcon, indexIsButtonIconPress, deactiveStatus }) => {
-
-  let theme = useTheme();
+const ListItem = ({
+  firstText,
+  centerText,
+  endText,
+  notIcon,
+  priceText,
+  priceBottomText,
+  iconBasket,
+  notPriceIcon,
+  statusText,
+  status,
+  onPress,
+  onLongPress,
+  index,
+  markId,
+  indexIsButtonIcon,
+  indexIsButtonIconPress,
+  deactiveStatus
+}) => {
   let marks = useGlobalStore(state => state.marks);
-
-  // markId varsa, ilgili mark bilgisini al
   const currentMark = markId ? marks.find(mark => mark.Id == markId) : null;
-
   const opacity = deactiveStatus ? 0.5 : 1;
 
-  const styles = {
-    container: {
-      width: '100%',
-      minHeight: 70,
-      display: 'flex',
-      flexDirection: 'row',
-      opacity: opacity,
-      cursor: 'pointer',
-      backgroundColor: theme.bg,
-      boxSizing: 'border-box',
-      transition: 'background-color 0.2s',
-      padding: '10px 0'
-    },
-    left: {
-      flex: 1,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    indexBox: {
-      width: 20,
-      height: 20,
-      borderRadius: 2,
-      border: `1px solid ${status == undefined ? theme.primary : status ? theme.primary : theme.red}`,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      color: status == undefined ? theme.primary : status ? theme.primary : theme.red,
-      fontSize: 10
-    },
-    iconButton: {
-      width: 30,
-      height: 30,
-      borderRadius: 2,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer'
-    },
-    center: {
-      flex: 5,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      gap: 2
-    },
-    row: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 20,
-      width: '85%',
-    },
-    firstText: {
-      fontSize: 12
-    },
-    statusText: {
-      fontSize: 10,
-      color: status ? theme.green : theme.red,
-      border: `1px solid ${status ? theme.green : theme.red}`,
-      borderRadius: 5,
-      padding: '0 5px',
-    },
-    mark: {
-      backgroundColor: currentMark?.Color,
-      padding: '2px 6px',
-      borderRadius: 4,
-    },
-    markText: {
-      fontSize: 10,
-      color: '#fff',
-    },
-    centerText: {
-      color: 'black'
-    },
-    endTextContainer: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10
-    },
-    right: {
-      flex: 2,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'flex-end',
-      paddingRight: 10
-    }
-  };
-
   return (
-    <>
-      <div
-        onClick={onPress}
-        style={styles.container}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (onLongPress) onLongPress();
-        }}
-      >
-        <div style={styles.left}>
-          {
-            !indexIsButtonIcon ?
-              (<div style={styles.indexBox}>
-                <span>{index}</span>
-              </div>)
-              :
-              <button
-                style={styles.iconButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  indexIsButtonIconPress();
-                }}
-              >
-                {indexIsButtonIcon}
-              </button>
-          }
-        </div>
-        <div style={styles.center}>
-          <div style={styles.row}>
-            {
-              firstText != undefined ?
-                <span style={styles.firstText}>{firstText}</span>
-                :
-                null
-            }
-            {
-              statusText != undefined ?
-                <span style={styles.statusText}>{statusText}</span>
-                : null
-            }
-            {
-              currentMark != null ?
-                <div style={styles.mark}>
-                  <span style={styles.markText}>{currentMark.Name}</span>
-                </div>
-                : null
-            }
+    <div
+      onClick={onPress}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (onLongPress) onLongPress();
+      }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '12px 12px',
+        backgroundColor: 'var(--adm-color-background)',
+        borderBottom: '1px solid var(--adm-color-border)',
+        cursor: 'pointer',
+        opacity: opacity,
+        position: 'relative'
+      }}
+    >
+      {/* Index or Button Icon */}
+      <div style={{ marginRight: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24 }}>
+        {indexIsButtonIcon ? (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              indexIsButtonIconPress();
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {indexIsButtonIcon}
           </div>
-          {
-            centerText != undefined ?
-              <span style={styles.centerText}>{centerText}</span>
-              :
-              null
-          }
-          {
-            endText != undefined ?
-              <div style={styles.endTextContainer}>
-                {
-                  !notIcon ?
-                    !iconBasket ?
-                      <FaCube size={10} color={endText > 0 ? theme.green : theme.red} />
-                      :
-                      <FaShoppingBasket size={10} color={endText > 0 ? theme.green : theme.red} />
-                    :
-                    null
-
-                }
-                <span style={{
-                  fontSize: 12,
-                  color: !notIcon ? (endText > 0 ? theme.green : theme.red) : 'inherit'
-                }}>{endText}</span>
-              </div>
-              :
-              null
-          }
-        </div>
-        <div style={styles.right}>
-          {
-            priceText != undefined ?
-              <span style={{
-                color: theme.black
-              }}>{priceText} {!notPriceIcon && '₼'}</span>
-              :
-              null
-          }
-          {
-            priceBottomText != undefined ?
-              <span style={{
-                color: theme.black,
-                fontSize: 12
-              }}>{priceBottomText} {!notPriceIcon && '₼'}</span>
-              :
-              null
-          }
-        </div>
+        ) : (
+          <div style={{
+            width: 20,
+            height: 20,
+            borderRadius: 4,
+            border: `1px solid ${status === undefined ? 'var(--adm-color-primary)' : status ? 'var(--adm-color-primary)' : 'var(--adm-color-danger)'}`,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            color: status === undefined ? 'var(--adm-color-primary)' : status ? 'var(--adm-color-primary)' : 'var(--adm-color-danger)',
+            fontSize: 11,
+            fontWeight: 600
+          }}>
+            {index}
+          </div>
+        )}
       </div>
-      <Line width={'100%'} />
-    </>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+          <span style={{
+            fontSize: 15,
+            fontWeight: 500,
+            color: 'var(--adm-color-text)',
+            marginRight: 8,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {firstText}
+          </span>
+          {statusText && (
+            <Tag
+              color={status ? 'success' : 'danger'}
+              style={{ fontSize: 10, padding: '1px 4px' }}
+            >
+              {statusText}
+            </Tag>
+          )}
+          {currentMark && (
+            <Tag
+              style={{
+                backgroundColor: currentMark.Color,
+                color: '#fff',
+                fontSize: 10,
+                padding: '1px 4px',
+                marginLeft: 4
+              }}
+            >
+              {currentMark.Name}
+            </Tag>
+          )}
+        </div>
+
+        {centerText && (
+          <div style={{
+            fontSize: 13,
+            color: 'var(--adm-color-weak)',
+            marginBottom: 4
+          }}>
+            {centerText}
+          </div>
+        )}
+
+        {endText !== undefined && (
+          <Space align='center' style={{ '--gap': '4px' }}>
+            {!notIcon && (
+              iconBasket ?
+                <KoubeiOutline style={{ fontSize: 12, color: endText > 0 ? 'var(--adm-color-success)' : 'var(--adm-color-danger)' }} /> :
+                <AppstoreOutline style={{ fontSize: 12, color: endText > 0 ? 'var(--adm-color-success)' : 'var(--adm-color-danger)' }} />
+            )}
+            <span style={{
+              fontSize: 12,
+              color: !notIcon ? (endText > 0 ? 'var(--adm-color-success)' : 'var(--adm-color-danger)') : 'var(--adm-color-weak)'
+            }}>
+              {endText}
+            </span>
+          </Space>
+        )}
+      </div>
+
+      {/* Right Price Section */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        marginLeft: 8,
+        flexShrink: 0
+      }}>
+        {priceText !== undefined && (
+          <span style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'var(--adm-color-primary)'
+          }}>
+            {priceText} {!notPriceIcon && '₼'}
+          </span>
+        )}
+        {priceBottomText !== undefined && (
+          <span style={{
+            fontSize: 12,
+            color: 'var(--adm-color-weak)',
+            marginTop: 2
+          }}>
+            {priceBottomText} {!notPriceIcon && '₼'}
+          </span>
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import useTheme from '../theme/useTheme';
+import { CapsuleTabs } from 'antd-mobile';
 import moment from 'moment';
 
 const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
-  let data = [
+  const data = [
     { title: 'Bu gün', value: 'day' },
     { title: 'Dünən', value: 'yesterday' },
     { title: 'Bu ay', value: 'month' },
@@ -12,64 +12,22 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
     { title: 'Müddətsiz', value: 'all' }
   ];
 
-  let theme = useTheme();
-
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'row',
-      padding: 5,
-      justifyContent: 'space-around',
-      marginTop: 5,
-    },
-    button: {
-      minWidth: 60,
-      height: 25,
-      overflow: 'hidden',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      border: `1px solid ${theme.primary}`,
-      borderRadius: 3,
-      cursor: 'pointer',
-      backgroundColor: 'transparent',
-      transition: 'all 0.2s',
-      margin: '0 2px'
-    },
-    text: {
-      color: theme.primary,
-      fontSize: 12,
-      marginRight: 10,
-      marginLeft: 10,
-    },
-    buttonActive: {
-      backgroundColor: theme.primary,
-      minWidth: 60,
-      height: 25,
-      overflow: 'hidden',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 3,
-      border: `1px solid ${theme.primary}`,
-      cursor: 'pointer',
-      margin: '0 2px'
-    },
-    textActive: {
-      color: theme.stable.white,
-      fontSize: 12,
-      marginLeft: 10,
-      marginRight: 10,
-    },
-  };
-
   useEffect(() => {
     const updateDate = () => {
+      // If selected is null, do nothing or handle default
+      if (selected === null || selected === undefined) return;
+
       const today = new Date();
       let filterInfo = { ...filter };
+      // Remove any previously set date filters first if needed, 
+      // but the switch cases overwrite or delete them.
+
+      // agrigate=1 is logic from original code
       filterInfo.agrigate = 1;
 
-      switch (data[selected].value) {
+      const selectedValue = data[selected].value;
+
+      switch (selectedValue) {
         case 'day':
           filterInfo.momb = moment(today).format('YYYY-MM-DD 00:00:00');
           filterInfo.mome = moment(today).format('YYYY-MM-DD 23:59:59');
@@ -77,56 +35,55 @@ const DocumentTimes = ({ selected, setSelected, filter, setFilter }) => {
         case 'yesterday':
           const yesterday = new Date(today);
           yesterday.setDate(yesterday.getDate() - 1);
-          filterInfo.momb = moment(yesterday).format('YYYY-MM-DD 00:00:00')
-          filterInfo.mome = moment(yesterday).format('YYYY-MM-DD 23:59:59')
+          filterInfo.momb = moment(yesterday).format('YYYY-MM-DD 00:00:00');
+          filterInfo.mome = moment(yesterday).format('YYYY-MM-DD 23:59:59');
           break;
         case 'month':
           const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
           filterInfo.momb = moment(firstDayOfMonth).format('YYYY-MM-DD 00:00:00');
           filterInfo.mome = moment(today).format("YYYY-MM-DD 23:59:59");
           break;
-
-        // case '30':
-        //   const thirtyDaysAgo = new Date(today);
-        //   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        //   filterInfo.momb = moment(thirtyDaysAgo).format("YYYY-MM-DD 00:00:00");
-        //   filterInfo.mome = moment(thirtyDaysAgo).format("YYYY-MM-DD 23:59:59");
-        //   break;
         case 'lastMonth':
           const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
           const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-
           filterInfo.momb = moment(firstDayLastMonth).format("YYYY-MM-DD 00:00:00");
           filterInfo.mome = moment(lastDayLastMonth).format("YYYY-MM-DD 23:59:59");
-
           break;
         case 'all':
           delete filterInfo.momb;
           delete filterInfo.mome;
+          break;
+        default:
           break;
       }
 
       setFilter(filterInfo);
     };
 
-    if (selected != null) {
-      updateDate();
-    }
+    updateDate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-
   return (
-    <div style={styles.container}>
-      {data.map((element, index) => (
-        <button
-          onClick={() => setSelected(index)}
-          key={element.value}
-          style={index === selected ? styles.buttonActive : styles.button}
-        >
-          <span style={index === selected ? styles.textActive : styles.text}>{element.title}</span>
-        </button>
-      ))}
+    <div style={{
+      backgroundColor: 'var(--adm-color-background)',
+      padding: '4px 0',
+      display: 'flex',
+      justifyContent: 'center'
+    }}>
+      <CapsuleTabs
+        activeKey={selected !== null ? selected.toString() : ''}
+        onChange={(key) => setSelected(parseInt(key))}
+        style={{
+          '--title-font-size': '11px',
+          '--padding': '4px 8px',
+          '--gap': '6px'
+        }}
+      >
+        {data.map((item, index) => (
+          <CapsuleTabs.Tab title={item.title} key={index.toString()} />
+        ))}
+      </CapsuleTabs>
     </div>
   );
 };

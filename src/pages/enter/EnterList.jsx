@@ -1,24 +1,22 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading, FloatingBubble, Divider } from 'antd-mobile';
+import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
-import FabButton from '../../shared/ui/FabButton';
 import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
 import ListItem from '../../shared/ui/list/ListItem';
-import Line from '../../shared/ui/Line';
 import translatePayed from './../../services/report/translatePayed';
 import { useNavigate } from 'react-router-dom';
 
 const EnterList = () => {
     const navigate = useNavigate();
-    let theme = useTheme();
     let permissions = useGlobalStore(state => state.permissions);
 
     const [selectedTime, setSelectedTime] = useState(null);
@@ -35,34 +33,6 @@ const EnterList = () => {
     const [documentsInfo, setDocumentsInfo] = useState(null);
     const [itemSize, setItemSize] = useState(0)
     const [isRefreshing, setIsRefreshing] = useState(false);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        loadingContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            display: 'flex'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: 80
-        },
-        emptyContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            display: 'flex',
-            paddingTop: 50
-        }
-    }
 
     const fetchingDocumentData = useCallback(async () => {
         setIsRefreshing(true);
@@ -122,7 +92,7 @@ const EnterList = () => {
     }
 
     const renderItem = (item, index) => (
-        <div key={item.Id}>
+        <React.Fragment key={item.Id}>
             <ListItem
                 index={index + 1}
                 onLongPress={() => {
@@ -146,7 +116,7 @@ const EnterList = () => {
                     }
                 }}
             />
-        </div>
+        </React.Fragment>
     );
 
     useEffect(() => {
@@ -157,11 +127,25 @@ const EnterList = () => {
         }, 300);
 
         return () => clearTimeout(time);
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
+    const handleFabClick = () => {
+        if (permission_ver(permissions, 'enter', 'C')) {
+            navigate('/enter/enter-manage', {
+                state: { id: null }
+            })
+        }
+    };
+
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
 
             <ListPagesHeader
                 isSearch={true}
@@ -170,50 +154,22 @@ const EnterList = () => {
                 setFilter={setFilter}
                 filterSearchKey={'docNumber'}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter: setFilter,
-                            searchParams: [
-                                'documentName',
-                                'product',
-                                'stocks',
-                                'owners',
-                                'departments'
-                            ],
-                            sortList: [
-                                {
-                                    id: '1',
-                                    label: 'Tarix',
-                                    value: "Moment"
-                                },
-                                {
-                                    id: 2,
-                                    label: 'Ad',
-                                    value: 'Name'
-                                },
-                                {
-                                    id: '3',
-                                    label: "Məbləğə görə",
-                                    value: 'Amount'
-                                },
-                                {
-                                    id: '4',
-                                    label: 'Status',
-                                    value: "Mark"
-                                },
-                                {
-                                    id: '5',
-                                    label: 'Anbar',
-                                    value: "StockName"
-                                }
-
-                            ],
-                        }
-                    });
+                filterParams={{
+                    searchParams: [
+                        'documentName',
+                        'product',
+                        'stocks',
+                        'owners',
+                        'departments'
+                    ],
+                    sortList: [
+                        { id: '1', label: 'Tarix', value: "Moment" },
+                        { id: 2, label: 'Ad', value: 'Name' },
+                        { id: '3', label: "Məbləğə görə", value: 'Amount' },
+                        { id: '4', label: 'Status', value: "Mark" },
+                        { id: '5', label: 'Anbar', value: "StockName" }
+                    ]
                 }}
-
             />
 
             <DocumentTimes
@@ -232,28 +188,37 @@ const EnterList = () => {
                 ]} />
             ) : (
                 <div style={{
-                    width: '100%',
-                    height: 20,
                     display: 'flex',
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    padding: '10px 0',
+                    borderBottom: '1px solid var(--adm-color-border)'
                 }}>
-                    <div className="spinner" style={{ width: 15, height: 15 }}></div>
-                    <Line width={'100%'} />
+                    <SpinLoading color='primary' style={{ '--size': '20px' }} />
                 </div>
             )}
 
-            <div style={styles.listContainer}>
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                paddingBottom: 80,
+                padding: '0 12px 80px 12px'
+            }}>
                 {
                     documents == null ?
-                        <div style={styles.loadingContainer}>
-                            <div className="spinner"></div> // Web spinner
+                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <SpinLoading color='primary' style={{ '--size': '40px' }} />
                         </div>
                         :
                         <>
                             {documents.length === 0 ? (
-                                <div style={styles.emptyContainer}>
-                                    <span style={{ color: theme.text }}>List boşdur</span>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                    color: 'var(--adm-color-weak)'
+                                }}>
+                                    <span>List boşdur</span>
                                 </div>
                             ) : (
                                 documents.map((item, index) => renderItem(item, index))
@@ -263,15 +228,18 @@ const EnterList = () => {
                 }
             </div>
 
-            <FabButton
-                onPress={() => {
-                    if (permission_ver(permissions, 'enter', 'C')) {
-                        navigate('/enter/enter-manage', {
-                            state: { id: null }
-                        })
-                    }
+            <FloatingBubble
+                style={{
+                    '--initial-position-bottom': '24px',
+                    '--initial-position-right': '24px',
+                    '--edge-distance': '24px',
+                    '--background': 'var(--adm-color-primary)',
+                    '--size': '56px'
                 }}
-            />
+                onClick={handleFabClick}
+            >
+                <AddOutline fontSize={28} color='#fff' />
+            </FloatingBubble>
         </div>
     )
 }

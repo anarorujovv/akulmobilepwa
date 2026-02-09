@@ -1,23 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import React, { useEffect, useState } from 'react';
+import { SpinLoading, FloatingBubble, Divider } from 'antd-mobile';
+import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
-import FabButton from '../../shared/ui/FabButton';
 import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from '../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
 import ListItem from '../../shared/ui/list/ListItem';
-import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 
 const SupplyReturnList = () => {
     const navigate = useNavigate();
-    let theme = useTheme();
     let permissions = useGlobalStore(state => state.permissions);
 
     const [documents, setDocuments] = useState([]);
@@ -35,47 +33,6 @@ const SupplyReturnList = () => {
     });
 
     const [selectedTime, setSelectedTime] = useState(null);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        deleteButton: {
-            backgroundColor: theme.red,
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: 100,
-            height: '100%',
-        },
-        deleteText: {
-            color: theme.bg,
-            fontWeight: 'bold',
-            fontSize: 16
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: 80
-        },
-        loadingContainer: {
-            width: '100%',
-            height: 20,
-            justifyContent: 'center',
-            alignItems: 'center',
-            display: 'flex'
-        },
-        emptyContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            display: 'flex',
-            paddingTop: 50
-        }
-    }
 
     const fetchingDocumentData = async () => {
         setIsRefreshing(true);
@@ -137,7 +94,7 @@ const SupplyReturnList = () => {
     }
 
     const renderItem = (item, index) => (
-        <div key={item.Id}>
+        <React.Fragment key={item.Id}>
             <ListItem
                 onLongPress={() => {
                     if (window.confirm('Alış silməyə əminsiniz?')) {
@@ -159,7 +116,7 @@ const SupplyReturnList = () => {
                 }}
                 index={index + 1}
             />
-        </div>
+        </React.Fragment>
     );
 
     useEffect(() => {
@@ -169,11 +126,26 @@ const SupplyReturnList = () => {
         }, 300);
 
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
+
+    const handleFabClick = () => {
+        if (permission_ver(permissions, 'supplyreturn', 'C')) {
+            navigate('/supplyreturn/supply-return-manage', {
+                state: { id: null }
+            })
+        }
+    };
 
     return (
 
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 isSearch={true}
                 header={'İade Alışlar'}
@@ -181,41 +153,19 @@ const SupplyReturnList = () => {
                 setFilter={setFilter}
                 filterSearchKey={'docNumber'}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter: setFilter,
-                            searchParams: [
-                                'product',
-                                'stocks',
-                                'owners',
-                                'documentName'
-                            ],
-                            sortList: [
-                                {
-                                    id: '1',
-                                    label: 'Tarix',
-                                    value: "Moment"
-                                },
-                                {
-                                    id: '2',
-                                    label: 'Anbar',
-                                    value: 'StockName'
-                                },
-                                {
-                                    id: '3',
-                                    label: "Məbləğə görə",
-                                    value: 'Amount'
-                                },
-                                {
-                                    id: '4',
-                                    label: 'Status',
-                                    value: "Mark"
-                                }
-                            ],
-                        }
-                    });
+                filterParams={{
+                    searchParams: [
+                        'product',
+                        'stocks',
+                        'owners',
+                        'documentName'
+                    ],
+                    sortList: [
+                        { id: '1', label: 'Tarix', value: "Moment" },
+                        { id: '2', label: 'Anbar', value: 'StockName' },
+                        { id: '3', label: "Məbləğə görə", value: 'Amount' },
+                        { id: '4', label: 'Status', value: "Mark" }
+                    ]
                 }}
             />
 
@@ -238,24 +188,40 @@ const SupplyReturnList = () => {
                     />
                 )
                     :
-                    <div style={styles.loadingContainer}>
-                        <div className="spinner" style={{ width: 15, height: 15 }}></div>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        padding: '10px 0',
+                        borderBottom: '1px solid var(--adm-color-border)'
+                    }}>
+                        <SpinLoading color='primary' style={{ '--size': '20px' }} />
                     </div>
             }
 
-            <div style={styles.listContainer}>
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                paddingBottom: 80,
+                padding: '0 12px 80px 12px'
+            }}>
                 {
                     documents == null ?
 
-                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            <div className="spinner"></div> // Web spinner
+                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <SpinLoading color='primary' style={{ '--size': '40px' }} />
                         </div>
 
                         :
                         <>
                             {documents.length === 0 ? (
-                                <div style={styles.emptyContainer}>
-                                    <span style={{ color: theme.text }}>List boşdur</span>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                    color: 'var(--adm-color-weak)'
+                                }}>
+                                    <span>List boşdur</span>
                                 </div>
                             ) : (
                                 documents.map((item, index) => renderItem(item, index))
@@ -265,15 +231,18 @@ const SupplyReturnList = () => {
                 }
             </div>
 
-            <FabButton
-                onPress={() => {
-                    if (permission_ver(permissions, 'supplyreturn', 'C')) {
-                        navigate('/supplyreturn/supply-return-manage', {
-                            state: { id: null }
-                        })
-                    }
+            <FloatingBubble
+                style={{
+                    '--initial-position-bottom': '24px',
+                    '--initial-position-right': '24px',
+                    '--edge-distance': '24px',
+                    '--background': 'var(--adm-color-primary)',
+                    '--size': '56px'
                 }}
-            />
+                onClick={handleFabClick}
+            >
+                <AddOutline fontSize={28} color='#fff' />
+            </FloatingBubble>
         </div>
     )
 }

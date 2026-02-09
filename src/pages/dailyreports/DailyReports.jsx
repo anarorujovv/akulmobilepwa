@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading } from 'antd-mobile';
 import MySelection from '../../shared/ui/MySelection';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
-import Line from '../../shared/ui/Line';
 import CardItem from './../../shared/ui/list/CardItem';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
 
 const DailyProfits = () => {
-    let theme = useTheme();
     const [selectionData, setSelectionData] = useState([]);
     const [info, setInfo] = useState(null);
     const [filter, setFilter] = useState({
@@ -19,58 +17,6 @@ const DailyProfits = () => {
 
     let [data, setData] = useState([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        content: {
-            flex: 1,
-            padding: 10,
-            overflowY: 'auto'
-        },
-        section: {
-            marginBottom: 15,
-            borderRadius: 8,
-            overflow: 'hidden',
-            backgroundColor: theme.whiteGrey,
-            borderColor: theme.grey,
-            borderWidth: 1,
-        },
-        itemRow: {
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            padding: '12px 20px',
-            alignItems: 'center',
-            cursor: 'pointer',
-            borderBottom: `1px solid ${theme.whiteGrey}`
-        },
-        itemText: {
-            color: theme.black,
-            fontSize: 13
-        },
-        selectionContainer: {
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        infoText: {
-            textAlign: 'center',
-            color: theme.primary,
-            fontWeight: 'bold'
-        }
-    };
 
     let fetchingData = async () => {
         setInfo(null);
@@ -171,38 +117,73 @@ const DailyProfits = () => {
 
     useEffect(() => {
         fetchingData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 header={'Gündəlik hesabat'}
             />
 
             {filter.salepointid === 'not' ? (
-                <div style={styles.content}>
+                <div style={{
+                    flex: 1,
+                    padding: 10,
+                    overflowY: 'auto'
+                }}>
                     {selectionData[0] ? (
                         selectionData.map((item) => (
                             <div key={item.Id}>
                                 <div
                                     onClick={() => changeFilter(item.Id)}
-                                    style={styles.itemRow}
-                                    className="hover-bg" // Assuming a hover class exists or inline hover can be added
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        justifyContent: 'space-between',
+                                        padding: '12px 20px',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        borderBottom: '1px solid var(--adm-color-border)',
+                                        backgroundColor: 'var(--adm-color-white)'
+                                    }}
                                 >
-                                    <span style={styles.itemText}>{item.Name}</span>
+                                    <span style={{
+                                        color: 'var(--adm-color-text)',
+                                        fontSize: 13
+                                    }}>{item.Name}</span>
                                 </div>
-                                <Line width={'95%'} />
                             </div>
                         ))
                     ) : (
-                        <div style={styles.loadingContainer}>
-                            <div className="spinner"></div>
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '100%'
+                        }}>
+                            <SpinLoading color='primary' />
                         </div>
                     )}
                 </div>
             ) : (
-                <div style={styles.content}>
-                    <div style={styles.selectionContainer}>
+                <div style={{
+                    flex: 1,
+                    padding: 10,
+                    overflowY: 'auto'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10
+                    }}>
                         {selectionData[0] ? (
                             <MySelection
                                 list={selectionData}
@@ -223,12 +204,26 @@ const DailyProfits = () => {
                         />
 
                         {info == null ? (
-                            <div style={styles.loadingContainer}>
-                                <div className="spinner"></div>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                padding: 20
+                            }}>
+                                <SpinLoading color='primary' style={{ '--size': '32px' }} />
                             </div>
                         ) : info === 'not' ? (
-                            <div style={styles.loadingContainer}>
-                                <span style={styles.infoText}>Məlumat tapılmadı!</span>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                padding: 20
+                            }}>
+                                <span style={{
+                                    textAlign: 'center',
+                                    color: 'var(--adm-color-text-caption)',
+                                    fontWeight: 'bold'
+                                }}>Məlumat tapılmadı!</span>
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 20 }}>

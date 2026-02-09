@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import { SpinLoading } from 'antd-mobile';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
@@ -10,14 +10,12 @@ import MyPagination from '../../shared/ui/MyPagination';
 import DocumentInfo from './../../shared/ui/DocumentInfo';
 import { formatPrice } from '../../services/formatPrice';
 import ListItem from '../../shared/ui/list/ListItem';
-import Line from '../../shared/ui/Line';
 import DocumentTimes from './../../shared/ui/DocumentTimes';
 import getDateByIndex from '../../services/report/getDateByIndex';
 import { useNavigate } from 'react-router-dom';
 
 const SaleReportList = () => {
   const navigate = useNavigate();
-  let theme = useTheme();
   let permissions = useGlobalStore(state => state.permissions);
 
   const [selectedTime, setSelectedTime] = useState(4);
@@ -42,35 +40,6 @@ const SaleReportList = () => {
   const [documentsInfo, setDocumentsInfo] = useState(null);
   const [itemSize, setItemSize] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      backgroundColor: theme.bg,
-      overflow: 'hidden'
-    },
-    listContainer: {
-      flex: 1,
-      overflowY: 'auto',
-      paddingBottom: 80
-    },
-    loadingContainer: {
-      width: '100%',
-      height: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      display: 'flex'
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      display: 'flex',
-      paddingTop: 50
-    }
-  }
 
   const fetchingDocumentData = async () => {
     setIsRefreshing(true);
@@ -117,10 +86,11 @@ const SaleReportList = () => {
     }, 300);
 
     return () => clearTimeout(time);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const renderItem = (item, index) => (
-    <div key={item.ProductId || index}>
+    <React.Fragment key={item.ProductId || index}>
       <ListItem
         firstText={item.ProductName}
         priceText={formatPrice(item.SumPrice)}
@@ -136,11 +106,17 @@ const SaleReportList = () => {
         }}
         index={index + 1}
       />
-    </div>
+    </React.Fragment>
   );
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      backgroundColor: 'var(--adm-color-background)',
+      overflow: 'hidden'
+    }}>
       <ListPagesHeader
         header={"Mənfəət"}
         isSearch={true}
@@ -148,38 +124,32 @@ const SaleReportList = () => {
         setFilter={setFilter}
         filterSearchKey={'docNumber'}
         isFilter={true}
-        processFilterClick={() => {
-          navigate('/filter', {
-            state: {
-              filter: filter,
-              // setFilter: setFilter,
-              searchParams: [
-                'product',
-                'groups',
-                'customers',
-                'stocks',
-                'salePoint',
-                'customerGroups'
-              ],
-              customFields: {
-                groups: {
-                  title: "Qrup",
-                  name: 'gp',
-                  api: 'productfolders',
-                  type: 'select'
-                },
-                product: {
-                  title: "Məhsul",
-                  api: 'products',
-                  name: "productName",
-                  type: 'select',
-                  searchApi: 'products/getfast.php',
-                  searchKey: 'fast'
-                },
-              },
-              isDate: true
-            }
-          })
+        filterParams={{
+          searchParams: [
+            'product',
+            'groups',
+            'customers',
+            'stocks',
+            'salePoint',
+            'customerGroups'
+          ],
+          customFields: {
+            groups: {
+              title: "Qrup",
+              name: 'gp',
+              api: 'productfolders',
+              type: 'select'
+            },
+            product: {
+              title: "Məhsul",
+              api: 'products',
+              name: "productName",
+              type: 'select',
+              searchApi: 'products/getfast.php',
+              searchKey: 'fast'
+            },
+          },
+          isDate: true
         }}
       />
 
@@ -193,58 +163,53 @@ const SaleReportList = () => {
       {documentsInfo != null ? (
         <DocumentInfo
           data={[
-            {
-              title: "Satış",
-              value: formatPrice(documentsInfo.AllAmount)
-            },
-            {
-              title: "Qaytarma",
-              value: formatPrice(documentsInfo.RetAllAmount)
-            },
-            {
-              title: 'Maya',
-              value: formatPrice(documentsInfo.AllCost)
-            },
-            {
-              title: "Qazanc",
-              value: formatPrice(documentsInfo.AllProfit)
-            },
-            {
-              title: "Miqdar",
-              value: formatPrice(documentsInfo.AllSaleQuantity)
-            },
-            {
-              title: "Marja",
-              value: formatPrice(documentsInfo.Margin)
-            },
-            {
-              title: "Qaytarma mayası",
-              value: formatPrice(documentsInfo.RetAllCost)
-            }
+            { title: "Satış", value: formatPrice(documentsInfo.AllAmount) },
+            { title: "Qaytarma", value: formatPrice(documentsInfo.RetAllAmount) },
+            { title: 'Maya', value: formatPrice(documentsInfo.AllCost) },
+            { title: "Qazanc", value: formatPrice(documentsInfo.AllProfit) },
+            { title: "Miqdar", value: formatPrice(documentsInfo.AllSaleQuantity) },
+            { title: "Marja", value: formatPrice(documentsInfo.Margin) },
+            { title: "Qaytarma mayası", value: formatPrice(documentsInfo.RetAllCost) }
           ]}
         />
       ) : (
-        <div style={styles.loadingContainer}>
-          <div className="spinner" style={{ width: 15, height: 15 }}></div>
-          <Line width={'100%'} />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '10px 0',
+          borderBottom: '1px solid var(--adm-color-border)'
+        }}>
+          <SpinLoading color='primary' style={{ '--size': '20px' }} />
         </div>
       )}
 
-      <div style={styles.listContainer}>
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        paddingBottom: 80,
+        padding: '0 12px 0 12px'
+      }}>
         {documents == null ? (
           <div style={{
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            display: 'flex'
+            display: 'flex',
+            height: '100%'
           }}>
-            <div className="spinner"></div> // Web spinner
+            <SpinLoading color='primary' style={{ '--size': '40px' }} />
           </div>
         ) : (
           <>
             {documents.length === 0 ? (
-              <div style={styles.emptyContainer}>
-                <span style={{ color: theme.text }}>List boşdur</span>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                color: 'var(--adm-color-weak)',
+              }}>
+                <span>List boşdur</span>
               </div>
             ) : (
               documents.map((item, index) => renderItem(item, index))

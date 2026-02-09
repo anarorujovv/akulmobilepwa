@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { SpinLoading } from 'antd-mobile';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import api from '../../services/api';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
@@ -7,12 +8,9 @@ import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
 import ListItem from '../../shared/ui/list/ListItem';
 import { formatPrice } from '../../services/formatPrice';
-import useTheme from '../../shared/theme/useTheme';
-import { useNavigate } from 'react-router-dom';
+import DocumentInfo from '../../shared/ui/DocumentInfo';
 
 const CashInList = () => {
-    const navigate = useNavigate();
-    let theme = useTheme();
 
     const [filter, setFilter] = useState({
         dr: 1,
@@ -25,26 +23,6 @@ const CashInList = () => {
     const [dateByIndex, setDateByIndex] = useState(4);
     const [list, setList] = useState([]);
     const [sum, setSum] = useState(null);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto'
-        },
-        emptyContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingTop: 50
-        }
-    };
 
     const makeApiRequestCashInList = async () => {
         let obj = {
@@ -73,10 +51,17 @@ const CashInList = () => {
         }, 300);
 
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
             <ListPagesHeader
                 filter={filter}
                 setFilter={setFilter}
@@ -84,46 +69,37 @@ const CashInList = () => {
                 header={'Kassa Mədaxil'}
                 isSearch={true}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter: setFilter, // Function cannot be passed via state in a reliable way for back navigation patterns often used here
-                            // In a real refactor, Filter should probably accept a callback or return data
-                            // For now, assuming Filter page logic stays similar, we might need a workaround or context.
-                            // But proceeding with state for now.
-                            searchParams: [
-                                'salePoint',
-                                'departments',
-                                'owners',
-                            ],
-                            sortList: [
-                                {
-                                    id: 1,
-                                    label: 'Satış nöqtəsi',
-                                    value: 'SalePointName'
-                                },
-                                {
-                                    id: 2,
-                                    label: "Tarix",
-                                    value: 'Moment'
-                                },
-                                {
-                                    id: 3,
-                                    label: "Məbləğ",
-                                    value: 'Amount'
-                                }
-                            ],
-                            customFields: {
-                                departments: {
-                                    title: "Şöbə",
-                                    api: 'departments',
-                                    name: "departmentName",
-                                    type: 'select',
-                                },
-                            }
+                filterParams={{
+                    searchParams: [
+                        'salePoint',
+                        'departments',
+                        'owners',
+                    ],
+                    sortList: [
+                        {
+                            id: 1,
+                            label: 'Satış nöqtəsi',
+                            value: 'SalePointName'
+                        },
+                        {
+                            id: 2,
+                            label: "Tarix",
+                            value: 'Moment'
+                        },
+                        {
+                            id: 3,
+                            label: "Məbləğ",
+                            value: 'Amount'
                         }
-                    });
+                    ],
+                    customFields: {
+                        departments: {
+                            title: "Şöbə",
+                            api: 'departments',
+                            name: "departmentName",
+                            type: 'select',
+                        },
+                    }
                 }}
             />
 
@@ -134,13 +110,44 @@ const CashInList = () => {
                 setFilter={setFilter}
             />
 
-            <div style={styles.listContainer}>
+            {
+                sum == null ?
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        padding: '10px 0',
+                        borderBottom: '1px solid var(--adm-color-border)'
+                    }}>
+                        <SpinLoading color='primary' style={{ '--size': '20px' }} />
+                    </div>
+                    :
+                    <DocumentInfo
+                        data={[
+                            {
+                                title: "Məbləğ",
+                                value: formatPrice(sum.AllSum)
+                            }
+                        ]}
+                    />
+            }
+
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '0 12px 0 12px'
+            }}>
                 {list === null || list.length === 0 ? (
-                    <div style={styles.emptyContainer}>
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100%'
+                    }}>
                         {list === null ? (
-                            <div className="spinner"></div>
+                            <SpinLoading color='primary' style={{ '--size': '40px' }} />
                         ) : (
-                            <span style={{ color: theme.text }}>List boşdur</span>
+                            <span style={{ color: 'var(--adm-color-weak)' }}>List boşdur</span>
                         )}
                     </div>
                 ) : (
@@ -150,6 +157,7 @@ const CashInList = () => {
                                 firstText={item.SalePointName}
                                 centerText={item.Moment}
                                 priceText={formatPrice(item.Amount)}
+                                notIcon={true}
                                 index={index + 1}
                             />
                         </div>

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
+import React, { useEffect, useState } from 'react';
+import { SpinLoading } from 'antd-mobile';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
@@ -14,7 +14,6 @@ import { useNavigate } from 'react-router-dom';
 
 const ProductTransactionsList = () => {
     const navigate = useNavigate();
-    let theme = useTheme();
 
     const [selectedTime, setSelectedTime] = useState(4);
     const [filter, setFilter] = useState({
@@ -40,55 +39,6 @@ const ProductTransactionsList = () => {
     const [documentsInfo, setDocumentsInfo] = useState(null);
     const [itemSize, setItemSize] = useState(0);
     const [isRefreshing, setIsRefreshing] = useState(false);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto',
-            padding: 10
-        },
-        emptyContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            display: 'flex',
-            paddingTop: 50
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        section: {
-            marginBottom: 15,
-            borderRadius: 8,
-            overflow: 'hidden',
-            backgroundColor: theme.stable.white,
-            borderColor: theme.grey,
-            borderWidth: 1,
-            marginLeft: 10,
-            marginRight: 10,
-        },
-        sectionTitle: {
-            backgroundColor: theme.primary,
-            padding: 10,
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: theme.bg,
-        },
-        dateRangeContainer: {
-            width: '100%',
-            padding: 10
-        }
-    };
 
     const fetchingDocumentData = async () => {
         setIsRefreshing(true);
@@ -137,7 +87,7 @@ const ProductTransactionsList = () => {
         }, 300);
 
         return () => clearTimeout(time);
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter])
 
     const renderItem = (item) => (
@@ -168,7 +118,13 @@ const ProductTransactionsList = () => {
     );
 
     return (
-        <div style={styles.container}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
 
             <ListPagesHeader
                 header={"Dövriyyə"}
@@ -177,32 +133,26 @@ const ProductTransactionsList = () => {
                 filterSearchKey={'docNumber'}
                 isSearch={true}
                 isFilter={true}
-                processFilterClick={() => {
-                    navigate('/filter', {
-                        state: {
-                            filter: filter,
-                            // setFilter:setFilter,
-                            searchParams: [
-                                'groups',
-                                'product',
-                                'stocks',
-                                'customers',
-                                'owners'
-                            ],
-                            customFields: {
-                                groups: {
-                                    title: "Məhsul qrupu",
-                                    name: 'gp',
-                                    type: 'select',
-                                    api: 'productfolders'
-                                }
-                            }
+                filterParams={{
+                    searchParams: [
+                        'groups',
+                        'product',
+                        'stocks',
+                        'customers',
+                        'owners'
+                    ],
+                    customFields: {
+                        groups: {
+                            title: "Məhsul qrupu",
+                            name: 'gp',
+                            type: 'select',
+                            api: 'productfolders'
                         }
-                    })
+                    }
                 }}
             />
 
-            <div style={styles.dateRangeContainer}>
+            <div style={{ width: '100%', padding: 10 }}>
                 <DateRangePicker
                     submit={true}
                     width={'100%'}
@@ -219,14 +169,30 @@ const ProductTransactionsList = () => {
             />
 
             {documents == null ? (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner"></div> // Web spinner
+                <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <SpinLoading color='primary' style={{ '--size': '40px' }} />
                 </div>
             ) : (
-                <div style={styles.listContainer}>
+                <div style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: 10
+                }}>
                     {documents.length === 0 ? (
-                        <div style={styles.emptyContainer}>
-                            <span style={{ color: theme.text }}>List boşdur</span>
+                        <div style={{
+                            flex: 1,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            display: 'flex',
+                            paddingTop: 50,
+                            color: 'var(--adm-color-weak)'
+                        }}>
+                            <span>List boşdur</span>
                         </div>
                     ) : (
                         documents.map((item) => renderItem(item))

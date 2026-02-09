@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import useTheme from '../../shared/theme/useTheme';
 import { AiOutlineShoppingCart, AiOutlineBank, AiOutlineWallet, AiOutlineAppstore } from 'react-icons/ai';
 import { BsCashCoin } from 'react-icons/bs';
+import { SpinLoading, Grid, Card } from 'antd-mobile';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
@@ -12,10 +12,10 @@ import Selection from '../../shared/ui/Selection';
 import permission_ver from '../../services/permissionVerification';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import { useNavigate } from 'react-router-dom';
+import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 
 const ExpeditorList = () => {
     const navigate = useNavigate();
-    const theme = useTheme();
 
     const permissions = useGlobalStore(state => state.permissions);
     const [cashes, setCashes] = useState([]);
@@ -29,93 +29,28 @@ const ExpeditorList = () => {
     const [selectedTime, setSelectedTime] = useState(0);
     const [owner, setOwner] = useState(null);
 
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        scrollView: {
-            flex: 1,
-            overflowY: 'auto',
-            padding: 15
-        },
-        headerText: {
-            fontSize: 24,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: 20,
-            width: '100%',
-            color: theme.primary,
-            marginTop: 10
-        },
-        gridContainer: {
-            display: 'flex',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 15
-        },
-        cardContainer: {
-            width: 'calc(50% - 10px)',
-            borderRadius: 10,
-            padding: 15,
-            border: '1px solid #ddd',
-            backgroundColor: theme.whiteGrey,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            boxSizing: 'border-box',
-            marginBottom: 15
-        },
-        cardHeader: {
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 10,
-        },
-        cardTitle: {
-            fontSize: 18,
-            fontWeight: 'bold',
-            marginLeft: 10,
-            color: theme.primary
-        },
-        cardContent: {
-            marginTop: 10,
-        },
-        cardItem: {
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: 8,
-            cursor: 'pointer'
-        },
-        cardItemKey: {
-            fontSize: 14,
-            color: theme.primary,
-            textDecoration: "underline"
-        },
-        cardItemValue: {
-            fontSize: 14,
-            fontWeight: 'bold',
-            color: theme.black
-        },
-        loadingContainer: {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 10
-        }
-    };
-
     const renderCard = (title, icon, items, style = {}) => (
-        <div style={{ ...styles.cardContainer, ...style }}>
-            <div style={styles.cardHeader}>
+        <Card style={{
+            borderRadius: 12,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: 'none',
+            ...style
+        }}>
+            <div style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+                gap: 8
+            }}>
                 {icon}
-                <span style={styles.cardTitle}>{title}</span>
+                <span style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: 'var(--adm-color-text)'
+                }}>{title}</span>
             </div>
-            <div style={styles.cardContent}>
+            <div style={{ marginTop: 8 }}>
                 {items != null ? (
                     items[0] ? (
                         items.map((item, index) => (
@@ -125,26 +60,46 @@ const ExpeditorList = () => {
                                     if (item.navParams == undefined) {
                                         navigate(item.navName);
                                     } else {
-                                        // Pass state for React Router
                                         navigate(item.navName, { state: { ...item.navParams } });
                                     }
                                 }}
-                                style={styles.cardItem}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 10,
+                                    cursor: 'pointer',
+                                    padding: '4px 0',
+                                    borderBottom: index !== items.length - 1 ? '1px solid var(--adm-color-border)' : 'none'
+                                }}
                             >
-                                <span style={styles.cardItemKey}>{item.key}</span>
-                                <span style={styles.cardItemValue}>{item.value}</span>
+                                <span style={{
+                                    fontSize: 14,
+                                    color: 'var(--adm-color-primary)',
+                                    textDecoration: "underline"
+                                }}>{item.key}</span>
+                                <span style={{
+                                    fontSize: 14,
+                                    fontWeight: 'bold',
+                                    color: 'var(--adm-color-text)'
+                                }}>{item.value}</span>
                             </div>
                         ))
                     ) : (
-                        <div style={styles.loadingContainer}>
-                            <div className="spinner" style={{ width: 20, height: 20 }}></div>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            padding: 10
+                        }}>
+                            <SpinLoading color='primary' style={{ '--size': '20px' }} />
                         </div>
                     )
                 ) : (
                     ""
                 )}
             </div>
-        </div>
+        </Card>
     );
 
     async function fetchingCashes() {
@@ -189,7 +144,7 @@ const ExpeditorList = () => {
             arr.push({
                 key: 'Satış',
                 value: formatPrice(demand.AllSum),
-                navName: "/demands/demand" // Updated path
+                navName: "/demands/demand"
             });
         } else {
             arr.push({
@@ -203,7 +158,7 @@ const ExpeditorList = () => {
             arr.push({
                 key: 'İadə',
                 value: formatPrice(demandReturn.AllSum),
-                navName: '/demands/demandreturns' // Updated path
+                navName: '/demands/demandreturns'
             });
         } else {
             arr.push({
@@ -243,7 +198,7 @@ const ExpeditorList = () => {
                             {
                                 key: payType == 'i' ? 'Mədaxil' : "Məxaric",
                                 value: formatPrice(payType == 'i' ? element.InSum : element.OutSum),
-                                navName: '/transactions' // Updated path
+                                navName: '/transactions'
                             }
                         );
                     }
@@ -276,12 +231,12 @@ const ExpeditorList = () => {
                     {
                         key: 'Alınacaq',
                         value: formatPrice(element.AllInSum),
-                        navName: "/settlements" // Updated path
+                        navName: "/settlements"
                     },
                     {
                         key: 'Veriləcək',
                         value: formatPrice(element.AllOutSum),
-                        navName: '/settlements' // Updated path
+                        navName: '/settlements'
                     }
                 ]);
             }
@@ -307,7 +262,7 @@ const ExpeditorList = () => {
             list.push({
                 key: 'Sifariş',
                 value: formatPrice(result.AllSum),
-                navName: "/customer-orders" // Updated path
+                navName: "/customer-orders"
             });
         }
 
@@ -325,7 +280,7 @@ const ExpeditorList = () => {
             list.push({
                 key: 'Yerdəyişmə',
                 value: formatPrice(move.AllSum),
-                navName: "/moves" // Updated path
+                navName: "/moves"
             });
         }
 
@@ -351,6 +306,7 @@ const ExpeditorList = () => {
             fetchingCashes();
             fetchingDebtAmounts();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [owner]);
 
     useEffect(() => {
@@ -371,12 +327,24 @@ const ExpeditorList = () => {
             fetchingPaymentAmounts();
             fetchingCustomerOrderAndMoveAllSum();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dateFilter, owner]);
 
     return (
-        <div style={styles.container}>
-            <div style={styles.scrollView}>
-                <span style={styles.headerText}>Distributorlar</span>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'var(--adm-color-background)',
+            overflow: 'hidden'
+        }}>
+            <ListPagesHeader header={'Distributorlar'} />
+
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: 16
+            }}>
                 {
                     permission_ver(permissions, 'owner', 'R') ?
                         owner != null ?
@@ -394,6 +362,7 @@ const ExpeditorList = () => {
                         :
                         ""
                 }
+
                 <DocumentTimes
                     filter={dateFilter}
                     setFilter={setDateFilter}
@@ -401,41 +370,48 @@ const ExpeditorList = () => {
                     setSelected={setSelectedTime}
                 />
 
-                <div style={styles.gridContainer}>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 16,
+                    marginTop: 16
+                }}>
 
                     {renderCard(
                         'Satışlar',
-                        <AiOutlineShoppingCart size={24} color={theme.orange} />,
+                        <AiOutlineShoppingCart size={24} color="#ff9c6e" />,
                         [...demandSums]
                     )}
 
                     {renderCard(
                         'Distributor',
-                        <AiOutlineAppstore size={24} color={theme.primary} />,
+                        <AiOutlineAppstore size={24} color="var(--adm-color-primary)" />,
                         [...customerOrderAndMoveSums]
                     )}
 
                     {renderCard(
                         'Ödənişlər',
-                        <BsCashCoin size={24} color={theme.pink} />,
+                        <BsCashCoin size={24} color="#ff85c0" />,
                         [...paymentSums]
                     )}
 
                     {renderCard(
                         'Borclar',
-                        <AiOutlineBank size={24} color={theme.red} />,
+                        <AiOutlineBank size={24} color="#ff4d4f" />,
                         [...debtSums]
                     )}
+                </div>
 
+                <div style={{ marginTop: 16 }}>
                     {renderCard(
                         'Balans',
-                        <AiOutlineWallet size={24} color={theme.orange} />,
+                        <AiOutlineWallet size={24} color="#ffa940" />,
                         cashes == null ?
                             null :
                             cashes[0] ?
                                 cashes.map(element => ({
                                     key: element.Name, value: formatPrice(element.Balance),
-                                    navName: "/cashe/cashe-manage", // Updated to likely correct path
+                                    navName: "/cashe/cashe-manage",
                                     navParams: {
                                         id: element.Id,
                                         name: element.Name,
@@ -446,7 +422,6 @@ const ExpeditorList = () => {
                                 [],
                         { width: '100%' }
                     )}
-
                 </div>
             </div>
         </div>
