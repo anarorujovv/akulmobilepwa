@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
-import { IoBasket, IoInformationCircleOutline } from 'react-icons/io5'; // Using react-icons
-import Button from '../../../shared/ui/Button';
+import { Card, Button, List, Modal } from 'antd-mobile';
+import { IoBasket, IoInformationCircleOutline } from 'react-icons/io5';
 import useTheme from '../../../shared/theme/useTheme';
 import { formatPrice } from '../../../services/formatPrice';
 import { DemandGlobalContext } from '../../../shared/data/DemandGlobalState';
@@ -69,13 +68,14 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
     }
 
     return (
-        <ManageCard>
-            <div style={styles.header}>
-                <IoBasket size={23} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Məhsul</span>
-            </div>
+        <Card
+            title={
+                <div style={styles.header}>
+                    <IoBasket size={23} color={theme.grey} />
+                    <span style={{ color: theme.grey }}>Məhsul</span>
+                </div>
+            }
+        >
 
             <div style={styles.container}>
 
@@ -83,49 +83,51 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     setHasUnsavedChanges={setHasUnsavedChanges}
                 />
 
-                {
-                    document.Positions.map((item, index) => (
-                        <ListItem
-                            key={index}
-                            indexIsButtonIconPress={() => {
-                                handleClickProductLastPrice(item);
-                            }}
-                            indexIsButtonIcon={<IoInformationCircleOutline size={30} color={theme.primary} />}
-                            index={index + 1}
-                            onLongPress={() => {
-                                if (window.confirm('Məhsulu silməyə əminsiniz?')) {
-                                    let data = { ...document };
-                                    data.Positions.splice(index, 1);
-                                    setDocument({ ...data, ...(pricingUtils(data.Positions)) });
-                                    setHasUnsavedChanges(true); // Moved here to be inside callback if valid
-                                }
-                            }}
-                            onPress={() => {
-                                // Assuming we have a product-position route or modal
-                                // The original code navigated to 'product-position'
-                                navigate('/product-position', {
-                                    state: {
-                                        product: item,
-                                        state: document,
-                                        setState: setDocument, // setState via state might update global context if logic exists there, but usually unsafe to pass setter via state. 
-                                        // However, since we use GlobalContext, maybe we don't need to pass setDocument if product-position uses context?
-                                        // Original code passed it. I'll keep it in state, but logic in target page needs to use it or context.
-                                        type: 0,
-                                        units: units,
-                                        setUnits: setUnits,
-                                        setHasUnsavedChanges: setHasUnsavedChanges,
-                                        pricePermission: local.demands.demand.positionModalPrice
+                <List>
+                    {
+                        document.Positions.map((item, index) => (
+                            <ListItem
+                                key={index}
+                                indexIsButtonIconPress={() => {
+                                    handleClickProductLastPrice(item);
+                                }}
+                                indexIsButtonIcon={<IoInformationCircleOutline size={30} color={theme.primary} />}
+                                index={index + 1}
+                                onLongPress={() => {
+                                    if (window.confirm('Məhsulu silməyə əminsiniz?')) {
+                                        let data = { ...document };
+                                        data.Positions.splice(index, 1);
+                                        setDocument({ ...data, ...(pricingUtils(data.Positions)) });
+                                        setHasUnsavedChanges(true); // Moved here to be inside callback if valid
                                     }
-                                })
-                            }}
-                            firstText={item.Name}
-                            centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
-                            endText={formatPrice(item.StockQuantity)}
-                            priceText={local.demands.demandReturn.positionPrice ? formatPrice(item.Quantity * item.Price) : ""}
-                        />
-                    ))
+                                }}
+                                onPress={() => {
+                                    // Assuming we have a product-position route or modal
+                                    // The original code navigated to 'product-position'
+                                    navigate('/product-position', {
+                                        state: {
+                                            product: item,
+                                            state: document,
+                                            setState: setDocument, // setState via state might update global context if logic exists there, but usually unsafe to pass setter via state. 
+                                            // However, since we use GlobalContext, maybe we don't need to pass setDocument if product-position uses context?
+                                            // Original code passed it. I'll keep it in state, but logic in target page needs to use it or context.
+                                            type: 0,
+                                            units: units,
+                                            setUnits: setUnits,
+                                            setHasUnsavedChanges: setHasUnsavedChanges,
+                                            pricePermission: local.demands.demand.positionModalPrice
+                                        }
+                                    })
+                                }}
+                                firstText={item.Name}
+                                centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
+                                endText={formatPrice(item.StockQuantity)}
+                                priceText={local.demands.demandReturn.positionPrice ? formatPrice(item.Quantity * item.Price) : ""}
+                            />
+                        ))
 
-                }
+                    }
+                </List>
                 <div style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -136,6 +138,8 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     width: '100%'
                 }}>
                     <Button
+                        block
+                        color='primary'
                         onClick={() => {
                             navigate("/product-list", {
                                 state: {
@@ -149,7 +153,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                                 }
                             });
                         }}
-                        width={'70%'}
+                        style={{ width: '70%' }}
                     >
                         Məhsul əlavə et
                     </Button>
@@ -199,28 +203,37 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                 setHasUnsavedChanges={setHasUnsavedChanges}
             />
 
-            <MyModal center={true} height={100} modalVisible={productLastPriceModal} setModalVisible={setProductLastPriceModal} width={250}>
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <span style={{
-                        fontSize: 25,
-                        color: theme.primary,
-                        marginBottom: 10
-                    }}>SON SATIŞ QİYMƏTİ</span>
-                    <span style={{
-                        fontSize: 20,
-                        color: theme.black,
-                        fontWeight: 'bold'
-                    }}>{productLastPrice} AZN</span>
-                </div>
-            </MyModal>
-        </ManageCard>
+            <Modal
+                visible={productLastPriceModal}
+                content={
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: '20px'
+                    }}>
+                        <span style={{
+                            fontSize: 25,
+                            color: theme.primary,
+                            marginBottom: 10
+                        }}>SON SATIŞ QİYMƏTİ</span>
+                        <span style={{
+                            fontSize: 20,
+                            color: theme.black,
+                            fontWeight: 'bold'
+                        }}>{productLastPrice} AZN</span>
+                    </div>
+                }
+                closeOnMaskClick
+                onClose={() => {
+                    setProductLastPriceModal(false)
+                }}
+                showCloseButton
+            />
+        </Card>
     )
 }
 

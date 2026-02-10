@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Button from './Button';
+import { Button } from 'antd-mobile';
 import PricesModal from './modals/PricesModal';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import api from '../../services/api';
@@ -45,10 +45,14 @@ const AllChangeProductPriceType = ({ document, setDocument, setHasUnsavedChanges
     return (
         <>
             <Button
+                block
+                shape='rounded'
+                color='primary'
+                fill='outline'
                 onClick={() => {
                     setModalVisible(true);
                 }}
-                width={'50%'}
+                style={{ width: '50%' }}
             >
                 Qiymət növlərini dəyişdir
             </Button>

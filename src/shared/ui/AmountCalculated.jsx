@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import MyModal from './MyModal';
+import { Modal } from 'antd-mobile';
 import Input from './Input';
 import Button from './Button';
 import CustomSelection from './CustomSelection';
@@ -93,37 +93,43 @@ const AmountCalculated = ({
     }, [modalVisible])
 
     return (
-        <MyModal modalVisible={modalVisible} setModalVisible={setModalVisible} width="90%" height="50%" center>
-            <div style={styles.container}>
-                <div style={styles.titleContainer}>
-                    <span style={styles.title}>Ümumi məbləğ - {formatPrice(document.Amount)}</span>
-                    <span style={styles.title}>Ümumi endirim - {formatPrice(document.Discount)}</span>
+        <Modal
+            visible={modalVisible}
+            content={
+                <div style={{ ...styles.container, width: '90vw', height: 'auto', minHeight: '300px' }}>
+                    <div style={styles.titleContainer}>
+                        <span style={styles.title}>Ümumi məbləğ - {formatPrice(document.Amount)}</span>
+                        <span style={styles.title}>Ümumi endirim - {formatPrice(document.Discount)}</span>
+                    </div>
+
+                    <Input
+                        value={sum}
+                        onChange={(value) => setSum(value)}
+                        width="100%"
+                        placeholder={`${selectedOption == 'amount' ? "Məbləğ" : "Endirim"} daxil edin`}
+                        type="number"
+                    />
+
+                    <CustomSelection
+                        options={options}
+                        value={selectedOption}
+                        onChange={(newKey) => setSelectedOption(newKey)}
+                        title="Endirim növü"
+                        placeholder="Seçim"
+                        disabled={false}
+                    />
+
+                    <Button
+                        onClick={handleCalculateTotalAmount}
+                    >
+                        Təstiqlə
+                    </Button>
                 </div>
-
-                <Input
-                    value={sum}
-                    onChange={(value) => setSum(value)}
-                    width="100%"
-                    placeholder={`${selectedOption == 'amount' ? "Məbləğ" : "Endirim"} daxil edin`}
-                    type="number"
-                />
-
-                <CustomSelection
-                    options={options}
-                    value={selectedOption}
-                    onChange={(newKey) => setSelectedOption(newKey)}
-                    title="Endirim növü"
-                    placeholder="Seçim"
-                    disabled={false}
-                />
-
-                <Button
-                    onClick={handleCalculateTotalAmount}
-                >
-                    Təstiqlə
-                </Button>
-            </div>
-        </MyModal>
+            }
+            closeOnMaskClick
+            onClose={() => setModalVisible(false)}
+            showCloseButton
+        />
     );
 };
 

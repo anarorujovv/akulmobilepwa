@@ -13,7 +13,7 @@ import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import { DemandGlobalContext } from '../../shared/data/DemandGlobalState';
 import mergeProductQuantities from '../../services/mergeProductQuantities';
-import Button from '../../shared/ui/Button';
+import { Button, SpinLoading } from 'antd-mobile';
 import DestinationCard from './../../shared/ui/DestinationCard';
 import moment from 'moment';
 import calculateUnit from './../../services/report/calculateUnit';
@@ -235,7 +235,7 @@ const DemandManage = () => {
       {
         document == null ?
           <div style={styles.loading}>
-            <div className="spinner"></div> // Web spinner
+            <SpinLoading />
           </div>
           :
           <>
@@ -298,11 +298,11 @@ const DemandManage = () => {
             </div>
             {
               hasUnsavedChanges ?
-                <div style={{ padding: '10px' }}>
+                <div style={{ padding: '10px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
                   <Button
-                    bg={theme.green}
-                    disabled={loading}
-                    isLoading={loading}
+                    block
+                    color='success'
+                    loading={loading}
                     onClick={handleSave}
                   >
                     Yadda Saxla

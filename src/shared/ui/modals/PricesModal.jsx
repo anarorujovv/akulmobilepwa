@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import MyModal from './../MyModal';
+import { Popup, List, SpinLoading } from 'antd-mobile';
 import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
@@ -100,33 +100,50 @@ const PricesModal = ({
     }
 
     return (
-        <MyModal
-            modalVisible={modalVisible}
-            setModalVisible={setModalVisible}
-            width={'100%'}
-            height={"100%"}
+        <Popup
+            visible={modalVisible}
+            onMaskClick={() => {
+                setModalVisible(false)
+            }}
+            bodyStyle={{
+                borderTopLeftRadius: '8px',
+                borderTopRightRadius: '8px',
+                minHeight: '40vh',
+                maxHeight: '60vh',
+            }}
         >
+            <div style={{ padding: '16px 16px 0 16px' }}>
+                <span style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>Qiymət növü seçin</span>
+            </div>
             {
                 prices == null ?
                     <div style={styles.noDataContainer}>
-                        <span style={{
-                            fontSize: 16,
-                            color: theme.primary
-                        }}>Məlumat tapılmadı...</span>
+                        <span style={{ fontSize: 16, color: theme.primary }}>Məlumat tapılmadı...</span>
                     </div>
                     :
-                    <div style={styles.listContainer}>
-                        {
-                            prices[0] ?
-                                prices.map((item, index) => renderItem(item, index))
-                                :
-                                <div style={styles.noDataContainer}>
-                                    <div className="spinner"></div>
-                                </div>
-                        }
-                    </div>
+                    !prices[0] ?
+                        <div style={styles.noDataContainer}>
+                            <SpinLoading color='primary' />
+                        </div>
+                        :
+                        <div style={{ overflowY: 'auto', flex: 1, maxHeight: '50vh' }}>
+                            <List>
+                                {prices.map((item, index) => (
+                                    <List.Item
+                                        key={item.Id || index}
+                                        onClick={() => {
+                                            pressable(item);
+                                            setModalVisible(false);
+                                        }}
+                                        clickable
+                                    >
+                                        {item.Name}
+                                    </List.Item>
+                                ))}
+                            </List>
+                        </div>
             }
-        </MyModal>
+        </Popup>
     )
 }
 

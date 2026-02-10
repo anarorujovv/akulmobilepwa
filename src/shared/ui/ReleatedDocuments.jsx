@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import ManageCard from './ManageCard';
+import { Card, List, Button, Modal } from 'antd-mobile';
 import { IoDocuments } from 'react-icons/io5';
 import useTheme from '../theme/useTheme';
-import Button from './Button';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import api from '../../services/api';
 import ListItem from './list/ListItem';
@@ -143,34 +142,37 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
   return (
     <>
       {(
-        <ManageCard
-          customPadding={{
+        <Card
+          style={{
             paddingTop: 10,
             paddingBottom: 10,
-          }}>
-
-          <div style={styles.header}>
-            <IoDocuments size={20} color={theme.grey} />
-            <span style={{ color: theme.grey }}>Əlaqəli sənədlər</span>
-          </div>
-
+          }}
+          title={
+            <div style={styles.header}>
+              <IoDocuments size={20} color={theme.grey} />
+              <span style={{ color: theme.grey }}>Əlaqəli sənədlər</span>
+            </div>
+          }
+        >
           {
             releatedDocuments == null ?
               ""
               :
               releatedDocuments[0] ? (
-                releatedDocuments.map((element, index) => (
-                  <ListItem
-                    key={index}
-                    firstText={element.Moment}
-                    centerText={element.Name}
-                    priceText={formatPrice(element.Amount)}
-                    index={index + 1}
-                    onPress={() => {
-                      onClickItem(element);
-                    }}
-                  />
-                ))
+                <List>
+                  {releatedDocuments.map((element, index) => (
+                    <ListItem
+                      key={index}
+                      firstText={element.Moment}
+                      centerText={element.Name}
+                      priceText={formatPrice(element.Amount)}
+                      index={index + 1}
+                      onPress={() => {
+                        onClickItem(element);
+                      }}
+                    />
+                  ))}
+                </List>
               ) : (
                 <div style={styles.loadingContainer}>
                   <div className="spinner"></div>
@@ -188,57 +190,59 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
               marginTop: 10,
             }}>
               <Button
+                color='primary'
+                block
                 onClick={() => {
                   setModalVisible(true);
                 }}
-                width={'70%'}
+                style={{ width: '70%' }}
               >
                 Sənəd yarat
               </Button>
             </div>
           }
-        </ManageCard>
+        </Card>
       )}
 
-      <MyModal
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        width={300}
-        height={150}
-        center
-      >
-        <div style={styles.modalContent}>
-          {
-            !isLoading ?
-              <>
-                {
-                  payment &&
-                  <button style={styles.optionButton} onClick={() => {
-                    click('pay');
-                  }}>
-                    <span style={styles.optionText}>Ödəniş</span>
-                  </button>
-                }
+      <Modal
+        visible={modalVisible}
+        content={
+          <div style={{ ...styles.modalContent, width: '80vw', height: '30vh', padding: '20px' }}>
+            {
+              !isLoading ?
+                <>
+                  {
+                    payment &&
+                    <button style={styles.optionButton} onClick={() => {
+                      click('pay');
+                    }}>
+                      <span style={styles.optionText}>Ödəniş</span>
+                    </button>
+                  }
 
-                {selection != undefined &&
-                  selection.map((element, index) => {
-                    return (
-                      <button key={index} style={styles.optionButton} onClick={() => {
-                        click('custom', element.onClick);
-                      }}>
-                        <span style={styles.optionText}>{element.Text}</span>
-                      </button>
-                    )
-                  })
-                }
-              </>
-              :
-              <div style={styles.loadingContainer}>
-                <div className="spinner"></div>
-              </div>
-          }
-        </div>
-      </MyModal>
+                  {selection != undefined &&
+                    selection.map((element, index) => {
+                      return (
+                        <button key={index} style={styles.optionButton} onClick={() => {
+                          click('custom', element.onClick);
+                        }}>
+                          <span style={styles.optionText}>{element.Text}</span>
+                        </button>
+                      )
+                    })
+                  }
+                </>
+                :
+                <div style={styles.loadingContainer}>
+                  <div className="spinner"></div>
+                </div>
+            }
+          </div>
+        }
+        closeOnMaskClick
+        onClose={() => setModalVisible(false)}
+        showCloseButton
+      />
     </>
   );
 };

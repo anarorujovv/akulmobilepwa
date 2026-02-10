@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import MyModal from './../MyModal';
+import { Modal } from 'antd-mobile';
 import useTheme from '../../theme/useTheme';
 import Line from '../Line';
 import getTemplates from '../../../services/getTemplates';
@@ -145,40 +145,44 @@ const TempsModal = ({
     }
 
     return (
-        <MyModal
-            modalVisible={modalVisible}
-            setModalVisible={setModalVisible}
-            width={'100%'}
-            height={"100%"}
-        >
-            {
-                temps == null ?
-                    <div style={styles.noDataContainer}>
-                        <span style={{
-                            fontSize: 16,
-                            color: theme.primary
-                        }}>Məlumat tapılmadı...</span>
-                    </div>
-                    :
-                    <div style={styles.listContainer}>
-                        {
-                            temps == null ?
-                                <div style={styles.noDataContainer}>
-                                    <span style={{ fontWeight: 'bold', fontSize: 16 }}>Məlumat tapılmadı...</span>
-                                </div>
-                                :
-                                temps[0] ?
-                                    <div style={{ width: '100%', height: '100%', overflowY: 'auto' }}>
-                                        {temps.map((item, index) => renderItem(item, index))}
-                                    </div>
-                                    :
-                                    <div style={styles.noDataContainer}>
-                                        <div className="spinner"></div>
-                                    </div>
-                        }
-                    </div>
+        <Modal
+            visible={modalVisible}
+            content={
+                <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                    {
+                        temps == null ?
+                            <div style={styles.noDataContainer}>
+                                <span style={{
+                                    fontSize: 16,
+                                    color: theme.primary
+                                }}>Məlumat tapılmadı...</span>
+                            </div>
+                            :
+                            <div style={styles.listContainer}>
+                                {
+                                    temps == null ?
+                                        <div style={styles.noDataContainer}>
+                                            <span style={{ fontWeight: 'bold', fontSize: 16 }}>Məlumat tapılmadı...</span>
+                                        </div>
+                                        :
+                                        temps[0] ?
+                                            <div style={{ width: '100%', height: '100%', overflowY: 'auto' }}>
+                                                {temps.map((item, index) => renderItem(item, index))}
+                                            </div>
+                                            :
+                                            <div style={styles.noDataContainer}>
+                                                <div className="spinner"></div>
+                                            </div>
+                                }
+                            </div>
+                    }
+                </div>
             }
-        </MyModal>
+            closeOnMaskClick
+            onClose={() => setModalVisible(false)}
+            showCloseButton
+            title="Şablonlar"
+        />
     )
 }
 

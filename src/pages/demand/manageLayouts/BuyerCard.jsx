@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card } from 'antd-mobile';
 import { IoPerson } from 'react-icons/io5'; // Using react-icons for IonIcons replacement
 import useTheme from '../../../shared/theme/useTheme';
 import api from '../../../services/api';
@@ -105,16 +105,15 @@ const BuyerCard = ({ changeSelection }) => {
     }
 
     return (
-        <ManageCard>
-            <div style={styles.header}>
-                <IoPerson size={20} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Qarşı-Tərəf</span>
-            </div>
-
+        <Card
+            title={
+                <div style={styles.header}>
+                    <IoPerson size={20} color={theme.grey} />
+                    <span style={{ color: theme.grey }}>Qarşı-Tərəf</span>
+                </div>
+            }
+        >
             <div style={styles.container}>
-
                 <Selection
                     isRequired={true}
                     apiBody={{}}
@@ -132,8 +131,9 @@ const BuyerCard = ({ changeSelection }) => {
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
-                        width: '70%',
-                        justifyContent: 'space-between'
+                        width: '100%',
+                        justifyContent: 'space-between',
+                        padding: '0 10px'
                     }}
                 >
                     <span style={{ fontSize: 12, color: theme.orange }}>{'Müştəri endirimi'}</span>
@@ -149,9 +149,8 @@ const BuyerCard = ({ changeSelection }) => {
                     value={document.StockId}
                     defaultValue={document.StockName}
                 />
-
             </div>
-        </ManageCard >
+        </Card>
     )
 }
 

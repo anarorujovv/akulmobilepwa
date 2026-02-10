@@ -1,8 +1,7 @@
 import React from 'react';
 import { IoInformationCircle } from 'react-icons/io5';
-import ManageCard from './ManageCard';
+import { Card, Input } from 'antd-mobile';
 import useTheme from '../theme/useTheme';
-import Input from './Input';
 import Selection from './Selection';
 
 const DestinationCard = ({ changeInput, changeSelection, document, setDocument, isAllDisabled }) => {
@@ -35,12 +34,14 @@ const DestinationCard = ({ changeInput, changeSelection, document, setDocument, 
 
     return (
         <>
-            <ManageCard>
-                <div style={styles.header}>
-                    <IoInformationCircle size={23} color={theme.grey} />
-                    <span style={styles.text}>Təyinat</span>
-                </div>
-
+            <Card
+                title={
+                    <div style={styles.header}>
+                        <IoInformationCircle size={23} color={theme.grey} />
+                        <span style={styles.text}>Təyinat</span>
+                    </div>
+                }
+            >
                 <div style={styles.content}>
                     <Selection
                         disabled={isAllDisabled}
@@ -68,21 +69,18 @@ const DestinationCard = ({ changeInput, changeSelection, document, setDocument, 
                         <>
                             <div style={styles.spacer} />
                             <Input
+                                placeholder='Açıqlama'
                                 value={document.Description}
-                                disabled={isAllDisabled}
-                                isRequired={false}
-                                onChange={(e) => {
-                                    changeInput('Description', e);
+                                onChange={val => {
+                                    changeInput('Description', val);
                                 }}
-                                placeholder={'Açıqlama'}
-                                type={'string'}
-                                width={'70%'}
+                                disabled={isAllDisabled}
                             />
                         </>
                     }
                 </div>
 
-            </ManageCard>
+            </Card>
         </>
     );
 };
