@@ -1,3 +1,4 @@
+import { Popup } from 'antd-mobile';
 import React, { useEffect, useState, useRef } from 'react';
 import useTheme from '../theme/useTheme';
 import Input from './Input';
@@ -18,23 +19,19 @@ import useGlobalStore from '../data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
 import playSound from '../../services/playSound';
 
-const PositionManage = ({ route, navigation }) => {
-  // route.params kullanımı React Router ile location.state'e dönüşmeli.
-  // Ancak component yapısını bozmamak için props olarak alıyoruz varsayımıyla devam ediyorum.
-  // Eğer bu bir 'page' ise useParams veya useLocation kullanılmalı.
-  // Şimdilik props'un doğru geldiğini varsayıyorum veya wrapper bir page component bu propları geçiyor.
-  // Genelde { product, state, setState, units, type, setUnits, setHasUnsavedChanges, pricePermission } 
-  // gibi proplar modal veya alt sayfa olarak açıldığında geçilir.
-
-  // React Router DOM adaptasyonu:
-  /*
-    Eğer bu component bir Route olarak kullanılıyorsa:
-    const location = useLocation();
-    const { product, ... } = location.state || {};
-  */
-
-  let { product, state, setState, units, type, setUnits, setHasUnsavedChanges, pricePermission = true } = route?.params || {};
-  // route.params yoksa hata almaması için boş obje kontrolü ekledim.
+const PositionManage = ({
+  visible,
+  onClose,
+  product,
+  state,
+  setState,
+  units,
+  type,
+  setUnits,
+  setHasUnsavedChanges,
+  pricePermission = true
+}) => {
+  // Use props directly instead of route params
 
   const permissions = useGlobalStore(state => state.permissions);
 
@@ -217,7 +214,9 @@ const PositionManage = ({ route, navigation }) => {
     // playSound('bc'); // Web implementation needed or remove
     setState({ ...propsState, ...(pricingUtils(propsState.Positions)) });
     setHasUnsavedChanges(true);
-    navigation.goBack();
+    setState({ ...propsState, ...(pricingUtils(propsState.Positions)) });
+    setHasUnsavedChanges(true);
+    if (onClose) onClose();
   }
 
   const handleChangePrice = (value) => {
@@ -315,183 +314,196 @@ const PositionManage = ({ route, navigation }) => {
 
   // Keyboard listener web'de gerek yok.
 
-  if (!product && Object.keys(data).length === 0) {
-    // Eğer product parametresi yoksa ve data boşsa bir şey gösterme veya geri dön
-    return <div style={styles.loadingCenter}>Məlumat tapılmadı</div>
-  }
+
 
   return (
-    Object.keys(data).length == 0 ?
-      <div style={styles.loadingCenter}>
-        <div className="spinner"></div>
-      </div>
-      :
-      <div style={styles.container}>
+    <Popup
+      visible={visible}
+      onMaskClick={onClose}
+      destroyOnClose
+      position='right'
+      bodyStyle={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: theme.bg
+      }}
+    >
+      {Object.keys(data).length == 0 ?
+        <div style={styles.loadingCenter}>
+          <div className="spinner"></div>
+        </div>
+        :
 
-        <PositionManageHeader
-          handleSave={handleSave}
-          loading={false}
-          navigation={navigation}
-          updateText={'Təsdiqlə'}
-          createText={'Təsdiqlə'}
-        />
+        <div style={styles.container}>
 
-        <div style={styles.scrollView} ref={scrollViewRef}>
-          <div style={styles.contentContainer}>
+          <PositionManageHeader
+            handleSave={handleSave}
+            loading={false}
+            onBack={onClose}
+            updateText={'Təsdiqlə'}
+            createText={'Təsdiqlə'}
+          />
 
-            <div>
-              <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
-              <div style={{
-                width: '100%',
-                marginTop: 20
-              }}>
-                <div>
+          <div style={styles.scrollView} ref={scrollViewRef}>
+            <div style={styles.contentContainer}>
 
-                  {
-                    pricePermission ?
-                      permission_ver(permissions, 'profit', 'D') &&
-                        data.CostPrice ?
-                        <div style={styles.row}>
-                          <span style={styles.text}>Mayası</span>
-                          <span style={styles.text}>{formatPrice(data.CostPrice)}</span>
-                        </div>
-                        :
-                        ""
-                      :
-                      ""
-                  }
+              <div>
+                <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
+                <div style={{
+                  width: '100%',
+                  marginTop: 20
+                }}>
+                  <div>
 
-                  {
-                    data.TargetSalePrice ?
-                      <div style={styles.row}>
-                        <span style={styles.text}>Satış qiyməti</span>
-                        <span style={styles.text}>{formatPrice(data.TargetSalePrice)}</span>
-                      </div>
-                      :
-                      ''
-                  }
-
-                </div>
-              </div>
-
-
-            </div>
-
-            <div>
-
-              {
-                units && units[data.ProductId] ?
-                  <>
-                    <MySelection
-                      label={'Vahid'}
-                      value={data.UnitId}
-                      onValueChange={handleChangeUnit}
-                      list={units[data.ProductId]}
-                      labelName={'Name'}
-                      valueName={'Id'}
-                    />
-
-                    <div style={styles.margin10} />
-                  </>
-                  :
-                  ""
-              }
-
-
-              {
-                pricePermission ? <Input
-                  placeholder={'Məbləğ'}
-                  value={data.AllSum}
-                  width={'100%'}
-                  type={'number'}
-                  onChange={(e) => {
-                    handleChangeAllSum(e);
-                  }}
-                />
-                  :
-                  ""
-              }
-
-              {
-                pricePermission ? <div style={styles.margin20} />
-                  :
-                  ""
-              }
-
-              {
-                pricePermission ?
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    width: '100%'
-                  }}>
                     {
-                      state.BasicAmount != undefined ?
-                        <Input
-                          placeholder={'Endirim'}
-                          value={data.Discount}
-                          width={'45%'}
-                          type={'number'}
-                          onChange={(e) => {
-                            handleChangeDiscount(e);
-                          }}
-                        />
+                      pricePermission ?
+                        permission_ver(permissions, 'profit', 'D') &&
+                          data.CostPrice ?
+                          <div style={styles.row}>
+                            <span style={styles.text}>Mayası</span>
+                            <span style={styles.text}>{formatPrice(data.CostPrice)}</span>
+                          </div>
+                          :
+                          ""
                         :
                         ""
                     }
 
-                    <Input
-                      labelButton={type == 0 ? true : false}
-                      onPressLabelButton={() => {
-                        setPriceModal(true);
-                      }}
-                      placeholder={priceName == '' ? type == 0 ? 'Satış qiyməti' : "Alış qiyməti" : priceName}
-                      value={data.Price}
-                      width={state.BasicAmount ? '45%' : '100%'}
-                      type={'number'}
-                      onChange={(e) => {
-                        handleChangePrice(String(e))
-                      }}
-                    />
+                    {
+                      data.TargetSalePrice ?
+                        <div style={styles.row}>
+                          <span style={styles.text}>Satış qiyməti</span>
+                          <span style={styles.text}>{formatPrice(data.TargetSalePrice)}</span>
+                        </div>
+                        :
+                        ''
+                    }
+
                   </div>
-                  :
-                  ""
-              }
+                </div>
 
-              <div style={styles.margin20} />
 
-              <div style={styles.quantityControl}>
-                <Button disabled={data.Quantity == 1} onClick={() => {
-                  handleChangeQuantity(Number(data.Quantity) - 1);
-                }} width={'30%'} icon={<AiOutlineMinusSquare size={35} />} />
-                <Input
-                  txPosition={'center'}
-                  placeholder={'Miqdar'}
-                  value={data.Quantity}
-                  type={'number'}
-                  onChange={(e) => {
-                    handleChangeQuantity(e)
-                  }}
-                  width={'30%'}
-                />
-
-                <Button onClick={() => {
-                  handleChangeQuantity(Number(data.Quantity) + 1);
-                }} width={'30%'} icon={<AiOutlinePlusSquare size={35} />} />
               </div>
+
+              <div>
+
+                {
+                  units && units[data.ProductId] ?
+                    <>
+                      <MySelection
+                        label={'Vahid'}
+                        value={data.UnitId}
+                        onValueChange={handleChangeUnit}
+                        list={units[data.ProductId]}
+                        labelName={'Name'}
+                        valueName={'Id'}
+                      />
+
+                      <div style={styles.margin10} />
+                    </>
+                    :
+                    ""
+                }
+
+
+                {
+                  pricePermission ? <Input
+                    placeholder={'Məbləğ'}
+                    value={data.AllSum}
+                    width={'100%'}
+                    type={'number'}
+                    onChange={(e) => {
+                      handleChangeAllSum(e);
+                    }}
+                  />
+                    :
+                    ""
+                }
+
+                {
+                  pricePermission ? <div style={styles.margin20} />
+                    :
+                    ""
+                }
+
+                {
+                  pricePermission ?
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      width: '100%'
+                    }}>
+                      {
+                        state.BasicAmount != undefined ?
+                          <Input
+                            placeholder={'Endirim'}
+                            value={data.Discount}
+                            width={'45%'}
+                            type={'number'}
+                            onChange={(e) => {
+                              handleChangeDiscount(e);
+                            }}
+                          />
+                          :
+                          ""
+                      }
+
+                      <Input
+                        labelButton={type == 0 ? true : false}
+                        onPressLabelButton={() => {
+                          setPriceModal(true);
+                        }}
+                        placeholder={priceName == '' ? type == 0 ? 'Satış qiyməti' : "Alış qiyməti" : priceName}
+                        value={data.Price}
+                        width={state.BasicAmount ? '45%' : '100%'}
+                        type={'number'}
+                        onChange={(e) => {
+                          handleChangePrice(String(e))
+                        }}
+                      />
+                    </div>
+                    :
+                    ""
+                }
+
+                <div style={styles.margin20} />
+
+                <div style={styles.quantityControl}>
+                  <Button disabled={data.Quantity == 1} onClick={() => {
+                    handleChangeQuantity(Number(data.Quantity) - 1);
+                  }} width={'30%'} icon={<AiOutlineMinusSquare size={35} />} />
+                  <Input
+                    txPosition={'center'}
+                    placeholder={'Miqdar'}
+                    value={data.Quantity}
+                    type={'number'}
+                    onChange={(e) => {
+                      handleChangeQuantity(e)
+                    }}
+                    width={'30%'}
+                  />
+
+                  <Button onClick={() => {
+                    handleChangeQuantity(Number(data.Quantity) + 1);
+                  }} width={'30%'} icon={<AiOutlinePlusSquare size={35} />} />
+                </div>
+              </div>
+
             </div>
-
           </div>
-        </div>
 
-        {
-          type == 0 ?
-            <PricesModal modalVisible={priceModal} setModalVisible={setPriceModal} pressable={handleChangePriceType} setProduct={setData} />
-            :
-            ""
-        }
-      </div>
+          {
+            type == 0 ?
+              <PricesModal modalVisible={priceModal} setModalVisible={setPriceModal} pressable={handleChangePriceType} setProduct={setData} />
+              :
+              ""
+          }
+        </div>
+      }
+    </Popup>
   )
 }
 

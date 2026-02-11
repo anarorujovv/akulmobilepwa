@@ -10,17 +10,30 @@ import SuccessMessage from './RepllyMessage/SuccessMessage';
 import defaultUnit from './../../services/report/defaultUnit';
 import isValidEAN from '../../services/isValidEan';
 import MyPagination from './MyPagination';
+import PositionManage from './PositionManage';
+import { Popup } from 'antd-mobile';
 
-const DocumentProductList = ({ route, navigation }) => {
-    // route.params react-router-dom ile location.state'den alınmalı.
-    // Ancak bu component bir stack screen olarak kullanılıyorsa, react-router adaptasyonu üstte yapılmalı.
-    // Şimdilik props olarak gelen varsayalım ya da location.state'den alalım.
-    const { type, state, setState, units, setUnits, setHasUnsavedChanges, pricePermission } = route?.params || {};
+const DocumentProductList = ({
+    visible,
+    onClose,
+    // Props passed from parent instead of route params
+    type,
+    state,
+    setState,
+    units,
+    setUnits,
+    setHasUnsavedChanges,
+    pricePermission
+}) => {
 
     const [products, setProducts] = useState([]);
     const [unitList, setUnitList] = useState(null);
     const [focusMode, setFocusMode] = useState(true);
     const [itemSize, setItemSize] = useState(0);
+
+    // PositionManage Modal State
+    const [positionManageVisible, setPositionManageVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     const [isRefresh, setIsRefresh] = useState(false);
 
@@ -108,16 +121,12 @@ const DocumentProductList = ({ route, navigation }) => {
 
         }
 
-        navigation.navigate('product-position', {
-            product: targetProduct,
-            type: type,
-            state: state,
-            setState: setState,
-            units: lastUnits,
-            setUnits: setUnits,
-            setHasUnsavedChanges: setHasUnsavedChanges,
-            pricePermission: pricePermission
-        });
+        // Open PositionManage modal
+        setUnits(prev => ({ ...prev, ...lastUnits }));
+        setSelectedProduct(targetProduct);
+        setTimeout(() => {
+            setPositionManageVisible(true);
+        }, 100);
     };
 
     // index'i sayfalama(pg) ve lm (limit) değerine göre hesapla
@@ -144,11 +153,12 @@ const DocumentProductList = ({ route, navigation }) => {
     };
 
     const handleScanner = () => {
-        navigation.navigate('product-scanner', {
-            setData: (e) => {
-                setFilter(rel => ({ ...rel, ['fast']: e }))
-            }
-        });
+        // navigation.navigate('product-scanner', {
+        //     setData: (e) => {
+        //         setFilter(rel => ({ ...rel, ['fast']: e }))
+        //     }
+        // });
+        console.warn("Scanner nav disabled in modal mode");
     };
 
     const reload = () => {
@@ -188,40 +198,68 @@ const DocumentProductList = ({ route, navigation }) => {
     }, [filter]);
 
     return (
-        <div style={{ flex: 1, backgroundColor: theme.bg, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
-            <ListPagesHeader
-                searchM={focusMode}
-                processScannerClick={handleScanner}
-                header={"Məhsullar"}
-                filterSearchKey={'fast'}
-                isSearch={true}
-                filter={filter}
-                setFilter={setFilter}
-            />
+        <Popup
+            visible={visible}
+            onMaskClick={onClose}
+            destroyOnClose
+            position='right'
+            bodyStyle={{
+                width: '100vw',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundColor: theme.bg
+            }}
+        >
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+                <ListPagesHeader
+                    searchM={focusMode}
+                    processScannerClick={handleScanner}
+                    header={"Məhsullar"}
+                    filterSearchKey={'fast'}
+                    isSearch={true}
+                    filter={filter}
+                    setFilter={setFilter}
+                    onBack={onClose}
+                />
 
-            {
-                products == null ?
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <span style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>Məhsul axtarışı...</span>
-                    </div>
-                    :
-                    products[0] ?
-                        <>
-                            {/* Refresh butonu eklenebilir veya pull-to-refresh kütüphanesi kullanılabilir */}
-                            <div style={{ width: '100%' }}>
-                                {products.map((item, index) => renderItem(item, index))}
-                            </div>
-                            <FooterComponent />
-                        </>
-                        :
-                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 100 }}>
-                            {isRefresh ?
-                                <div className="spinner"></div> :
-                                <span style={{ color: theme.text }}>Heç nə tapılmadı</span>
-                            }
+                {
+                    products == null ?
+                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <span style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>Məhsul axtarışı...</span>
                         </div>
-            }
-        </div>
+                        :
+                        products[0] ?
+                            <>
+                                {/* Refresh butonu eklenebilir veya pull-to-refresh kütüphanesi kullanılabilir */}
+                                <div style={{ width: '100%' }}>
+                                    {products.map((item, index) => renderItem(item, index))}
+                                </div>
+                                <FooterComponent />
+                            </>
+                            :
+                            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 100 }}>
+                                {isRefresh ?
+                                    <div className="spinner"></div> :
+                                    <span style={{ color: theme.text }}>Heç nə tapılmadı</span>
+                                }
+                            </div>
+                }
+            </div>
+
+            <PositionManage
+                visible={positionManageVisible}
+                onClose={() => setPositionManageVisible(false)}
+                product={selectedProduct}
+                state={state}
+                setState={setState}
+                units={units}
+                type={type}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+                pricePermission={pricePermission}
+            />
+        </Popup>
     );
 };
 

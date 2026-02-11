@@ -14,8 +14,7 @@ const DemandStack = () => {
         <Routes>
             <Route path="/" element={<DemandList />} />
             <Route path="/demand-manage" element={<DemandManageProvider />} />
-            <Route path="/product-position" element={<PositionManage />} />
-            <Route path="/product-list" element={<DocumentProductList />} />
+            <Route path="/demand-manage/:id" element={<DemandManageProvider />} />
             <Route path="/product-scanner" element={<ProductScanner />} />
             <Route path="/payment" element={<PaymentManageProvider />} />
             <Route path="/return" element={<DemandReturnManageProvider />} />

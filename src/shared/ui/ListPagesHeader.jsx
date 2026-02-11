@@ -14,6 +14,7 @@ const ListPagesHeader = ({
     isFilter,
     filterParams,  // New prop: { searchParams, sortList, customFields }
     searchM,
+    onBack, // Optional custom back handler
 }) => {
     const navigate = useNavigate();
     const [searchMode, setSearchMode] = useState(false);
@@ -45,6 +46,8 @@ const ListPagesHeader = ({
             myFilter[filterSearchKey] = '';
             myFilter.pg = 1;
             setFilter(myFilter);
+        } else if (onBack) {
+            onBack();
         } else {
             navigate(-1);
         }

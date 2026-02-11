@@ -4,7 +4,7 @@ import { IoArrowBack } from 'react-icons/io5';
 import useTheme from '../theme/useTheme';
 import prompt from '../../services/prompt';
 
-const PositionManageHeader = ({ navigation, handleSave, loading, id, createText, updateText, hasUnsavedChanges }) => {
+const PositionManageHeader = ({ navigation, handleSave, loading, id, createText, updateText, hasUnsavedChanges, onBack }) => {
 
   const theme = useTheme();
 
@@ -39,15 +39,17 @@ const PositionManageHeader = ({ navigation, handleSave, loading, id, createText,
 
   const handleBack = () => {
     // HasUnsavedChanges kontrolü prompt servisi ile
-    if (hasUnsavedChanges) {
-      // prompt fonksiyonunun web versiyonu window.confirm olabilir veya custom modal.
-      // Şimdilik varsayılan bir yapı kullanıyoruz
-      if (window.confirm('Çıxmağa əminsiniz ?')) {
-        navigation.goBack();
-      }
-    } else {
-      navigation.goBack();
-    }
+    // if (hasUnsavedChanges) {
+    //   // prompt fonksiyonunun web versiyonu window.confirm olabilir veya custom modal.
+    //   // Şimdilik varsayılan bir yapı kullanıyoruz
+    //   if (window.confirm('Çıxmağa əminsiniz ?')) {
+    //     if(onBack) onBack();
+    //     else navigation?.goBack();
+    //   }
+    // } else {
+    if (onBack) onBack();
+    else navigation?.goBack();
+    // }
   };
 
 

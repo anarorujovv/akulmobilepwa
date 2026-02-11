@@ -24,7 +24,7 @@ import ReleatedDocuments from './../../shared/ui/ReleatedDocuments';
 // import playSound from './../../services/playSound';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const DemandManage = () => {
   const navigate = useNavigate();
@@ -55,7 +55,14 @@ const DemandManage = () => {
     }
   }
 
-  let { id } = location.state || {};
+  // React Router URL params
+  let { id } = useParams();
+
+  // Fallback to location.state if navigated via state (legacy support or internal nav)
+  // But prioritizing URL params is cleaner for deep linking.
+  if (!id && location.state?.id) {
+    id = location.state.id;
+  }
 
   const { document, setDocument, units, setUnits } = useContext(DemandGlobalContext);
   const [loading, setLoading] = useState(false);

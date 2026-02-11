@@ -15,6 +15,8 @@ import api from '../../../services/api';
 import MyModal from '../../../shared/ui/MyModal';
 import AllChangeProductPriceType from '../../../shared/ui/AllChangeProductPriceType';
 import { useNavigate } from 'react-router-dom';
+import DocumentProductList from '../../../shared/ui/DocumentProductList';
+import PositionManage from '../../../shared/ui/PositionManage';
 
 const ProductCard = ({ setHasUnsavedChanges }) => {
     const navigate = useNavigate();
@@ -26,6 +28,11 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
     const [amountEditModal, setAmountEditModal] = useState(false);
     const [productLastPrice, setProductLastPrice] = useState(0);
     const [productLastPriceModal, setProductLastPriceModal] = useState(false);
+
+    // Modal States
+    const [productListVisible, setProductListVisible] = useState(false);
+    const [positionManageVisible, setPositionManageVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     const theme = useTheme();
 
@@ -102,22 +109,9 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                                     }
                                 }}
                                 onPress={() => {
-                                    // Assuming we have a product-position route or modal
-                                    // The original code navigated to 'product-position'
-                                    navigate('/product-position', {
-                                        state: {
-                                            product: item,
-                                            state: document,
-                                            setState: setDocument, // setState via state might update global context if logic exists there, but usually unsafe to pass setter via state. 
-                                            // However, since we use GlobalContext, maybe we don't need to pass setDocument if product-position uses context?
-                                            // Original code passed it. I'll keep it in state, but logic in target page needs to use it or context.
-                                            type: 0,
-                                            units: units,
-                                            setUnits: setUnits,
-                                            setHasUnsavedChanges: setHasUnsavedChanges,
-                                            pricePermission: local.demands.demand.positionModalPrice
-                                        }
-                                    })
+                                    // Open PositionManage modal for editing
+                                    setSelectedProduct(item);
+                                    setPositionManageVisible(true);
                                 }}
                                 firstText={item.Name}
                                 centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
@@ -141,17 +135,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                         block
                         color='primary'
                         onClick={() => {
-                            navigate("/product-list", {
-                                state: {
-                                    state: document,
-                                    setState: setDocument,
-                                    type: 0,
-                                    units: units,
-                                    setUnits: setUnits,
-                                    setHasUnsavedChanges: setHasUnsavedChanges,
-                                    pricePermission: local.demands.demand.positionModalPrice
-                                }
-                            });
+                            setProductListVisible(true);
                         }}
                         style={{ width: '70%' }}
                     >
@@ -232,6 +216,32 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     setProductLastPriceModal(false)
                 }}
                 showCloseButton
+            />
+
+
+            <DocumentProductList
+                visible={productListVisible}
+                onClose={() => setProductListVisible(false)}
+                state={document}
+                setState={setDocument}
+                type={0}
+                units={units}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+                pricePermission={local.demands.demand.positionModalPrice}
+            />
+
+            <PositionManage
+                visible={positionManageVisible}
+                onClose={() => setPositionManageVisible(false)}
+                product={selectedProduct}
+                state={document}
+                setState={setDocument}
+                units={units}
+                type={0}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+                pricePermission={local.demands.demand.positionModalPrice}
             />
         </Card>
     )
