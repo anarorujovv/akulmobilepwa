@@ -6,6 +6,7 @@ import Login from './security/Login';
 import AsyncStorage from './services/AsyncStorageWrapper';
 import MainStack from './routers/stacks/MainStack';
 import useTheme from './shared/theme/useTheme';
+import InstallPWAModal from './shared/ui/InstallPWAModal';
 
 const App = () => {
   const [token, setToken] = useState('');
@@ -63,6 +64,7 @@ const App = () => {
         pauseOnHover
         theme="colored"
       />
+      <InstallPWAModal />
       <BrowserRouter>
         {token === null ? (
           <Login />
