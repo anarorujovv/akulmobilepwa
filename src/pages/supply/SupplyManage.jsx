@@ -241,7 +241,7 @@ const SupplyManage = () => {
 
               <ReleatedDocuments
                 document={{ ...document, target: 'supplies' }}
-                //   navigation={navigation}
+                paymentPath='/supply/payment'
                 payment={'outs'}
                 selection={[
                   {

@@ -2,10 +2,10 @@ import React from 'react'
 import { DemandGlobalProvider } from '../../shared/data/DemandGlobalState'
 import DemandManage from './DemandManage'
 
-const DemandManageProvider = ({route,navigation}) => {
+const DemandManageProvider = () => {
   return (
     <DemandGlobalProvider>
-      <DemandManage route={route} navigation={navigation}/>
+      <DemandManage />
     </DemandGlobalProvider>
   )
 }

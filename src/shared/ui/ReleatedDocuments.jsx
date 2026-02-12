@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, List, Button, Modal } from 'antd-mobile';
 import { IoDocuments } from 'react-icons/io5';
 import useTheme from '../theme/useTheme';
@@ -6,13 +6,13 @@ import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import api from '../../services/api';
 import ListItem from './list/ListItem';
 import { formatPrice } from '../../services/formatPrice';
-import MyModal from './MyModal';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
+import { useNavigate } from 'react-router-dom';
 
-const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDisable, onSubmit, hasUnsavedChanged, onClickItem }) => {
-
+const ReleatedDocuments = ({ document, selection, payment, paymentPath, shouldDisable, onSubmit, hasUnsavedChanged, onClickItem }) => {
 
   let theme = useTheme();
+  const navigate = useNavigate();
 
   const styles = {
     header: {
@@ -98,7 +98,12 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
       direct: payment,
       routeByDocument: { ...document, Id: documentLastId }
     }
-    navigation.navigate('payment', params);
+
+    if (paymentPath) {
+      navigate(paymentPath, { state: params });
+    } else {
+      console.error("paymentPath prop is missing in ReleatedDocuments");
+    }
   }
 
   const click = async (type, clickFunction) => {
@@ -128,15 +133,11 @@ const ReleatedDocuments = ({ document, selection, payment, navigation, shouldDis
   }
 
   useEffect(() => {
-    // useFocusEffect yerine useEffect, dependency array'i boş tutuyoruz veya ilgili propları veriyoruz
-    // React Router dom ile navigation değişimlerinde component remount olabilir veya location değişebilir.
-    // Şimdilik sadece mount'da çalışacak
     if (releatedDocuments == null || releatedDocuments[0]) {
       setReleatedDocuments([]);
     }
     fetchApiReleatedDocuments();
   }, []);
-  // Not: Eğer sayfalar arası geçişte veri güncellenmiyorsa navigation location'ı dependency olarak eklenmeli.
 
 
   return (

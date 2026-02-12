@@ -60,6 +60,8 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
         }
     };
 
+    if (!document) return null;
+
     const handleClickProductLastPrice = async (item) => {
         let obj = {
             customerid: document.CustomerId,

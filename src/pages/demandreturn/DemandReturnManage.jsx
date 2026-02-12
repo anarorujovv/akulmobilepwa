@@ -273,7 +273,7 @@ const DemandReturnManage = () => {
                                     <ReleatedDocuments
                                         shouldDisable={true}
                                         document={{ ...document, target: 'demandreturns' }}
-                                        // navigation={navigation}
+                                        paymentPath='/demandreturns/payment'
                                         payment={'ins'}
                                         selection={[]}
                                         hasUnsavedChanged={hasUnsavedChanges}

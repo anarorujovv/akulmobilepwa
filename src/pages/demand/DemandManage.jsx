@@ -58,8 +58,10 @@ const DemandManage = () => {
   // React Router URL params
   let { id } = useParams();
 
+  // Handle case where id might be 'null' string from URL or undefined
+  if (id === 'null' || id === 'undefined') id = null;
+
   // Fallback to location.state if navigated via state (legacy support or internal nav)
-  // But prioritizing URL params is cleaner for deep linking.
   if (!id && location.state?.id) {
     id = location.state.id;
   }
@@ -234,7 +236,7 @@ const DemandManage = () => {
 
   useEffect(() => {
     fetchingDocument(id);
-  }, [])
+  }, [id])
 
   return (
 
@@ -282,7 +284,7 @@ const DemandManage = () => {
 
               <ReleatedDocuments
                 payment={'ins'}
-                //   navigation={navigation}
+                paymentPath='/demand/payment'
                 document={{ ...document, target: 'demands' }}
                 selection={[
                   {

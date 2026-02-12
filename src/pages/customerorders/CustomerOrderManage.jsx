@@ -242,7 +242,7 @@ const CustomerOrderManage = () => {
 
               <ReleatedDocuments
                 payment={'ins'}
-                // navigation={navigation}
+                paymentPath='/customerorders/payment'
                 document={{ ...document, target: 'customerorders' }}
                 selection={[
                 ]}

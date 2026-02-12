@@ -19,6 +19,8 @@ const BuyerCard = ({ changeSelection }) => {
     const local = useGlobalStore(state => state.local);
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
             width: '100%',

@@ -15,6 +15,8 @@ const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
 
   const theme = useTheme();
 
+
+
   const styles = {
     header: {
       width: '100%',
@@ -128,6 +130,8 @@ const ModificationsCard = ({ target, state, setState, hasUnsavedChanged }) => {
     }
     initializeApp(target);
   }, [target])
+
+  if (!state) return null;
 
   return (
     <ManageCard

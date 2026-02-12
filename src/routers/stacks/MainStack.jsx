@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { SpinLoading } from 'antd-mobile';
+import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
+import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
+import api from '../../services/api';
 import Home from './../../pages/Home';
 import ProductStack from '../../pages/product/ProductStack';
 import SupplyStack from './../../pages/supply/SupplyStack';
@@ -37,6 +41,85 @@ import ExpeditorStack from '../../pages/expeditor/ExpeditorStack';
 import CatalogStack from '../../pages/catalog/CatalogStack';
 
 const MainStack = () => {
+  const setPermissions = useGlobalStore(state => state.setPermissions);
+  const setMarks = useGlobalStore(state => state.setMarks);
+  const setLocal = useGlobalStore(state => state.setLocal);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const initializeApp = async () => {
+    try {
+      const token = await AsyncStorageWrapper.getItem('token');
+
+      const localAsync = await AsyncStorageWrapper.getItem('local_per');
+      if (localAsync) {
+        setLocal(JSON.parse(localAsync));
+      } else {
+        // Fallback default config if local_per is missing
+        setLocal({
+          demands: {
+            demand: {
+              listPrice: true,
+              positionPrice: true,
+              positionModalPrice: true,
+              customerDebt: true,
+              sum: true,
+              allSum: true,
+              date: true
+            },
+            demandReturn: {
+              listPrice: true,
+              positionPrice: true,
+              positionModalPrice: true,
+              customerDebt: true,
+              sum: true,
+              allSum: true,
+              date: true
+            },
+            demandToPayment: {
+              customerDebt: true
+            },
+            stockBalance: {
+              supplyBalance: true
+            },
+          },
+        });
+      }
+
+      await api('marks/get.php', { token }).then(element => {
+        if (element?.List) setMarks(element.List);
+      }).catch(err => console.log(err));
+
+      const permissionString = await AsyncStorageWrapper.getItem('perlist');
+      if (permissionString !== null) {
+        setPermissions(JSON.parse(permissionString));
+      }
+    } catch (error) {
+      console.error("Initialization error:", error);
+    } finally {
+      setIsInitialized(true);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'var(--adm-color-background)'
+      }}>
+        <SpinLoading color='primary' style={{ '--size': '48px' }} />
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path='/' element={<Home />} />

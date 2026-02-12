@@ -15,6 +15,7 @@ const MainCard = ({ changeInput, changeSelection }) => {
   const { document, setDocument } = useContext(DemandGlobalContext);
   const [momentModal, setMomentModal] = useState(false);
 
+  if (!document) return null;
 
   return (
     <Card title={<span style={{ fontSize: 20, color: theme.primary }}>Satış</span>}>
@@ -31,9 +32,9 @@ const MainCard = ({ changeInput, changeSelection }) => {
 
         <Form.Item
           label='Tarix'
-          clickable={local.demands.demand.date}
+          clickable={local?.demands?.demand?.date}
           onClick={() => {
-            if (local.demands.demand.date) {
+            if (local?.demands?.demand?.date) {
               setMomentModal(true);
             }
           }}

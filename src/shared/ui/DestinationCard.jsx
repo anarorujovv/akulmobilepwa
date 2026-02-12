@@ -8,6 +8,8 @@ const DestinationCard = ({ changeInput, changeSelection, document, setDocument, 
 
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
             width: '100%',

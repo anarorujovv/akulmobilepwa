@@ -112,9 +112,7 @@ const DemandList = () => {
                 priceText={local.demands.demand.listPrice ? formatPrice(item.Amount) : ""}
                 onPress={() => {
                     if (permission_ver(permissions, 'demand', 'R')) {
-                        navigate('/demand/demand-manage', {
-                            state: { id: item.Id }
-                        })
+                        navigate(`/demand/demand-manage/${item.Id}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -137,9 +135,7 @@ const DemandList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'demand', 'C')) {
-            navigate('/demand/demand-manage', {
-                state: { id: null }
-            })
+            navigate('/demand/demand-manage');
         }
     };
 
