@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SpinLoading, FloatingBubble, Divider } from 'antd-mobile';
+import { SpinLoading, FloatingBubble } from 'antd-mobile';
 import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
@@ -107,9 +107,8 @@ const SupplyReturnList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'supplyreturn', 'R')) {
-                        navigate('/supplyreturn/supply-return-manage', {
-                            state: { id: item.Id }
-                        })
+                        // FIX: Navigating with ID parameter
+                        navigate(`/supplyreturns/supply-return-manage/${item.Id}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -131,9 +130,8 @@ const SupplyReturnList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'supplyreturn', 'C')) {
-            navigate('/supplyreturn/supply-return-manage', {
-                state: { id: null }
-            })
+            // FIX: Navigating with null parameter for new record
+            navigate('/supplyreturns/supply-return-manage/null');
         }
     };
 

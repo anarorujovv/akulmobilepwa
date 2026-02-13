@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
-import { IoBasket } from 'react-icons/io5';
-import Button from '../../../shared/ui/Button';
+import { Card, Button, List } from 'antd-mobile';
+import { IoBasket, IoInformationCircleOutline } from 'react-icons/io5';
 import useTheme from '../../../shared/theme/useTheme';
 import { formatPrice } from '../../../services/formatPrice';
 import { SupplyReturnGlobalContext } from '../../../shared/data/SupplyReturnGlobalState';
@@ -11,13 +10,20 @@ import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
 import AmountCalculated from '../../../shared/ui/AmountCalculated';
 import permission_ver from '../../../services/permissionVerification';
 import { useNavigate } from 'react-router-dom';
+import DocumentProductList from '../../../shared/ui/DocumentProductList';
+import PositionManage from '../../../shared/ui/PositionManage';
 
 const ProductCard = ({ setHasUnsavedChanges }) => {
     const navigate = useNavigate();
 
-    const { document, setDocument, units, setUnits } = useContext(SupplyReturnGlobalContext)
-    const [modal, setModal] = useState(false);
+    const { document, setDocument, units, setUnits } = useContext(SupplyReturnGlobalContext);
+    const [amountEditModal, setAmountEditModal] = useState(false);
     const permissions = useGlobalStore(state => state.permissions);
+
+    // Modal States
+    const [productListVisible, setProductListVisible] = useState(false);
+    const [positionManageVisible, setPositionManageVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     const theme = useTheme();
 
@@ -28,8 +34,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
             gap: 10,
             display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
-            boxSizing: 'border-box'
+            alignItems: 'center'
         },
         container: {
             width: '100%',
@@ -55,42 +60,48 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
         }
     };
 
+    if (!document) return null;
+
     return (
-        <ManageCard>
-            <div style={styles.header}>
-                <IoBasket size={23} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Məhsul</span>
-            </div>
+        <Card
+            title={
+                <div style={styles.header}>
+                    <IoBasket size={23} color={theme.grey} />
+                    <span style={{ color: theme.grey }}>Məhsul</span>
+                </div>
+            }
+        >
             <div style={styles.container}>
-                {
-                    document.Positions.map((item, index) => {
-                        return (
-                            <div key={index} style={{ width: '100%' }}>
-                                <ListItem index={index + 1} onLongPress={() => {
-                                    if (window.confirm('Məhsulu silməyə əminsiniz?')) {
-                                        let data = { ...document };
-                                        data.Positions.splice(index, 1);
-                                        setDocument({ ...data, ...(pricingUtils(data.Positions)) });
-                                    }
-                                }} onPress={() => {
-                                    navigate('/product-position', {
-                                        state: {
-                                            product: item,
-                                            state: document,
-                                            setState: setDocument,
-                                            type: 1,
-                                            units: units,
-                                            setUnits: setUnits,
-                                            setHasUnsavedChanges: setHasUnsavedChanges
+                <List>
+                    {
+                        document.Positions.map((item, index) => {
+                            return (
+                                <ListItem
+                                    key={index}
+                                    indexIsButtonIcon={<IoInformationCircleOutline size={30} color={theme.primary} />}
+                                    index={index + 1}
+                                    onLongPress={() => {
+                                        if (window.confirm('Məhsulu silməyə əminsiniz?')) {
+                                            let data = { ...document };
+                                            data.Positions.splice(index, 1);
+                                            setDocument({ ...data, ...(pricingUtils(data.Positions)) });
+                                            setHasUnsavedChanges(true); // Added unsaved changes
                                         }
-                                    })
-                                }} firstText={item.Name} centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`} endText={formatPrice(item.StockQuantity)} priceText={formatPrice(item.Quantity * item.Price)} />
-                            </div>
-                        )
-                    })
-                }
+                                    }}
+                                    onPress={() => {
+                                        // Open PositionManage modal instead of navigation
+                                        setSelectedProduct(item);
+                                        setPositionManageVisible(true);
+                                    }}
+                                    firstText={item.Name}
+                                    centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
+                                    endText={formatPrice(item.StockQuantity)}
+                                    priceText={formatPrice(item.Quantity * item.Price)}
+                                />
+                            )
+                        })
+                    }
+                </List>
 
                 <div style={{
                     display: 'flex',
@@ -102,19 +113,12 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     width: '100%'
                 }}>
                     <Button
+                        block
+                        color='primary'
                         onClick={() => {
-                            navigate("/product-list", {
-                                state: {
-                                    state: document,
-                                    setState: setDocument,
-                                    type: 1,
-                                    units: units,
-                                    setUnits: setUnits,
-                                    setHasUnsavedChanges: setHasUnsavedChanges,
-                                }
-                            });
+                            setProductListVisible(true);
                         }}
-                        width={'70%'}
+                        style={{ width: '70%' }}
                     >
                         Məhsul əlavə et
                     </Button>
@@ -136,7 +140,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     }
                     <div
                         onClick={() => {
-                            setModal(true);
+                            setAmountEditModal(true);
                         }}
                         style={styles.footerRowClickable}>
                         <span style={{ fontSize: 16, color: theme.black }}>Yekun məbləğ</span>
@@ -148,10 +152,35 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                 setHasUnsavedChanges={setHasUnsavedChanges}
                 document={document}
                 setDocument={setDocument}
-                modalVisible={modal}
-                setModalVisible={setModal}
+                modalVisible={amountEditModal}
+                setModalVisible={setAmountEditModal}
             />
-        </ManageCard>
+
+            <DocumentProductList
+                visible={productListVisible}
+                onClose={() => setProductListVisible(false)}
+                state={document}
+                setState={setDocument}
+                type={1} // Assuming 1 for supply/buying related flows
+                units={units}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+                pricePermission={true} // Defaulting to true as no local config
+            />
+
+            <PositionManage
+                visible={positionManageVisible}
+                onClose={() => setPositionManageVisible(false)}
+                product={selectedProduct}
+                state={document}
+                setState={setDocument}
+                units={units}
+                type={1}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+                pricePermission={true} // Defaulting to true
+            />
+        </Card>
     )
 }
 

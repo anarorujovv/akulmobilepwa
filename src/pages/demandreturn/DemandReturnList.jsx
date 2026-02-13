@@ -105,13 +105,12 @@ const DemandReturnList = () => {
                 notIcon={true}
                 centerText={item.CustomerName}
                 endText={item.Moment}
-                priceText={local.demands.demandReturn.listPrice ? formatPrice(item.Amount) : ""}
+                priceText={local?.demands?.demandReturn?.listPrice ? formatPrice(item.Amount) : ""}
 
                 onPress={() => {
                     if (permission_ver(permissions, 'demandreturn', 'R')) {
-                        navigate('/demandreturn/demand-return-manage', {
-                            state: { id: item.Id }
-                        })
+                        // FIX: Navigating with URL parameter combined with state
+                        navigate(`/demandreturn/demand-return-manage/${item.Id}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -132,9 +131,8 @@ const DemandReturnList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'demandreturn', 'C')) {
-            navigate('/demandreturn/demand-return-manage', {
-                state: { id: null }
-            })
+            // FIX: Navigating with URL parameter combined with state for new/null ID
+            navigate('/demandreturn/demand-return-manage/null');
         }
     };
 
@@ -176,7 +174,7 @@ const DemandReturnList = () => {
             />
 
             {
-                local.demands.demandReturn.allSum ?
+                local?.demands?.demandReturn?.allSum ?
                     documentsInfo != null ? (
                         <DocumentInfo
                             data={[

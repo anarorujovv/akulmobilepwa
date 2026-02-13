@@ -9,11 +9,11 @@ import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
 const MainCard = ({ changeInput, changeSelection }) => {
 
   const local = useGlobalStore(state => state.local);
-
   const { document, setDocument } = useContext(DemandReturnGlobalContext);
   const [momentModal, setMomentModal] = useState(false);
-
   let theme = useTheme();
+
+  if (!document) return null;
 
   return (
     <ManageCard>
@@ -49,7 +49,7 @@ const MainCard = ({ changeInput, changeSelection }) => {
         />
 
         <SelectionDate
-          disabled={local.demands.demandReturn.date ? false : true}
+          disabled={local?.demands?.demandReturn?.date ? false : true}
           change={changeSelection}
           document={document}
           setDocument={setDocument}

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card } from 'antd-mobile';
 import { IoPerson } from 'react-icons/io5';
 import useTheme from '../../../shared/theme/useTheme';
 import api from '../../../services/api';
@@ -16,6 +16,8 @@ const BuyerCard = ({ changeSelection }) => {
     const { document, setDocument } = useContext(SupplyReturnGlobalContext);
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
             width: '100%',
@@ -23,16 +25,13 @@ const BuyerCard = ({ changeSelection }) => {
             gap: 10,
             display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
-            boxSizing: 'border-box'
+            alignItems: 'center'
         },
         container: {
             gap: 15,
             display: 'flex',
             flexDirection: 'column',
-            width: '100%',
-            padding: '0 15px 15px 15px',
-            boxSizing: 'border-box'
+            alignItems: 'center'
         }
     };
 
@@ -78,14 +77,14 @@ const BuyerCard = ({ changeSelection }) => {
     }
 
     return (
-        <ManageCard>
-            <div style={styles.header}>
-                <IoPerson size={20} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Qarşı-Tərəf</span>
-            </div>
-
+        <Card
+            title={
+                <div style={styles.header}>
+                    <IoPerson size={20} color={theme.grey} />
+                    <span style={{ color: theme.grey }}>Qarşı-Tərəf</span>
+                </div>
+            }
+        >
             <div style={styles.container}>
                 <Selection
                     searchApi={'customers/getfast.php'}
@@ -101,6 +100,20 @@ const BuyerCard = ({ changeSelection }) => {
                     bottomTitle={'Qalıq borc'}
                 />
 
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        width: '100%',
+                        justifyContent: 'space-between',
+                        padding: '0 10px'
+                    }}
+                >
+                    <span style={{ fontSize: 12, color: theme.orange }}>{'Müştəri endirimi'}</span>
+                    <span style={{ fontSize: 12, color: theme.black }}>{document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.CustomerData.Discount) : '0'} %</span>
+                </div>
+
+
                 <Selection
                     isRequired={true}
                     value={document.StockId}
@@ -111,7 +124,7 @@ const BuyerCard = ({ changeSelection }) => {
                     change={fetchingStockData}
                 />
             </div>
-        </ManageCard>
+        </Card>
     )
 }
 

@@ -20,10 +20,10 @@ import ModificationsCard from '../../shared/ui/ModificationsCard';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ReleatedDocuments from '../../shared/ui/ReleatedDocuments';
 import moment from 'moment';
-// import playSound from '../../services/playSound';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { SpinLoading } from 'antd-mobile';
 
 const DemandReturnManage = () => {
     const navigate = useNavigate();
@@ -54,7 +54,18 @@ const DemandReturnManage = () => {
         }
     }
 
-    let { id, routeByDocument, dataUnits } = location.state || {}; // Get id from state
+    // React Router URL params
+    let { id } = useParams();
+
+    // Handle case where id might be 'null' string from URL or undefined
+    if (id === 'null' || id === 'undefined') id = null;
+
+    // Fallback to location.state if navigated via state
+    if (!id && location.state?.id) {
+        id = location.state.id;
+    }
+
+    let { routeByDocument, dataUnits } = location.state || {};
 
     const { document, setDocument, units, setUnits } = useContext(DemandReturnGlobalContext);
     const [loading, setLoading] = useState(false);
@@ -194,7 +205,6 @@ const DemandReturnManage = () => {
                     SuccessMessage("Yadda saxlanıldı.");
                     fetchingDocument(element.ResponseService);
                     setHasUnsavedChanges(false);
-                    // playSound('success');
 
                     return element.ResponseService;
 
@@ -228,7 +238,7 @@ const DemandReturnManage = () => {
 
     useEffect(() => {
         fetchingDocument(id);
-    }, [])
+    }, [id]) // Dependency on ID to re-fetch if ID changes
 
 
     return (
@@ -236,12 +246,11 @@ const DemandReturnManage = () => {
             {
                 document == null ?
                     <div style={styles.loading}>
-                        <div className="spinner"></div> // Web spinner
+                        <SpinLoading color='primary' style={{ '--size': '48px' }} />
                     </div>
                     :
                     <>
                         <ManageHeader
-                            // navigation={navigation}
                             print={'demandreturns'}
                             document={document}
                             hasUnsavedChanges={hasUnsavedChanges}

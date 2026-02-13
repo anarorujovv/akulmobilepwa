@@ -107,9 +107,8 @@ const SupplyList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'supply', 'R')) {
-                        navigate('/supply/supply-manage', {
-                            state: { id: item.Id }
-                        })
+                        // FIX: Using URL parameter for ID
+                        navigate('/supply/supply-manage/' + item.Id)
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -130,9 +129,8 @@ const SupplyList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'supply', 'C')) {
-            navigate('/supply/supply-manage', {
-                state: { id: null }
-            })
+            // FIX: Using URL parameter for new document (null)
+            navigate('/supply/supply-manage/null')
         }
     };
 

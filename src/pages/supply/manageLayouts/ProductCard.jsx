@@ -18,7 +18,8 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
 
     const { document, setDocument, units, setUnits } = useContext(SupplyGlobalContext);
     const permissions = useGlobalStore(state => state.permissions);
-    const local = useGlobalStore(state => state.local);
+
+    // REMOVED local usage as requested
 
     const [amountEditModal, setAmountEditModal] = useState(false);
 
@@ -90,7 +91,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                                 firstText={item.Name}
                                 centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
                                 endText={formatPrice(item.StockQuantity)}
-                                priceText={local?.supplies?.supplyReturn?.positionPrice ? formatPrice(item.Quantity * item.Price) : ""}
+                                priceText={formatPrice(item.Quantity * item.Price)}
                             />
                         ))
 
@@ -117,41 +118,36 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     </Button>
                 </div>
 
-                {
-                    local?.supplies?.supply?.sum ?
-                        <>
-                            {
-                                permission_ver(permissions, 'mobilediscount', 'C') ? (
-                                    <>
-                                        <div style={styles.footerRow}>
-                                            <span style={{ fontSize: 14, color: theme.grey }}>Ümumi alış məbləği</span>
-                                            <span style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.BasicAmount)} ₼</span>
-                                        </div>
-                                        <div style={styles.footerRow}>
-                                            <span style={{ fontSize: 14, color: theme.grey }}>Endirim</span>
-                                            <span style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.Discount)}%</span>
-                                        </div>
-                                    </>
-                                )
-                                    :
-                                    ""
-                            }
+                <>
+                    {
+                        permission_ver(permissions, 'mobilediscount', 'C') ? (
+                            <>
+                                <div style={styles.footerRow}>
+                                    <span style={{ fontSize: 14, color: theme.grey }}>Ümumi alış məbləği</span>
+                                    <span style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.BasicAmount)} ₼</span>
+                                </div>
+                                <div style={styles.footerRow}>
+                                    <span style={{ fontSize: 14, color: theme.grey }}>Endirim</span>
+                                    <span style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.Discount)}%</span>
+                                </div>
+                            </>
+                        )
+                            :
+                            ""
+                    }
 
-                            <div
-                                onClick={() => {
-                                    setAmountEditModal(true);
-                                }}
-                                style={{
-                                    ...styles.footerRow,
-                                    cursor: 'pointer'
-                                }}>
-                                <span style={{ fontSize: 16, color: theme.black }}>Yekun məbləğ</span>
-                                <span style={{ fontSize: 16, color: theme.black }}>{formatPrice(document.Amount)} ₼</span>
-                            </div>
-                        </>
-                        :
-                        ""
-                }
+                    <div
+                        onClick={() => {
+                            setAmountEditModal(true);
+                        }}
+                        style={{
+                            ...styles.footerRow,
+                            cursor: 'pointer'
+                        }}>
+                        <span style={{ fontSize: 16, color: theme.black }}>Yekun məbləğ</span>
+                        <span style={{ fontSize: 16, color: theme.black }}>{formatPrice(document.Amount)} ₼</span>
+                    </div>
+                </>
             </div>
             <AmountCalculated
                 modalVisible={amountEditModal}
@@ -171,7 +167,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                 units={units}
                 setUnits={setUnits}
                 setHasUnsavedChanges={setHasUnsavedChanges}
-                pricePermission={local?.supplies?.supply?.positionModalPrice}
+                pricePermission={true}
             />
 
             <PositionManage
@@ -184,7 +180,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                 type={1}
                 setUnits={setUnits}
                 setHasUnsavedChanges={setHasUnsavedChanges}
-                pricePermission={local?.supplies?.supply?.positionModalPrice}
+                pricePermission={true}
             />
         </Card>
     )

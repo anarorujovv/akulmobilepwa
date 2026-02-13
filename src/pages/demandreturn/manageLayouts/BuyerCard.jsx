@@ -17,8 +17,9 @@ const BuyerCard = ({ changeInput, changeSelection }) => {
 
     const { document, setDocument } = useContext(DemandReturnGlobalContext);
     const local = useGlobalStore(state => state.local);
-
     const theme = useTheme();
+
+    if (!document) return null;
 
     const styles = {
         header: {
@@ -128,7 +129,7 @@ const BuyerCard = ({ changeInput, changeSelection }) => {
                     value={document.CustomerId}
                     defaultValue={document.CustomerName}
                     title={'Qarşı-Tərəf'}
-                    bottomText={local.demands.demandReturn.customerDebt ? document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : "0" : ""}
+                    bottomText={local?.demands?.demandReturn?.customerDebt ? document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : "0" : ""}
                     bottomTitle={'Qarşı-Tərəf'}
                 />
 

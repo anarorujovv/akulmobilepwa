@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
@@ -14,11 +14,11 @@ import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import { SupplyReturnGlobalContext } from '../../shared/data/SupplyReturnGlobalState';
 import mergeProductQuantities from './../../services/mergeProductQuantities';
 import moment from 'moment';
-import Button from '../../shared/ui/Button';
+import { Button, SpinLoading } from 'antd-mobile'; // Updated import
 import DestinationCard from './../../shared/ui/DestinationCard';
 import calculateUnit from '../../services/report/calculateUnit';
 import playSound from '../../services/playSound';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const SupplyReturnManage = () => {
     const navigate = useNavigate();
@@ -29,7 +29,7 @@ const SupplyReturnManage = () => {
             display: 'flex',
             flexDirection: 'column',
             height: '100vh',
-            backgroundColor: theme.bg,
+            backgroundColor: theme.whiteGrey, // Updated theme color
             overflow: 'hidden'
         },
         content: {
@@ -48,7 +48,20 @@ const SupplyReturnManage = () => {
         }
     }
 
-    let { id, routeByDocument, dataUnits } = location.state || {}; // Get params from location.state
+    // React Router URL params
+    let { id } = useParams();
+
+    // Handle case where id might be 'null' string from URL or undefined
+    if (id === 'null' || id === 'undefined') id = null;
+
+    // Fallback to location.state if navigated via state (legacy support or internal nav)
+    if (!id && location.state?.id) {
+        id = location.state.id;
+    }
+
+    // Support for routeByDocument from SupplyManage link
+    let { routeByDocument, dataUnits } = location.state || {};
+
 
     const { document, setDocument, setUnits } = useContext(SupplyReturnGlobalContext);
     const [loading, setLoading] = useState(false);
@@ -200,7 +213,7 @@ const SupplyReturnManage = () => {
 
     useEffect(() => {
         fetchingDocument(id);
-    }, [])
+    }, [id]) // Re-fetch on ID change
 
 
     return (
@@ -208,14 +221,14 @@ const SupplyReturnManage = () => {
             {
                 document == null ?
                     <div style={styles.loading}>
-                        <div className="spinner"></div> // Web spinner
+                        <SpinLoading />
                     </div>
                     :
                     <>
                         <ManageHeader
                             // navigation={navigation}
                             hasUnsavedChanges={hasUnsavedChanges}
-                        // onSubmit={handleSave} // Optional if header supports it
+                            onSubmit={handleSave} // Added submit button to header if supported
                         />
 
                         <div style={styles.content}>
@@ -235,8 +248,14 @@ const SupplyReturnManage = () => {
 
                         {
                             hasUnsavedChanges ?
-                                <div style={{ padding: '10px' }}>
-                                    <Button onClick={handleSave} disabled={loading} bg={theme.green} isLoading={loading} >Yadda Saxla</Button>
+                                <div style={{ padding: '10px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
+                                    <Button
+                                        block
+                                        color='success'
+                                        onClick={handleSave}
+                                        disabled={loading}
+                                        loading={loading}
+                                    >Yadda Saxla</Button>
                                 </div>
                                 :
                                 ""

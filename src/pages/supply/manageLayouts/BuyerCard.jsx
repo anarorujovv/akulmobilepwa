@@ -11,12 +11,12 @@ import applyDiscount from '../../../services/report/applyDiscount';
 import pricingUtils from '../../../services/pricingUtils';
 import mergeProductQuantities from '../../../services/mergeProductQuantities';
 import Selection from '../../../shared/ui/Selection';
-import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
+// REMOVED useGlobalStore import as it was only used for local config
 
 const BuyerCard = ({ changeSelection }) => {
 
     const { document, setDocument } = useContext(SupplyGlobalContext);
-    const local = useGlobalStore(state => state.local);
+    // REMOVED local usage
     const theme = useTheme();
 
     if (!document) return null;
@@ -100,7 +100,7 @@ const BuyerCard = ({ changeSelection }) => {
                     value={document.CustomerId}
                     defaultValue={document.CustomerName}
                     title={'Qarşı-Tərəf'}
-                    bottomText={local?.supplies?.supply?.customerDebt ? document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0' : ""}
+                    bottomText={document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0'}
                     bottomTitle={'Qarşı-tərəf'}
                 />
 

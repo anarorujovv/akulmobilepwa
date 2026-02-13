@@ -3,11 +3,11 @@ import { Card, Input, Form, DatePicker } from 'antd-mobile';
 import { SupplyGlobalContext } from '../../../shared/data/SupplyGlobalState';
 import useTheme from '../../../shared/theme/useTheme';
 import moment from 'moment';
-import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
+// REMOVED useGlobalStore import
 
 const MainCard = ({ changeInput, changeSelection }) => {
 
-  const local = useGlobalStore(state => state.local);
+  // REMOVED local usage
   let theme = useTheme();
 
   const { document, setDocument } = useContext(SupplyGlobalContext);
@@ -30,11 +30,9 @@ const MainCard = ({ changeInput, changeSelection }) => {
 
         <Form.Item
           label='Tarix'
-          clickable={local?.supplies?.supply?.date}
+          clickable={true}
           onClick={() => {
-            if (local?.supplies?.supply?.date) {
-              setMomentModal(true);
-            }
+            setMomentModal(true);
           }}
         >
           {document.Moment ? moment(document.Moment).format('YYYY-MM-DD HH:mm') : <span style={{ color: '#ccc' }}>Seçin</span>}

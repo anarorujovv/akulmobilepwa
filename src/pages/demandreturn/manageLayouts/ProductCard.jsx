@@ -23,6 +23,8 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
 
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
             width: '100%',
@@ -57,6 +59,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
         }
     };
 
+
     return (
         <ManageCard>
             <div style={styles.header}>
@@ -78,7 +81,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                                             let data = { ...document };
                                             data.Positions.splice(index, 1);
                                             setDocument({ ...data, ...(pricingUtils(data.Positions)) });
-                                            setHasUnsavedChanges(true);
+                                            setHasUnsavedChanges(true); // Added unsaved changes
                                         }
                                     }}
                                     onPress={() => {
@@ -91,14 +94,14 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                                                 units: units,
                                                 setUnits: setUnits,
                                                 setHasUnsavedChanges: setHasUnsavedChanges,
-                                                pricePermission: local.demands.demandReturn.positionModalPrice
+                                                pricePermission: local?.demands?.demandReturn?.positionModalPrice
                                             }
                                         })
                                     }}
                                     firstText={item.Name}
                                     centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
                                     endText={formatPrice(item.StockQuantity)}
-                                    priceText={local.demands.demandReturn.positionPrice ? formatPrice(item.Quantity * item.Price) : ""}
+                                    priceText={local?.demands?.demandReturn?.positionPrice ? formatPrice(item.Quantity * item.Price) : ""}
                                 />
                             </div>
                         )
@@ -124,7 +127,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                                     units: units,
                                     setUnits: setUnits,
                                     setHasUnsavedChanges: setHasUnsavedChanges,
-                                    pricePermission: local.demands.demandReturn.positionModalPrice
+                                    pricePermission: local?.demands?.demandReturn?.positionModalPrice
                                 }
                             });
                         }}
@@ -134,7 +137,7 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                     </Button>
                 </div>
                 {
-                    local.demands.demandReturn.sum ? <>
+                    local?.demands?.demandReturn?.sum ? <>
                         {
                             permission_ver(permissions, 'mobilediscount', 'C') && (
                                 <>
