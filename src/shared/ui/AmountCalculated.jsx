@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Modal } from 'antd-mobile';
-import Input from './Input';
-import Button from './Button';
-import CustomSelection from './CustomSelection';
+import { Modal, Input, Button, Selector, Form } from 'antd-mobile';
 import { formatPrice } from '../../services/formatPrice';
 import SuccessMessage from './RepllyMessage/SuccessMessage';
 import calculateDiscount from './../../services/report/calculateDiscount';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
-import useTheme from '../theme/useTheme';
 import applyDiscount from '../../services/report/applyDiscount';
 
 const AmountCalculated = ({
@@ -18,41 +14,33 @@ const AmountCalculated = ({
     setHasUnsavedChanges
 }) => {
     const [sum, setSum] = useState('');
-    const [selectedOption, setSelectedOption] = useState('discount');
-    let theme = useTheme();
+    const [selectedOption, setSelectedOption] = useState(['discount']);
 
     const options = [
-        { key: 'amount', value: 'Məbləğ' },
-        { key: 'discount', value: 'Endirim' },
+        { value: 'amount', label: 'Məbləğ' },
+        { value: 'discount', label: 'Endirim' },
     ];
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            padding: 16,
-            justifyContent: 'space-between',
-            height: '100%',
-            boxSizing: 'border-box'
-        },
-        titleContainer: {
-            gap: 10,
-            display: 'flex',
-            flexDirection: 'column'
-        },
-        title: {
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: theme.primary,
-            margin: 0
-        },
-    };
 
     const handleCalculateTotalAmount = () => {
         const info = { ...document };
+        const type = selectedOption[0];
 
-        if (selectedOption == 'amount') {
+        if (!type || !sum) {
+            ErrorMessage("Zəhmət olmasa məlumatları doldurun");
+            return;
+        }
+
+        if (type == 'amount') {
             if (info.Amount > 0) {
+                // Məbləğ is entered value to subtract? Or target amount?
+                // Logic in original: info.Amount - formatPrice(sum). So sum is value to subtract.
+                // Wait, logic: info.Amount = info.Amount - sum.
+                // It treats 'sum' as the amount to REDUCE by? Or the new amount?
+                // Original: info.Amount = info.Amount - formatPrice(sum);
+                // "Məbləğ" usually means "Amount". If I enter 10, does it mean subtract 10?
+                // Original logic seems to imply subtracting the input 'sum' from current 'Amount'.
+                // And then recalculating discount.
+
                 info.Amount = info.Amount - formatPrice(sum);
                 info.Discount = calculateDiscount(info.BasicAmount, info.Amount);
                 info.Positions.forEach(product => {
@@ -69,14 +57,14 @@ const AmountCalculated = ({
 
         }
 
-        if (selectedOption == 'discount') {
+        if (type == 'discount') {
             info.Amount = Number(info.BasicAmount) - ((info.BasicAmount / 100) * formatPrice(sum));
             info.Discount = formatPrice(sum);
             info.Positions.forEach(product => {
                 product.Price = applyDiscount(product.BasicPrice, formatPrice(sum));
                 product.Discount = formatPrice(sum);
             })
-            console.log(info);
+            // console.log(info);
             SuccessMessage("Endirim olundu")
             setDocument(info);
             setHasUnsavedChanges(true)
@@ -88,7 +76,7 @@ const AmountCalculated = ({
     useEffect(() => {
         if (!modalVisible) {
             setSum('');
-            setSelectedOption('discount')
+            setSelectedOption(['discount'])
         }
     }, [modalVisible])
 
@@ -96,33 +84,48 @@ const AmountCalculated = ({
         <Modal
             visible={modalVisible}
             content={
-                <div style={{ ...styles.container, width: '90vw', height: 'auto', minHeight: '300px' }}>
-                    <div style={styles.titleContainer}>
-                        <span style={styles.title}>Ümumi məbləğ - {formatPrice(document.Amount)}</span>
-                        <span style={styles.title}>Ümumi endirim - {formatPrice(document.Discount)}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 10 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, textAlign: 'center' }}>
+                        <span style={{ fontSize: 18, fontWeight: 'bold', color: 'var(--adm-color-primary)' }}>
+                            Ümumi məbləğ: {formatPrice(document.Amount)} ₼
+                        </span>
+                        <span style={{ fontSize: 16, fontWeight: '500', color: '#666' }}>
+                            Ümumi endirim: {formatPrice(document.Discount)} {selectedOption[0] === 'discount' ? '%' : '₼'}
+                        </span>
                     </div>
 
-                    <Input
-                        value={sum}
-                        onChange={(value) => setSum(value)}
-                        width="100%"
-                        placeholder={`${selectedOption == 'amount' ? "Məbləğ" : "Endirim"} daxil edin`}
-                        type="number"
-                    />
-
-                    <CustomSelection
-                        options={options}
-                        value={selectedOption}
-                        onChange={(newKey) => setSelectedOption(newKey)}
-                        title="Endirim növü"
-                        placeholder="Seçim"
-                        disabled={false}
-                    />
+                    <Form layout='vertical' style={{ border: 'none', padding: 0 }}>
+                        <Form.Item label="Endirim növü">
+                            <Selector
+                                options={options}
+                                value={selectedOption}
+                                onChange={(v) => {
+                                    if (v.length > 0) setSelectedOption(v)
+                                }}
+                                columns={2}
+                            />
+                        </Form.Item>
+                        <Form.Item label={selectedOption[0] == 'amount' ? "Məbləğ (₼)" : "Endirim (%)"}>
+                            <Input
+                                placeholder={`${selectedOption[0] == 'amount' ? "Məbləğ" : "Endirim"} daxil edin`}
+                                value={sum}
+                                onChange={setSum}
+                                type="number"
+                                style={{
+                                    border: '1px solid #ddd',
+                                    borderRadius: 4,
+                                    padding: '4px 8px'
+                                }}
+                            />
+                        </Form.Item>
+                    </Form>
 
                     <Button
+                        block
+                        color='primary'
                         onClick={handleCalculateTotalAmount}
                     >
-                        Təstiqlə
+                        Təsdiqlə
                     </Button>
                 </div>
             }

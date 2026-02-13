@@ -1,10 +1,10 @@
-import { Popup } from 'antd-mobile';
+import { Popup, Input, Button, SpinLoading } from 'antd-mobile';
 import React, { useEffect, useState, useRef } from 'react';
-import useTheme from '../theme/useTheme';
-import Input from './Input';
+// import useTheme from '../theme/useTheme'; // Removed;
+// import Input from './Input'; // Replaced
 import { formatPrice } from '../../services/formatPrice';
-import Button from './Button';
-import { AiOutlineMinusSquare, AiOutlinePlusSquare } from 'react-icons/ai';
+// import Button from './Button'; // Replaced
+// import { AiOutlineMinusSquare, AiOutlinePlusSquare } from 'react-icons/ai'; // Replaced
 import pricingUtils from '../../services/pricingUtils';
 import applyDiscount from './../../services/report/applyDiscount';
 import PricesModal from './modals/PricesModal';
@@ -41,14 +41,29 @@ const PositionManage = ({
 
   const scrollViewRef = useRef(null);
 
-  let theme = useTheme();
+  // let theme = useTheme();
+
+  const commonInputStyle = {
+    '--font-size': '16px',
+    border: `1px solid #ddd`,
+    borderRadius: 8,
+    padding: '8px 12px',
+    backgroundColor: '#ffffff'
+  };
+
+  const labelStyle = {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 6,
+    display: 'block'
+  };
 
   const styles = {
     container: {
       display: 'flex',
       flex: 1,
       flexDirection: 'column',
-      backgroundColor: theme.bg,
+      backgroundColor: '#fff',
       height: '100vh',
       overflow: 'hidden'
     },
@@ -75,7 +90,7 @@ const PositionManage = ({
       marginBottom: 10
     },
     text: {
-      color: theme.black,
+      color: '#000',
       margin: 0
     },
     margin20: {
@@ -327,12 +342,12 @@ const PositionManage = ({
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: theme.bg
+        backgroundColor: '#fff'
       }}
     >
       {Object.keys(data).length == 0 ?
         <div style={styles.loadingCenter}>
-          <div className="spinner"></div>
+          <SpinLoading />
         </div>
         :
 
@@ -409,21 +424,17 @@ const PositionManage = ({
 
 
                 {
-                  pricePermission ? <Input
-                    placeholder={'Məbləğ'}
-                    value={data.AllSum}
-                    width={'100%'}
-                    type={'number'}
-                    onChange={(e) => {
-                      handleChangeAllSum(e);
-                    }}
-                  />
-                    :
-                    ""
-                }
-
-                {
-                  pricePermission ? <div style={styles.margin20} />
+                  pricePermission ?
+                    <div style={{ marginBottom: 15 }}>
+                      <span style={labelStyle}>Məbləğ</span>
+                      <Input
+                        placeholder='Məbləğ'
+                        value={String(data.AllSum)}
+                        type='number'
+                        onChange={handleChangeAllSum}
+                        style={commonInputStyle}
+                      />
+                    </div>
                     :
                     ""
                 }
@@ -434,36 +445,40 @@ const PositionManage = ({
                       display: 'flex',
                       flexDirection: 'row',
                       justifyContent: 'space-between',
-                      width: '100%'
+                      width: '100%',
+                      marginBottom: 15
                     }}>
                       {
                         state.BasicAmount != undefined ?
-                          <Input
-                            placeholder={'Endirim'}
-                            value={data.Discount}
-                            width={'45%'}
-                            type={'number'}
-                            onChange={(e) => {
-                              handleChangeDiscount(e);
-                            }}
-                          />
+                          <div style={{ width: '45%' }}>
+                            <span style={labelStyle}>Endirim %</span>
+                            <Input
+                              placeholder='Endirim'
+                              value={String(data.Discount)}
+                              type='number'
+                              onChange={handleChangeDiscount}
+                              style={commonInputStyle}
+                            />
+                          </div>
                           :
                           ""
                       }
 
-                      <Input
-                        labelButton={type == 0 ? true : false}
-                        onPressLabelButton={() => {
-                          setPriceModal(true);
-                        }}
-                        placeholder={priceName == '' ? type == 0 ? 'Satış qiyməti' : "Alış qiyməti" : priceName}
-                        value={data.Price}
-                        width={state.BasicAmount ? '45%' : '100%'}
-                        type={'number'}
-                        onChange={(e) => {
-                          handleChangePrice(String(e))
-                        }}
-                      />
+                      <div style={{ width: state.BasicAmount ? '45%' : '100%' }}>
+                        <div
+                          onClick={() => { if (type == 0) setPriceModal(true) }}
+                          style={{ ...labelStyle, color: type == 0 ? 'var(--adm-color-primary)' : '#666', cursor: type == 0 ? 'pointer' : 'default', fontWeight: 'bold' }}
+                        >
+                          {priceName == '' ? (type == 0 ? 'Satış qiyməti' : "Alış qiyməti") : priceName}
+                        </div>
+                        <Input
+                          placeholder='Qiymət'
+                          value={String(data.Price)}
+                          type='number'
+                          onChange={val => handleChangePrice(String(val))}
+                          style={commonInputStyle}
+                        />
+                      </div>
                     </div>
                     :
                     ""
@@ -472,23 +487,30 @@ const PositionManage = ({
                 <div style={styles.margin20} />
 
                 <div style={styles.quantityControl}>
-                  <Button disabled={data.Quantity == 1} onClick={() => {
-                    handleChangeQuantity(Number(data.Quantity) - 1);
-                  }} width={'30%'} icon={<AiOutlineMinusSquare size={35} />} />
-                  <Input
-                    txPosition={'center'}
-                    placeholder={'Miqdar'}
-                    value={data.Quantity}
-                    type={'number'}
-                    onChange={(e) => {
-                      handleChangeQuantity(e)
+                  <Button
+                    disabled={Number(data.Quantity) <= 1}
+                    onClick={() => {
+                      handleChangeQuantity(Number(data.Quantity) - 1);
                     }}
-                    width={'30%'}
+                    style={{ width: '30%', backgroundColor: '#fff', border: `1px solid #ddd` }}
+                  >
+                    -
+                  </Button>
+                  <Input
+                    style={{ ...commonInputStyle, width: '30%', textAlign: 'center' }}
+                    placeholder='Miqdar'
+                    value={String(data.Quantity)}
+                    type='number'
+                    onChange={val => handleChangeQuantity(val)}
                   />
-
-                  <Button onClick={() => {
-                    handleChangeQuantity(Number(data.Quantity) + 1);
-                  }} width={'30%'} icon={<AiOutlinePlusSquare size={35} />} />
+                  <Button
+                    onClick={() => {
+                      handleChangeQuantity(Number(data.Quantity) + 1);
+                    }}
+                    style={{ width: '30%', backgroundColor: '#fff', border: `1px solid #ddd` }}
+                  >
+                    +
+                  </Button>
                 </div>
               </div>
 

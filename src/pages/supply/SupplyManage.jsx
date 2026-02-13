@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { SupplyGlobalContext } from '../../shared/data/SupplyGlobalState';
 import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
@@ -14,14 +14,14 @@ import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import mergeProductQuantities from '../../services/mergeProductQuantities';
 import moment from 'moment';
-import Button from '../../shared/ui/Button';
+import { Button, SpinLoading } from 'antd-mobile';
 import DestinationCard from './../../shared/ui/DestinationCard';
 import calculateUnit from '../../services/report/calculateUnit';
 import ModificationsCard from '../../shared/ui/ModificationsCard';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ReleatedDocuments from '../../shared/ui/ReleatedDocuments';
 // import playSound from '../../services/playSound';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const SupplyManage = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const SupplyManage = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
-      backgroundColor: theme.bg,
+      backgroundColor: theme.whiteGrey,
       overflow: 'hidden'
     },
     content: {
@@ -52,8 +52,17 @@ const SupplyManage = () => {
     }
   }
 
+  // React Router URL params
+  let { id } = useParams();
 
-  let { id } = location.state || {}; // Get id from state
+  // Handle case where id might be 'null' string from URL or undefined
+  if (id === 'null' || id === 'undefined') id = null;
+
+  // Fallback to location.state if navigated via state (legacy support or internal nav)
+  if (!id && location.state?.id) {
+    id = location.state.id;
+  }
+
   const { document, setDocument, units, setUnits } = useContext(SupplyGlobalContext);
   const [loading, setLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -145,7 +154,7 @@ const SupplyManage = () => {
       return null
     } else {
       if (info.name == "") {
-        await api('supplyreturns/newname.php', {
+        await api('supplies/newname.php', {
           n: "",
           token: await AsyncStorageWrapper.getItem("token")
         }).then(element => {
@@ -208,7 +217,7 @@ const SupplyManage = () => {
 
   useEffect(() => {
     fetchingDocument(id);
-  }, [])
+  }, [id])
 
   return (
     <div style={styles.container}>
@@ -216,7 +225,7 @@ const SupplyManage = () => {
       {
         document == null ?
           <div style={styles.loading}>
-            <div className="spinner"></div>
+            <SpinLoading />
           </div>
           :
           <>
@@ -224,7 +233,7 @@ const SupplyManage = () => {
               // navigation={navigation}
               document={document}
               print={'supplies'}
-              hasUnsavedChanges={hasUnsavedChanges}
+              isSubmitVisible={hasUnsavedChanges}
               onSubmit={handleSave}
             />
 
@@ -263,12 +272,12 @@ const SupplyManage = () => {
             </div>
             {
               hasUnsavedChanges ?
-                <div style={{ padding: '10px' }}>
+                <div style={{ padding: '10px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
                   <Button
-                    bg={theme.green}
+                    block
+                    color='success'
                     onClick={handleSave}
-                    isLoading={loading}
-                    disabled={loading}
+                    loading={loading}
                   >Yadda Saxla</Button>
                 </div>
                 :

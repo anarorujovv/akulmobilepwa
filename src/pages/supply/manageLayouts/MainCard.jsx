@@ -1,63 +1,75 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from './../../../shared/ui/ManageCard';
+import { Card, Input, Form, DatePicker } from 'antd-mobile';
 import { SupplyGlobalContext } from '../../../shared/data/SupplyGlobalState';
-import Input from '../../../shared/ui/Input';
 import useTheme from '../../../shared/theme/useTheme';
-import SelectionDate from '../../../shared/ui/SelectionDate';
+import moment from 'moment';
+import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
 
-const MainCard = ({ id, changeInput, changeSelection }) => {
+const MainCard = ({ changeInput, changeSelection }) => {
+
+  const local = useGlobalStore(state => state.local);
+  let theme = useTheme();
 
   const { document, setDocument } = useContext(SupplyGlobalContext);
   const [momentModal, setMomentModal] = useState(false);
 
-  let theme = useTheme();
+  if (!document) return null;
 
   return (
-    <ManageCard>
+    <Card title={<span style={{ fontSize: 20, color: theme.primary }}>Alış</span>}>
+      <Form layout='horizontal'>
+        <Form.Item label='Ad'>
+          <Input
+            placeholder='Ad'
+            value={document.Name}
+            onChange={(val) => {
+              changeInput('Name', val);
+            }}
+          />
+        </Form.Item>
 
-      <div style={{
-        width: '100%',
-        padding: 15,
-        boxSizing: 'border-box'
-      }}>
-        <span style={{
-          fontSize: 20,
-          color: theme.primary,
-          fontWeight: 'bold',
-          display: 'block'
-        }}>Alış</span>
-      </div>
-
-      <div style={{
-        marginTop: 20,
-        gap: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingBottom: 20
-      }}>
-
-        <Input
-          placeholder={'Ad'}
-          type={'string'}
-          width={'70%'}
-          value={document.Name}
-          onChange={(e) => {
-            changeInput('Name', e);
+        <Form.Item
+          label='Tarix'
+          clickable={local?.supplies?.supply?.date}
+          onClick={() => {
+            if (local?.supplies?.supply?.date) {
+              setMomentModal(true);
+            }
           }}
-        />
-
-        <SelectionDate
-          change={changeSelection}
-          document={document}
-          setDocument={setDocument}
-          modalVisible={momentModal}
-          setModalVisible={setMomentModal}
-        />
-
-      </div>
-
-    </ManageCard>
+        >
+          {document.Moment ? moment(document.Moment).format('YYYY-MM-DD HH:mm') : <span style={{ color: '#ccc' }}>Seçin</span>}
+          <DatePicker
+            visible={momentModal}
+            onClose={() => {
+              setMomentModal(false)
+            }}
+            precision='minute'
+            onConfirm={val => {
+              const dateMoment = moment(val).format('YYYY-MM-DD HH:mm:ss');
+              changeSelection(new Date(dateMoment));
+              setDocument(rel => ({ ...rel, ['Moment']: dateMoment }));
+            }}
+            renderLabel={(type, data) => {
+              switch (type) {
+                case 'year':
+                  return data + ' il'
+                case 'month':
+                  return data + ' ay'
+                case 'day':
+                  return data + ' gün'
+                case 'hour':
+                  return data + ' saat'
+                case 'minute':
+                  return data + ' dəqiqə'
+                default:
+                  return data
+              }
+            }}
+            title='Tarix seçimi'
+          />
+        </Form.Item>
+      </Form>
+    </Card>
   )
 }
 

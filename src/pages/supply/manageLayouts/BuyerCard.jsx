@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card } from 'antd-mobile';
 import { IoPerson } from 'react-icons/io5';
 import useTheme from '../../../shared/theme/useTheme';
 import { SupplyGlobalContext } from '../../../shared/data/SupplyGlobalState';
@@ -11,12 +11,15 @@ import applyDiscount from '../../../services/report/applyDiscount';
 import pricingUtils from '../../../services/pricingUtils';
 import mergeProductQuantities from '../../../services/mergeProductQuantities';
 import Selection from '../../../shared/ui/Selection';
+import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
 
 const BuyerCard = ({ changeSelection }) => {
 
-    const { document, setDocument } = useContext(SupplyGlobalContext)
-
+    const { document, setDocument } = useContext(SupplyGlobalContext);
+    const local = useGlobalStore(state => state.local);
     const theme = useTheme();
+
+    if (!document) return null;
 
     const styles = {
         header: {
@@ -25,18 +28,15 @@ const BuyerCard = ({ changeSelection }) => {
             gap: 10,
             display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
-            boxSizing: 'border-box'
+            alignItems: 'center'
         },
         container: {
             gap: 15,
             display: 'flex',
             flexDirection: 'column',
-            width: '100%',
-            padding: '0 15px 15px 15px',
-            boxSizing: 'border-box'
+            alignItems: 'center'
         }
-    }
+    };
 
     const fetchingCustomerData = async (item) => {
         let info = { ...document };
@@ -53,6 +53,7 @@ const BuyerCard = ({ changeSelection }) => {
                     customer.CustomerData.Discount = formatPrice(customer.CustomerData.Discount);
                     info.CustomerInfo = customer;
                     info.CustomerId = item.Id;
+
                     if (info.Positions[0]) {
                         let positions = [...info.Positions];
                         for (let index = 0; index < positions.length; index++) {
@@ -80,14 +81,14 @@ const BuyerCard = ({ changeSelection }) => {
 
 
     return (
-        <ManageCard>
-            <div style={styles.header}>
-                <IoPerson size={20} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Qarşı-Tərəf</span>
-            </div>
-
+        <Card
+            title={
+                <div style={styles.header}>
+                    <IoPerson size={20} color={theme.grey} />
+                    <span style={{ color: theme.grey }}>Qarşı-Tərəf</span>
+                </div>
+            }
+        >
             <div style={styles.container}>
                 <Selection
                     isRequired={true}
@@ -99,9 +100,22 @@ const BuyerCard = ({ changeSelection }) => {
                     value={document.CustomerId}
                     defaultValue={document.CustomerName}
                     title={'Qarşı-Tərəf'}
-                    bottomText={document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : "0"}
-                    bottomTitle={'Qalıq borc'}
+                    bottomText={local?.supplies?.supply?.customerDebt ? document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0' : ""}
+                    bottomTitle={'Qarşı-tərəf'}
                 />
+
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        width: '100%',
+                        justifyContent: 'space-between',
+                        padding: '0 10px'
+                    }}
+                >
+                    <span style={{ fontSize: 12, color: theme.orange }}>{'Müştəri endirimi'}</span>
+                    <span style={{ fontSize: 12, color: theme.black }}>{document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.CustomerData.Discount) : '0'} %</span>
+                </div>
 
                 <Selection
                     isRequired={true}
@@ -114,7 +128,7 @@ const BuyerCard = ({ changeSelection }) => {
                 />
 
             </div>
-        </ManageCard >
+        </Card >
     )
 }
 
