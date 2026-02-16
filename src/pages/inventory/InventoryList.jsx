@@ -104,9 +104,7 @@ const InventoryList = () => {
                 notIcon={true}
                 onPress={() => {
                     if (permission_ver(permissions, 'inventory', 'R')) {
-                        navigate('/inventory/inventory-manage', {
-                            state: { id: item.Id }
-                        });
+                        navigate(`/inventory/inventory-manage/${item.Id}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!');
                     }
@@ -128,9 +126,7 @@ const InventoryList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'inventory', 'C')) {
-            navigate('/inventory/inventory-manage', {
-                state: { id: null }
-            });
+            navigate('/inventory/inventory-manage');
         }
     };
 

@@ -1,33 +1,33 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from './../../../shared/ui/ManageCard';
-import Input from '../../../shared/ui/Input';
+import { Card, Input, Button, DatePicker, Selector, List, Form } from 'antd-mobile';
 import { InventoryGlobalContext } from '../../../shared/data/InventoryGlobalState';
 import mergeProductQuantities from './../../../services/mergeProductQuantities';
 import useTheme from '../../../shared/theme/useTheme';
-import SelectionDate from '../../../shared/ui/SelectionDate';
-import Selection from '../../../shared/ui/Selection';
-import Button from '../../../shared/ui/Button';
-import MyModal from '../../../shared/ui/MyModal';
-import CustomSelection from '../../../shared/ui/CustomSelection';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import api from '../../../services/api';
 import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage';
 import { formatPrice } from '../../../services/formatPrice';
 import SuccessMessage from '../../../shared/ui/RepllyMessage/SuccessMessage';
+import moment from 'moment';
+import MyModal from '../../../shared/ui/MyModal';
+import CustomSelection from '../../../shared/ui/CustomSelection';
+import Selection from '../../../shared/ui/Selection';
 
 const MainCard = ({ changeInput, changeSelection, setHasUnsavedCahnges }) => {
 
-  let theme = useTheme();
-
+  const theme = useTheme();
   const { document, setDocument, setUnits } = useContext(InventoryGlobalContext);
-  const [momentModal, setMomentModal] = useState(false);
   const [stockBalanceModal, setStockBalanceModal] = useState(false);
   const [stockBalanceType, setStockBalanceType] = useState("0");
   const [isLoading, setIsLoading] = useState(false);
   const [isImplementLoading, setIsImplementLoading] = useState(false);
 
-  let fetchingStockId = async (item) => {
-    let result = await mergeProductQuantities(document, item.Id);
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+
+  if (!document) return null;
+
+  const fetchingStockId = async (item) => {
+    let result = await mergeProductQuantities(document, item.value);
     changeSelection();
     setDocument(result);
   }
@@ -158,88 +158,80 @@ const MainCard = ({ changeInput, changeSelection, setHasUnsavedCahnges }) => {
   };
 
   return (
-    <ManageCard>
-
+    <Card>
       <div style={{
-        width: '100%',
-        padding: 15,
         display: 'flex',
-        flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxSizing: 'border-box'
+        marginBottom: 10
       }}>
-        <span style={{
-          fontSize: 20,
-          color: theme.primary,
-          fontWeight: 'bold'
-        }}>İnventarizasiya</span>
-
-        {document && document.Id && (
+        <div style={{ fontWeight: 'bold', fontSize: 16 }}>Əsas Məlumatlar</div>
+        {document.Id && (
           <Button
+            size='small'
+            color='primary'
+            loading={isImplementLoading}
             onClick={handleImplement}
-            width={'40%'}
-            bg={theme.primary}
-            isLoading={isImplementLoading}
           >
-            Təstiqlə
+            Təsdiqlə
           </Button>
         )}
       </div>
 
-      <div style={{
-        marginTop: 20,
-        gap: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
+      <Form layout='horizontal'>
+        <Form.Item label='Ad'>
+          <Input
+            placeholder='Ad daxil edin'
+            value={document.Name}
+            onChange={(val) => changeInput('Name', val)}
+          />
+        </Form.Item>
 
-        <Input
-          placeholder={'Ad'}
-          type={'text'}
-          width={'70%'}
-          value={document.Name}
-          onChange={(e) => {
-            changeInput('Name', e)
-          }}
-        />
+        <Form.Item label='Tarix' onClick={() => setDatePickerVisible(true)}>
+          <div style={{ padding: '4px 0', fontSize: 15 }}>
+            {moment(document.Moment).format('YYYY-MM-DD HH:mm')}
+          </div>
+        </Form.Item>
 
-        <SelectionDate
-          document={document}
-          setDocument={setDocument}
-          change={changeSelection}
-          modalVisible={momentModal}
-          setModalVisible={setMomentModal}
-        />
+        <Form.Item label='Anbar'>
+          <Selection
+            isRequired={true}
+            change={fetchingStockId}
+            apiBody={{}}
+            apiName={'stocks/get.php'}
+            value={document.StockId}
+            title={'Anbar'}
+            defaultValue={document.StockName}
+          />
 
-
-        <Selection
-          isRequired={true}
-          change={fetchingStockId}
-          apiBody={{}}
-          apiName={'stocks/get.php'}
-          value={document.StockId}
-          title={'Anbar'}
-          defaultValue={document.StockName}
-        />
+        </Form.Item>
 
         {document.StockId && document.StockId !== '' && (
           <Button
+            block
+            color='primary'
             onClick={() => setStockBalanceModal(true)}
-            width={'70%'}
-            bg={theme.primary}
+            style={{ marginTop: 10 }}
           >
             Anbar qalığı
           </Button>
         )}
-      </div>
+      </Form>
+
+      <DatePicker
+        visible={datePickerVisible}
+        onClose={() => setDatePickerVisible(false)}
+        defaultValue={new Date(document.Moment)}
+        onConfirm={(val) => {
+          changeSelection('Moment', moment(val).format('YYYY-MM-DD HH:mm:ss'))
+        }}
+      />
 
       <MyModal
         modalVisible={stockBalanceModal}
         setModalVisible={setStockBalanceModal}
         width="90%"
-        height="auto" // Changed from 30% to auto to fit content
+        height="auto"
         center
       >
         <div style={{ padding: 15, flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -259,22 +251,22 @@ const MainCard = ({ changeInput, changeSelection, setHasUnsavedCahnges }) => {
           <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
             <Button
               onClick={() => setStockBalanceModal(false)}
-              width={'48%'}
-              bg={theme.grey}
+              style={{ width: '48%' }}
             >
               Bağla
             </Button>
             <Button
               onClick={fetchStockBalance}
-              width={'48%'}
-              isLoading={isLoading}
+              loading={isLoading}
+              color='primary'
+              style={{ width: '48%' }}
             >
               Endir
             </Button>
           </div>
         </div>
       </MyModal>
-    </ManageCard>
+    </Card>
   )
 }
 

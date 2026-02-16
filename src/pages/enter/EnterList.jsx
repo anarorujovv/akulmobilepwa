@@ -108,9 +108,7 @@ const EnterList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'enter', 'R')) {
-                        navigate('/enter/enter-manage', {
-                            state: { id: item.Id }
-                        })
+                        navigate(`/enter/enter-manage/${item.Id}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -132,9 +130,7 @@ const EnterList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'enter', 'C')) {
-            navigate('/enter/enter-manage', {
-                state: { id: null }
-            })
+            navigate('/enter/enter-manage');
         }
     };
 

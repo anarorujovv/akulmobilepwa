@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card, Button, List, Modal } from 'antd-mobile';
 import { IoBasket } from 'react-icons/io5';
-import Button from '../../../shared/ui/Button';
 import useTheme from '../../../shared/theme/useTheme';
 import { formatPrice } from '../../../services/formatPrice';
 import pricingUtils from '../../../services/pricingUtils';
@@ -10,155 +9,126 @@ import { EnterGlobalContext } from '../../../shared/data/EnterGlobalState';
 import AmountCalculated from '../../../shared/ui/AmountCalculated';
 import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
 import permission_ver from '../../../services/permissionVerification';
-import { useNavigate } from 'react-router-dom';
+import PositionManage from '../../../shared/ui/PositionManage';
+import DocumentProductList from '../../../shared/ui/DocumentProductList';
 
 const ProductCard = ({ setHasUnsavedChanges }) => {
-    const navigate = useNavigate();
 
     const { document, setDocument, units, setUnits } = useContext(EnterGlobalContext);
     const [modalVisible, setModalVisible] = useState(false);
     const permissions = useGlobalStore(state => state.permissions);
 
+    const [positionManageVisible, setPositionManageVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState({});
+    const [productListVisible, setProductListVisible] = useState(false);
 
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
-            width: '100%',
-            padding: 15,
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            boxSizing: 'border-box'
-        },
-        container: {
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 5
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: theme.grey
         },
         footerRow: {
-            width: '70%',
             display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-        },
-        footerRowClickable: {
-            width: '70%',
-            display: 'flex',
-            flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            cursor: 'pointer'
+            padding: '10px 0',
+            borderBottom: '1px solid #eee'
+        },
+        footerRowClickable: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px 0',
+            cursor: 'pointer',
+            fontWeight: 'bold'
         }
     };
 
     return (
-        <ManageCard>
+        <Card title={
             <div style={styles.header}>
-                <IoBasket size={23} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Məhsul</span>
+                <IoBasket size={20} />
+                <span>Məhsullar</span>
             </div>
-            <div style={styles.container}>
-
+        }>
+            <List>
                 {
                     document.Positions.map((item, index) => (
-                        <div key={index} style={{ width: '100%' }}>
-                            <ListItem
-                                index={index + 1}
-                                onLongPress={() => {
-                                    if (window.confirm('Məhsulu silməyə əminsiniz?')) {
+                        <ListItem
+                            key={index}
+                            index={index + 1}
+                            onLongPress={() => {
+                                Modal.confirm({
+                                    title: 'Diqqət',
+                                    content: 'Məhsulu silməyə əminsiniz?',
+                                    onConfirm: () => {
                                         let data = { ...document };
                                         data.Positions.splice(index, 1);
                                         setDocument({ ...data, ...(pricingUtils(data.Positions)) });
                                         setHasUnsavedChanges(true);
                                     }
-                                }}
-                                onPress={() => {
-                                    navigate('/product-position', {
-                                        state: {
-                                            product: item,
-                                            state: document,
-                                            setState: setDocument,
-                                            type: 1,
-                                            units: units,
-                                            setUnits: setUnits,
-                                            setHasUnsavedChanges: setHasUnsavedChanges
-                                        }
-                                    })
-                                }}
-                                firstText={item.Name}
-                                centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
-                                endText={formatPrice(item.StockQuantity)}
-                                priceText={formatPrice(item.Quantity * item.Price)}
-                            />
-                        </div>
+                                });
+                            }}
+                            onPress={() => {
+                                setSelectedProduct(item);
+                                setPositionManageVisible(true);
+                            }}
+                            firstText={item.Name}
+                            centerText={`${formatPrice(item.Quantity)} x ${formatPrice(item.Price)}`}
+                            endText={formatPrice(item.StockQuantity)}
+                            priceText={formatPrice(item.Quantity * item.Price)}
+                        />
                     ))
-
                 }
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: 10,
-                    justifyContent: 'center',
-                    marginBottom: 30,
-                    marginTop: 10,
-                    width: '100%'
-                }}>
-                    <Button
-                        onClick={() => {
-                            navigate("/product-list", {
-                                state: {
-                                    state: document,
-                                    setState: setDocument,
-                                    type: 1,
-                                    units: units,
-                                    setUnits: setUnits,
-                                    setHasUnsavedChanges: setHasUnsavedChanges
-                                }
-                            });
-                        }}
-                        width={'70%'}
-                    >
-                        Məhsul əlavə et
-                    </Button>
-                </div>
-                <>
-                    {
-                        permission_ver(permissions, 'mobilediscount', 'C') && (
-                            <>
-                                {
-                                    document.BasicAmount &&
-                                    <div style={styles.footerRow}>
-                                        <span style={{ fontSize: 14, color: theme.grey }}>Ümumi alış məbləği</span>
-                                        <span style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.BasicAmount)} ₼</span>
-                                    </div>
-                                }
-                                {
-                                    document.BasicAmount &&
-                                    <div style={styles.footerRow}>
-                                        <span style={{ fontSize: 14, color: theme.grey }}>Endirim</span>
-                                        <span style={{ fontSize: 14, color: theme.grey }}>{formatPrice(document.Discount)}%</span>
-                                    </div>
-                                }
-                            </>
-                        )
-                    }
-                    <div
-                        onClick={() => {
-                            setModalVisible(true);
-                        }}
-                        style={styles.footerRowClickable}>
-                        <span style={{ fontSize: 16, color: theme.black }}>Yekun məbləğ</span>
-                        <span style={{ fontSize: 16, color: theme.black }}>{formatPrice(document.Amount)} ₼</span>
-                    </div>
-                </>
+            </List>
+            <div style={{ padding: '20px 0' }}>
+                <Button
+                    block
+                    color='primary'
+                    fill='outline'
+                    onClick={() => setProductListVisible(true)}
+                >
+                    Məhsul əlavə et
+                </Button>
             </div>
+            <>
+                {
+                    permission_ver(permissions, 'mobilediscount', 'C') && (
+                        <>
+                            {
+                                document.BasicAmount &&
+                                <div style={styles.footerRow}>
+                                    <span style={{ color: theme.grey }}>Ümumi alış məbləği</span>
+                                    <span style={{ color: theme.grey }}>{formatPrice(document.BasicAmount)} ₼</span>
+                                </div>
+                            }
+                            {
+                                document.BasicAmount &&
+                                <div style={styles.footerRow}>
+                                    <span style={{ color: theme.grey }}>Endirim</span>
+                                    <span style={{ color: theme.grey }}>{formatPrice(document.Discount)}%</span>
+                                </div>
+                            }
+                        </>
+                    )
+                }
+                <div
+                    onClick={() => {
+                        setModalVisible(true);
+                    }}
+                    style={styles.footerRowClickable}>
+                    <span style={{ fontSize: 16 }}>Yekun məbləğ</span>
+                    <span style={{ fontSize: 16, color: theme.primary }}>{formatPrice(document.Amount)} ₼</span>
+                </div>
+            </>
 
             <AmountCalculated
                 setHasUnsavedChanges={setHasUnsavedChanges}
@@ -167,7 +137,30 @@ const ProductCard = ({ setHasUnsavedChanges }) => {
                 modalVisible={modalVisible}
                 setModalVisible={setModalVisible}
             />
-        </ManageCard>
+
+            <PositionManage
+                visible={positionManageVisible}
+                onClose={() => setPositionManageVisible(false)}
+                product={selectedProduct}
+                state={document}
+                setState={setDocument}
+                units={units}
+                type={1}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+            />
+
+            <DocumentProductList
+                visible={productListVisible}
+                onClose={() => setProductListVisible(false)}
+                state={document}
+                setState={setDocument}
+                type={1}
+                units={units}
+                setUnits={setUnits}
+                setHasUnsavedChanges={setHasUnsavedChanges}
+            />
+        </Card>
     )
 }
 

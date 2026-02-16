@@ -1,12 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import useTheme from '../theme/useTheme';
-import ManageHeader from './ManageHeader';
-import Input from './Input';
+import { Popup, Input, Button, SpinLoading } from 'antd-mobile';
+import React, { useEffect, useState, useRef } from 'react';
 import { formatPrice } from '../../services/formatPrice';
-import Button from './Button';
-import { AiOutlineMinusSquare, AiOutlinePlusSquare } from 'react-icons/ai';
 import pricingUtils from '../../services/pricingUtils';
-import applyDiscount from './../../services/report/applyDiscount';
 import PricesModal from './modals/PricesModal';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from './RepllyMessage/ErrorMessage';
@@ -16,36 +11,65 @@ import MySelection from './MySelection';
 import PositionManageHeader from './PositionManageHeader';
 import useGlobalStore from '../data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
-import playSound from '../../services/playSound';
 
-const InventoryPositionManage = ({ route, navigation }) => {
-
-  let { product, state, setState, units, type, setUnits } = route?.params || {};
+const InventoryPositionManage = ({
+  visible,
+  onClose,
+  product,
+  state,
+  setState,
+  units,
+  type,
+  setUnits,
+  setHasUnsavedChanges
+}) => {
+  // Use props directly instead of route params
 
   let [data, setData] = useState({});
   let [priceModal, setPriceModal] = useState(false);
   let [priceName, setPriceName] = useState("");
 
   const permissions = useGlobalStore(state => state.permissions);
+  const scrollViewRef = useRef(null);
 
-  let theme = useTheme();
+  const commonInputStyle = {
+    '--font-size': '16px',
+    border: `1px solid #ddd`,
+    borderRadius: 8,
+    padding: '8px 12px',
+    backgroundColor: '#ffffff'
+  };
+
+  const labelStyle = {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 6,
+    display: 'block'
+  };
 
   const styles = {
     container: {
       display: 'flex',
       flex: 1,
       flexDirection: 'column',
-      backgroundColor: theme.bg,
+      backgroundColor: '#fff',
       height: '100vh',
       overflow: 'hidden'
+    },
+    scrollView: {
+      flex: 1,
+      overflowY: 'auto',
+      paddingBottom: 50,
+      display: 'flex',
+      flexDirection: 'column'
     },
     contentContainer: {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
       padding: 20,
-      height: 'calc(100vh - 55px)', // Header yüksekliğini çıkar
-      overflowY: 'auto'
+      flexGrow: 1,
+      minHeight: 500
     },
     row: {
       display: 'flex',
@@ -55,7 +79,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
       marginBottom: 10
     },
     text: {
-      color: theme.black,
+      color: '#000',
       margin: 0
     },
     margin20: {
@@ -127,6 +151,7 @@ const InventoryPositionManage = ({ route, navigation }) => {
       token: await AsyncStorageWrapper.getItem('token'),
       productids: [info.ProductId]
     }
+
     await api('stockbalancebyid/get.php', obj)
       .then(element => {
         if (element != null) {
@@ -152,12 +177,11 @@ const InventoryPositionManage = ({ route, navigation }) => {
       return;
     }
 
-    setUnits(rel => {
-      if (!rel[stateData.ProductId]) {
-        rel[stateData.ProductId] = units[stateData.ProductId];
-      }
-      return rel;
-    })
+    let unitInfos = { ...units };
+    if (!unitInfos[stateData.ProductId]) {
+      unitInfos[stateData.ProductId] = units[stateData.ProductId];
+    }
+    setUnits(unitInfos);
 
     let index = [...propsState.Positions].findIndex(rel => rel.ProductId == stateData.ProductId);
     if (index == -1) {
@@ -167,8 +191,8 @@ const InventoryPositionManage = ({ route, navigation }) => {
     }
 
     setState({ ...propsState, ...(pricingUtils(propsState.Positions)) });
-    // playSound('bc');
-    navigation.goBack();
+    setHasUnsavedChanges(true);
+    if (onClose) onClose();
   }
 
   const handleChangePrice = (value) => {
@@ -248,171 +272,199 @@ const InventoryPositionManage = ({ route, navigation }) => {
   }
 
   useEffect(() => {
-    loadInitalData();
-  }, [product])
-
-  if (!product && Object.keys(data).length === 0) {
-    return <div style={styles.loadingCenter}>Məlumat tapılmadı</div>
-  }
+    if (product?.ProductId) {
+      loadInitalData();
+    }
+  }, [product?.ProductId])
 
   return (
-    Object.keys(data).length == 0 ?
-      <div style={styles.loadingCenter}>
-        <div className="spinner"></div>
-      </div>
-      :
-      <div style={styles.container}>
-        <PositionManageHeader
-          handleSave={handleSave}
-          loading={false}
-          navigation={navigation}
-          updateText={'Təsdiqlə'}
-          createText={'Təsdiqlə'}
-        />
-        <div style={styles.contentContainer}>
+    <Popup
+      visible={visible}
+      onMaskClick={onClose}
+      destroyOnClose
+      position='right'
+      bodyStyle={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#fff'
+      }}
+    >
+      {Object.keys(data).length == 0 ?
+        <div style={styles.loadingCenter}>
+          <SpinLoading />
+        </div>
+        :
 
-          <div>
-            <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
-            <div style={{
-              width: '100%',
-              marginTop: 20
-            }}>
+        <div style={styles.container}>
+
+          <PositionManageHeader
+            handleSave={handleSave}
+            loading={false}
+            onBack={onClose}
+            updateText={'Təsdiqlə'}
+            createText={'Təsdiqlə'}
+          />
+
+          <div style={styles.scrollView} ref={scrollViewRef}>
+            <div style={styles.contentContainer}>
+
               <div>
+                <ListItem index={1} firstText={data.Name} centerText={data.BarCode} endText={data.StockQuantity} />
+                <div style={{
+                  width: '100%',
+                  marginTop: 20
+                }}>
+                  <div>
 
-                <div style={styles.row}>
-                  <span style={styles.text}>Fərq</span>
-                  <div style={styles.diffContainer}>
-                    <span>{formatPrice(data.Difference)}</span>
+                    <div style={styles.row}>
+                      <span style={styles.text}>Fərq</span>
+                      <div style={styles.diffContainer}>
+                        <span>{formatPrice(data.Difference)}</span>
+                      </div>
+                    </div>
+
+                    {/* cost price */}
+
+                    {
+                      permission_ver(permissions, 'profit', 'D') &&
+                        data.CostPrice ?
+                        <div style={styles.row}>
+                          <span style={styles.text}>Mayası</span>
+                          <span style={styles.text}>{formatPrice(data.CostPrice)}</span>
+                        </div>
+                        :
+                        ""
+                    }
+
+                    {/* Min price */}
+
+                    {
+                      data.MinPrice ?
+                        <div style={styles.row}>
+                          <span style={styles.text}>Min.Qiymət</span>
+                          <span style={styles.text}>{formatPrice(data.MinPrice)}</span>
+                        </div>
+                        :
+                        ""
+                    }
+
                   </div>
                 </div>
 
-                {/* cost price */}
-
-                {
-                  permission_ver(permissions, 'profit', 'D') &&
-                    data.CostPrice ?
-                    <div style={styles.row}>
-                      <span style={styles.text}>Mayası</span>
-                      <span style={styles.text}>{formatPrice(data.CostPrice)}</span>
-                    </div>
-                    :
-                    ""
-                }
-
-                {/* Min price */}
-
-                {
-                  data.MinPrice ?
-                    <div style={styles.row}>
-                      <span style={styles.text}>Min.Qiymət</span>
-                      <span style={styles.text}>{formatPrice(data.MinPrice)}</span>
-                    </div>
-                    :
-                    ""
-                }
 
               </div>
-            </div>
 
+              <div>
 
-          </div>
+                {
+                  units && units[data.ProductId] ?
+                    <>
 
-          <div>
+                      <MySelection
+                        label={'Vahid'}
+                        value={data.UnitId}
+                        onValueChange={handleChangeUnit}
+                        list={units[data.ProductId]}
+                        labelName={'Name'}
+                        valueName={'Id'}
+                      />
 
-            {
-              units ?
-                <>
+                      <div style={styles.margin10} />
+                    </>
+                    :
+                    ""
+                }
 
-                  <MySelection
-                    label={'Vahid'}
-                    value={data.UnitId}
-                    onValueChange={handleChangeUnit}
-                    list={units[data.ProductId]}
-                    labelName={'Name'}
-                    valueName={'Id'}
+                <div style={{ marginBottom: 15 }}>
+                  <span style={labelStyle}>Məbləğ</span>
+                  <Input
+                    placeholder='Məbləğ'
+                    value={String(data.AllSum)}
+                    type='number'
+                    onChange={handleChangeAllSum}
+                    style={commonInputStyle}
                   />
+                </div>
 
-                  <div style={styles.margin10} />
-                </>
-                :
-                ""
-            }
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  marginBottom: 15
+                }}>
+                  <div style={{ width: '45%' }}>
+                    <span style={labelStyle}>Endirim %</span>
+                    <Input
+                      placeholder='Endirim'
+                      value={String(data.Discount)}
+                      type='number'
+                      onChange={handleChangeDiscount}
+                      style={commonInputStyle}
+                    />
+                  </div>
 
-            <Input
-              placeholder={'Məbləğ'}
-              value={data.AllSum}
-              width={'100%'}
-              type={'number'}
-              onChange={(e) => {
-                handleChangeAllSum(e);
-              }}
-            />
+                  <div style={{ width: '45%' }}>
+                    <div
+                      onClick={() => { if (type == 0) setPriceModal(true) }}
+                      style={{ ...labelStyle, color: type == 0 ? 'var(--adm-color-primary)' : '#666', cursor: type == 0 ? 'pointer' : 'default', fontWeight: 'bold' }}
+                    >
+                      {priceName == '' ? 'Satış qiyməti' : priceName}
+                    </div>
+                    <Input
+                      placeholder='Qiymət'
+                      value={String(data.Price)}
+                      type='number'
+                      onChange={val => handleChangePrice(String(val))}
+                      style={commonInputStyle}
+                    />
+                  </div>
+                </div>
 
-            <div style={styles.margin20} />
+                <div style={styles.margin20} />
 
-            <div style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              width: '100%'
-            }}>
-              <Input
-                placeholder={'Endirim'}
-                value={data.Discount}
-                width={'45%'}
-                type={'number'}
-                onChange={(e) => {
-                  handleChangeDiscount(e);
-                }}
-              />
+                <div style={styles.quantityControl}>
+                  <Button
+                    disabled={Number(data.Quantity) <= 1}
+                    onClick={() => {
+                      handleChangeQuantity(Number(data.Quantity) - 1);
+                    }}
+                    style={{ width: '30%', backgroundColor: '#fff', border: `1px solid #ddd` }}
+                  >
+                    -
+                  </Button>
+                  <Input
+                    style={{ ...commonInputStyle, width: '30%', textAlign: 'center' }}
+                    placeholder='Faktiki qalıq'
+                    value={String(data.Quantity)}
+                    type='number'
+                    onChange={val => handleChangeQuantity(val)}
+                  />
+                  <Button
+                    onClick={() => {
+                      handleChangeQuantity(Number(data.Quantity) + 1);
+                    }}
+                    style={{ width: '30%', backgroundColor: '#fff', border: `1px solid #ddd` }}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
 
-              <Input
-                labelButton={true}
-                onPressLabelButton={() => {
-                  setPriceModal(true);
-                }}
-                placeholder={priceName == '' ? 'Satış qiyməti' : priceName}
-                value={data.Price}
-                width={'45%'}
-                type={'number'}
-                onChange={(e) => {
-                  handleChangePrice(String(e))
-                }}
-              />
-            </div>
-
-            <div style={styles.margin20} />
-
-            <div style={styles.quantityControl}>
-              <Button disabled={data.Quantity == 1} onClick={() => {
-                handleChangeQuantity(Number(data.Quantity) - 1);
-              }} width={'30%'} icon={<AiOutlineMinusSquare size={35} />} />
-              <Input
-                txPosition={'center'}
-                placeholder={'Faktiki qalıq'}
-                value={data.Quantity}
-                type={'number'}
-                onChange={(e) => {
-                  handleChangeQuantity(e)
-                }}
-                width={'30%'}
-              />
-
-              <Button onClick={() => {
-                handleChangeQuantity(Number(data.Quantity) + 1);
-              }} width={'30%'} icon={<AiOutlinePlusSquare size={35} />} />
             </div>
           </div>
 
+          {
+            type == 0 ?
+              <PricesModal modalVisible={priceModal} setModalVisible={setPriceModal} pressable={handleChangePriceType} setProduct={setData} />
+              :
+              ""
+          }
         </div>
-
-        {
-          type == 0 ?
-            <PricesModal modalVisible={priceModal} setModalVisible={setPriceModal} pressable={handleChangePriceType} setProduct={setData} />
-            :
-            ""
-        }
-      </div>
+      }
+    </Popup>
   )
 }
 

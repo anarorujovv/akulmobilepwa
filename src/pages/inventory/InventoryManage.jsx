@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
@@ -12,13 +12,12 @@ import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import mergeProductQuantities from '../../services/mergeProductQuantities';
 import { InventoryGlobalContext } from './../../shared/data/InventoryGlobalState';
 import moment from 'moment';
-import Button from '../../shared/ui/Button';
+import { Button, SpinLoading } from 'antd-mobile';
 import DestinationCard from '../../shared/ui/DestinationCard';
 import calculateUnit from '../../services/report/calculateUnit';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ModificationsCard from '../../shared/ui/ModificationsCard';
-// import playSound from '../../services/playSound';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const InventoryManage = () => {
     const navigate = useNavigate();
@@ -49,7 +48,15 @@ const InventoryManage = () => {
         }
     }
 
-    let { id } = location.state || {};
+    let { id } = useParams();
+
+    // Handle case where id might be 'null' string from URL or undefined
+    if (id === 'null' || id === 'undefined') id = null;
+
+    // Fallback to location.state if navigated via state (legacy support or internal nav)
+    if (!id && location.state?.id) {
+        id = location.state.id;
+    }
 
     const { document, setDocument, setUnits, units } = useContext(InventoryGlobalContext);
     const [loading, setLoading] = useState(false);
@@ -170,7 +177,7 @@ const InventoryManage = () => {
 
     useEffect(() => {
         fetchingDocument(id);
-    }, [])
+    }, [id])
 
     return (
 
@@ -178,7 +185,7 @@ const InventoryManage = () => {
             {
                 document == null ?
                     <div style={styles.loading}>
-                        <div className="spinner"></div> // Web spinner
+                        <SpinLoading />
                     </div>
                     :
                     <>
@@ -190,7 +197,7 @@ const InventoryManage = () => {
                         <div style={styles.content}>
 
                             <MainCard setHasUnsavedCahnges={setHasUnsavedChanges} changeInput={handleChangeInput} changeSelection={handleChangeSelection} />
-                            <ProductCard setHasUnsavedCahnges={setHasUnsavedChanges} navigation={navigate} />
+                            <ProductCard setHasUnsavedChanges={setHasUnsavedChanges} />
                             <DestinationCard
                                 changeSelection={handleChangeSelection}
                                 changeInput={handleChangeInput}
@@ -207,11 +214,11 @@ const InventoryManage = () => {
                         </div>
                         {
                             hasUnsavedChanges ?
-                                <div style={{ padding: '10px' }}>
+                                <div style={{ padding: '10px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
                                     <Button
-                                        bg={theme.green}
-                                        disabled={loading}
-                                        isLoading={loading}
+                                        block
+                                        color='success'
+                                        loading={loading}
                                         onClick={handleSave}
                                     >
                                         Yadda Saxla

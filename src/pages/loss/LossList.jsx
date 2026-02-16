@@ -108,9 +108,7 @@ const LossList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'loss', 'R')) {
-                        navigate('/loss/loss-manage', {
-                            state: { id: item.Id }
-                        })
+                        navigate(`/loss/loss-manage/${item.Id}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -132,9 +130,7 @@ const LossList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'loss', 'C')) {
-            navigate('/loss/loss-manage', {
-                state: { id: null }
-            })
+            navigate('/loss/loss-manage');
         }
     };
 

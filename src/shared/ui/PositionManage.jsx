@@ -186,6 +186,7 @@ const PositionManage = ({
         token: await AsyncStorageWrapper.getItem('token'),
         productids: [info.ProductId]
       }
+
       await api('stockbalancebyid/get.php', obj)
         .then(element => {
           if (element != null) {
@@ -324,12 +325,10 @@ const PositionManage = ({
   }
 
   useEffect(() => {
-    loadInitalData();
-  }, [product])
-
-  // Keyboard listener web'de gerek yok.
-
-
+    if (product) {
+      loadInitalData();
+    }
+  }, [product?.ProductId])
 
   return (
     <Popup
