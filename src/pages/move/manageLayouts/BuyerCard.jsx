@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card, Form } from 'antd-mobile';
 import { IoPerson } from 'react-icons/io5';
 import useTheme from '../../../shared/theme/useTheme';
 import Selection from './../../../shared/ui/Selection';
@@ -10,63 +10,56 @@ const BuyerCard = ({ changeSelection }) => {
     const { document, setDocument } = useContext(MoveGlobalContext);
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
-            width: '100%',
-            padding: 15,
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            boxSizing: 'border-box'
-        },
-        container: {
-            gap: 15,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '0 15px 15px 15px',
-            boxSizing: 'border-box'
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: theme.grey
         }
     };
 
     return (
-        <ManageCard>
+        <Card title={
             <div style={styles.header}>
-                <IoPerson size={20} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Qarşı-Tərəf</span>
+                <IoPerson size={20} />
+                <span>Qarşı-Tərəf</span>
             </div>
+        }>
+            <Form layout='horizontal'>
+                <Form.Item label='Anbardan'>
+                    <Selection
+                        isRequired={true}
+                        apiBody={{}}
+                        apiName={'stocks/get.php'}
+                        change={(e) => {
+                            changeSelection('StockFromId', e.Id)
+                        }}
+                        title={"Anbardan"}
+                        value={document.StockFromId}
+                        defaultValue={document.StockFromName}
+                    />
+                </Form.Item>
 
-            <div style={styles.container}>
-
-                <Selection
-                    isRequired={true}
-                    apiBody={{}}
-                    apiName={'stocks/get.php'}
-                    change={(e) => {
-                        changeSelection('StockFromId', e.Id)
-                    }}
-                    title={"Anbardan"}
-                    value={document.StockFromId}
-                    defaultValue={document.StockFromName}
-                />
-
-                <Selection
-                    isRequired={true}
-                    apiBody={{}}
-                    apiName={'stocks/get.php'}
-                    change={(e) => {
-                        changeSelection('StockToId', e.Id)
-                    }}
-                    title={"Anbara"}
-                    value={document.StockToId}
-                    defaultValue={document.StockToName}
-                />
-
-            </div>
-        </ManageCard>
+                <Form.Item label='Anbara'>
+                    <Selection
+                        isRequired={true}
+                        apiBody={{}}
+                        apiName={'stocks/get.php'}
+                        change={(e) => {
+                            changeSelection('StockToId', e.Id)
+                        }}
+                        title={"Anbara"}
+                        value={document.StockToId}
+                        defaultValue={document.StockToName}
+                    />
+                </Form.Item>
+            </Form>
+        </Card>
     )
 }
 

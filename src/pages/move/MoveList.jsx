@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { SpinLoading, FloatingBubble, Divider } from 'antd-mobile';
+import { SpinLoading, FloatingBubble, Divider, Modal } from 'antd-mobile';
 import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
@@ -27,7 +27,7 @@ const MoveList = () => {
         pg: 1,
         lm: 20,
         agrigate: 1
-    })
+    });
 
     const [documents, setDocuments] = useState([]);
     const [documentsInfo, setDocumentsInfo] = useState(null);
@@ -97,9 +97,13 @@ const MoveList = () => {
             <ListItem
                 index={index + 1}
                 onLongPress={() => {
-                    if (window.confirm('Yerdəyişmə silməyə əminsiniz?')) {
-                        handleDelete(item.Id);
-                    }
+                    Modal.confirm({
+                        title: 'Diqqət',
+                        content: 'Yerdəyişmə silməyə əminsiniz?',
+                        onConfirm: () => {
+                            handleDelete(item.Id);
+                        }
+                    });
                 }}
                 {...translatePayed(item.Payed)}
                 centerText={`${item.StockFromName} -> ${item.StockToName}`}
@@ -109,9 +113,7 @@ const MoveList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'move', 'R')) {
-                        navigate('/move/move-manage', {
-                            state: { id: item.Id }
-                        })
+                        navigate(`/move/move-manage/${item.Id}`)
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -133,9 +135,7 @@ const MoveList = () => {
 
     const handleFabClick = () => {
         if (permission_ver(permissions, 'move', 'C')) {
-            navigate('/move/move-manage', {
-                state: { id: null }
-            })
+            navigate('/move/move-manage')
         }
     };
 

@@ -1,60 +1,47 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from './../../../shared/ui/ManageCard';
-import Input from '../../../shared/ui/Input';
-import useTheme from '../../../shared/theme/useTheme';
-import SelectionDate from '../../../shared/ui/SelectionDate';
+import { Card, Input, Form, DatePicker } from 'antd-mobile';
 import { MoveGlobalContext } from '../../../shared/data/MoveGlobalState';
+import useTheme from '../../../shared/theme/useTheme';
+import moment from 'moment';
 
 const MainCard = ({ changeInput, changeSelection }) => {
 
-  let theme = useTheme();
+  const theme = useTheme();
 
   const { document, setDocument } = useContext(MoveGlobalContext);
-  const [momentModal, setMomentModal] = useState(false);
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
 
+  if (!document) return null;
 
   return (
-    <ManageCard>
-      <div style={{
-        width: '100%',
-        padding: 15,
-        boxSizing: 'border-box'
-      }}>
-        <span style={{
-          fontSize: 20,
-          color: theme.primary,
-          fontWeight: 'bold',
-          display: 'block'
-        }}>Yerdəyişmə</span>
-      </div>
-      <div style={{
-        marginTop: 20,
-        gap: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingBottom: 20
-      }}>
-        <Input
-          placeholder={'Ad'}
-          type={'string'}
-          width={'70%'}
-          value={document.Name}
-          onChange={(e) => {
-            changeInput('Name', e);
-          }}
-        />
+    <Card title={<span style={{ fontSize: 16, fontWeight: 'bold', color: theme.primary }}>Yerdəyişmə</span>}>
+      <Form layout='horizontal'>
+        <Form.Item label='Ad'>
+          <Input
+            placeholder='Ad'
+            value={document.Name}
+            onChange={(val) => {
+              changeInput('Name', val);
+            }}
+          />
+        </Form.Item>
 
-        <SelectionDate
-          change={changeSelection}
-          document={document}
-          setDocument={setDocument}
-          modalVisible={momentModal}
-          setModalVisible={setMomentModal}
-        />
-      </div>
+        <Form.Item label='Tarix' onClick={() => setDatePickerVisible(true)}>
+          <div style={{ padding: '4px 0', fontSize: 15 }}>
+            {moment(document.Moment).format('YYYY-MM-DD HH:mm')}
+          </div>
+        </Form.Item>
+      </Form>
 
-    </ManageCard>
+      <DatePicker
+        visible={datePickerVisible}
+        onClose={() => setDatePickerVisible(false)}
+        defaultValue={new Date(document.Moment)}
+        onConfirm={(val) => {
+          changeSelection('Moment', moment(val).format('YYYY-MM-DD HH:mm:ss'))
+        }}
+      />
+    </Card>
   )
 }
 
