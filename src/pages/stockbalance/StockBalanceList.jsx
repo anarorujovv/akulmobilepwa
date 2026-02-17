@@ -25,14 +25,13 @@ const StockBalanceList = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [itemSize, setItemSize] = useState(0);
     const [stockInfo, setStockInfo] = useState(null);
-    const [selectedTime, setSelectedTime] = useState(null);
 
     let [filter, setFilter] = useState({
         pg: 1,
         lm: 100,
         dr: 0,
         sr: "ProductName",
-        zeros: 3,
+        zeros: "3", // Default value matching selectionData
         ar: 0,
         showc: true,
         showh: false,
@@ -83,6 +82,21 @@ const StockBalanceList = () => {
             }
         });
     };
+
+    const renderItem = (item, index) => (
+        <React.Fragment key={item.ProductId}>
+            <ListItem
+                onPress={() => {
+                    navigate(`/stockbalance/stock-manage/${item.ProductId}`);
+                }}
+                firstText={item.GroupName}
+                centerText={item.ProductName}
+                endText={formatPrice(item.Quantity)}
+                priceText={formatPrice(item.Price)}
+                index={index + 1}
+            />
+        </React.Fragment>
+    );
 
     return (
         <div style={{
@@ -185,25 +199,7 @@ const StockBalanceList = () => {
                     </div>
                 ) : (
                     <>
-                        {stocks.map((item, index) => (
-                            <React.Fragment key={item.ProductId}>
-                                <ListItem
-                                    onPress={() => {
-                                        navigate("/stockbalance/stock-manage", {
-                                            state: {
-                                                id: item.ProductId,
-                                                name: item.ProductName
-                                            }
-                                        });
-                                    }}
-                                    firstText={item.GroupName}
-                                    centerText={item.ProductName}
-                                    endText={formatPrice(item.Quantity)}
-                                    priceText={formatPrice(item.Price)}
-                                    index={index + 1}
-                                />
-                            </React.Fragment>
-                        ))}
+                        {stocks.map((item, index) => renderItem(item, index))}
                         {(stocks.length === 100 || filter.pg !== 0) && (
                             <MyPagination
                                 itemSize={itemSize}
@@ -215,7 +211,7 @@ const StockBalanceList = () => {
                                     setStocks([]);
                                     setFilter(filterData);
                                 }}
-                                pageSize={21000} // Preserving original page size logic
+                                pageSize={100} // Matched limit
                             />
                         )}
                     </>

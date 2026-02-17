@@ -1,9 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import Input from './Input';
+import { DatePicker, Button, Input, ConfigProvider } from 'antd-mobile';
 import moment from 'moment';
-import Button from './Button';
-import MyModal from './MyModal';
-import useTheme from '../theme/useTheme';
+import enUS from 'antd-mobile/es/locales/en-US';
+
+// Custom locale definition
+const locale = {
+  ...enUS,
+  DatePicker: {
+    ...enUS.DatePicker,
+    tillNow: 'İndiyə qədər',
+    ok: 'Təsdiq',
+    cancel: 'Ləğv',
+    year: 'il',
+    month: 'ay',
+    day: 'gün',
+    hour: 'saat',
+    minute: 'dəq'
+  },
+  common: {
+    ...enUS.common,
+    confirm: 'Təsdiq',
+    cancel: 'Ləğv',
+    loading: 'Yüklənir'
+  }
+}
 
 const DateRangePicker = ({
   submit,
@@ -11,7 +31,6 @@ const DateRangePicker = ({
   filter,
   setFilter
 }) => {
-  const theme = useTheme();
   let [firstDate, setFirstData] = useState(null);
   let [lastDate, setLastDate] = useState(null);
 
@@ -58,121 +77,86 @@ const DateRangePicker = ({
     fetchingMomentData();
   }, [filter]);
 
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      width: width,
-      gap: 10,
-      alignItems: 'center'
-    },
-    pressable: {
-      width: submit ? '40%' : '50%',
-      cursor: 'pointer'
-    },
-    modalContent: {
-      padding: 20,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 20,
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    dateInput: {
-      padding: 10,
-      fontSize: 16,
-      borderRadius: 5,
-      border: `1px solid ${theme.input.greyWhite}`,
-      width: '100%',
-      boxSizing: 'border-box'
+  const labelRenderer = (type, data) => {
+    switch (type) {
+      case 'year': return data + ' il'
+      case 'month': return data
+      case 'day': return data
+      default: return data
     }
-  };
+  }
 
   return (
-    <div style={styles.container}>
+    <ConfigProvider locale={locale}>
+      <div style={{ display: 'flex', gap: '10px', width: width || '100%', alignItems: 'center' }}>
+        <div onClick={() => setFirstDateModal(true)} style={{ flex: 1 }}>
+          <Input
+            readOnly
+            value={firstDate ? moment(firstDate).format('DD-MM-YYYY') : ''}
+            placeholder='Başlama Tarixi'
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              padding: '6px 10px',
+              backgroundColor: '#fff',
+              textAlign: 'center',
+              '--font-size': '14px'
+            }}
+          />
+        </div>
 
-      <div
-        style={styles.pressable}
-        onClick={() => {
-          setFirstDateModal(true);
-        }}
-      >
-        <Input
-          width={'100%'}
-          value={firstDate == null ? "" : moment(firstDate).format('DD-MM-YYYY')}
-          disabled={true}
-          type={'text'}
-          placeholder={'Başlama Tarixi'}
-          onChange={() => { }}
+        <div onClick={() => setLastDateModal(true)} style={{ flex: 1 }}>
+          <Input
+            readOnly
+            value={lastDate ? moment(lastDate).format('DD-MM-YYYY') : ''}
+            placeholder='Bitmə Tarixi'
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              padding: '6px 10px',
+              backgroundColor: '#fff',
+              textAlign: 'center',
+              '--font-size': '14px'
+            }}
+          />
+        </div>
+
+        {submit && (
+          <Button
+            color='primary'
+            onClick={() => {
+              onSubmit(firstDate, lastDate);
+            }}
+            size='middle'
+            style={{ flexShrink: 0 }}
+          >
+            Axtar
+          </Button>
+        )}
+
+        <DatePicker
+          visible={firstDateModal}
+          onClose={() => setFirstDateModal(false)}
+          value={firstDate}
+          onConfirm={handleConfirmFirstDate}
+          title="Başlama Tarixi"
+          confirmText='Təsdiq'
+          cancelText='Ləğv'
+          renderLabel={labelRenderer}
+        />
+
+        <DatePicker
+          visible={lastDateModal}
+          onClose={() => setLastDateModal(false)}
+          value={lastDate}
+          onConfirm={handleConfirmLastDate}
+          title="Bitmə Tarixi"
+          confirmText='Təsdiq'
+          cancelText='Ləğv'
+          renderLabel={labelRenderer}
         />
       </div>
-
-      <div style={styles.pressable}
-        onClick={() => {
-          setLastDateModal(true);
-        }}
-      >
-        <Input
-          width={'100%'}
-          value={lastDate == null ? "" : moment(lastDate).format('DD-MM-YYYY')}
-          disabled={true}
-          type={'text'}
-          placeholder={'Bitmə Tarixi'}
-          onChange={() => { }}
-        />
-      </div>
-
-      {submit ?
-        <Button
-          width={'20%'}
-          onClick={() => {
-            onSubmit(firstDate, lastDate);
-          }}
-        >
-          Axtar
-        </Button>
-        :
-        null
-      }
-
-      <MyModal
-        modalVisible={firstDateModal}
-        setModalVisible={setFirstDateModal}
-        center={true}
-        width={'300px'}
-        height={'auto'}
-      >
-        <div style={styles.modalContent}>
-          <h3>Başlama Tarixi</h3>
-          <input
-            type="date"
-            style={styles.dateInput}
-            onChange={(e) => handleConfirmFirstDate(e.target.value)}
-          />
-          <Button onClick={() => setFirstDateModal(false)} width="100%">Bağla</Button>
-        </div>
-      </MyModal>
-
-      <MyModal
-        modalVisible={lastDateModal}
-        setModalVisible={setLastDateModal}
-        center={true}
-        width={'300px'}
-        height={'auto'}
-      >
-        <div style={styles.modalContent}>
-          <h3>Bitmə Tarixi</h3>
-          <input
-            type="date"
-            style={styles.dateInput}
-            onChange={(e) => handleConfirmLastDate(e.target.value)}
-          />
-          <Button onClick={() => setLastDateModal(false)} width="100%">Bağla</Button>
-        </div>
-      </MyModal>
-
-    </div>
+    </ConfigProvider>
   );
 };
 
