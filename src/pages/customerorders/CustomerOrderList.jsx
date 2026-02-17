@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { SpinLoading, FloatingBubble, Divider } from 'antd-mobile';
+import { SpinLoading, FloatingBubble, Divider, Modal } from 'antd-mobile';
 import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
@@ -104,9 +104,13 @@ const CustomerOrderList = () => {
             <ListItem
                 index={index + 1}
                 onLongPress={() => {
-                    if (window.confirm('Satışı silməyə əminsiniz?')) {
-                        handleDelete(item.Id);
-                    }
+                    Modal.confirm({
+                        title: 'Diqqət',
+                        content: 'Satışı silməyə əminsiniz?',
+                        onConfirm: () => {
+                            handleDelete(item.Id);
+                        }
+                    });
                 }}
                 {...translatePayed(item.Payed)}
                 centerText={item.CustomerName}
@@ -116,9 +120,7 @@ const CustomerOrderList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'customerorders', 'R')) {
-                        navigate('/customerorders/customer-order-manage', {
-                            state: { id: item.Id }
-                        })
+                        navigate(`/customerorders/customer-order-manage/${item.Id}`)
                     } else {
                         ErrorMessage('İcazəniz yoxdur!')
                     }
@@ -230,9 +232,7 @@ const CustomerOrderList = () => {
                 }}
                 onClick={() => {
                     if (permission_ver(permissions, 'customerorders', 'C')) {
-                        navigate('/customerorders/customer-order-manage', {
-                            state: { id: null }
-                        })
+                        navigate('/customerorders/customer-order-manage')
                     }
                 }}
             >

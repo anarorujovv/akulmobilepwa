@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card, Form } from 'antd-mobile';
 import { IoPerson } from 'react-icons/io5';
 import useTheme from '../../../shared/theme/useTheme';
 import api from '../../../services/api';
@@ -17,23 +17,16 @@ const BuyerCard = ({ changeSelection }) => {
     const { document, setDocument } = useContext(CustomerOrderGlobalContext);
     const theme = useTheme();
 
+    if (!document) return null;
+
     const styles = {
         header: {
-            width: '100%',
-            padding: 15,
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            boxSizing: 'border-box'
-        },
-        container: {
-            gap: 15,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '0 15px 15px 15px',
-            boxSizing: 'border-box'
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: theme.grey
         }
     };
 
@@ -104,42 +97,42 @@ const BuyerCard = ({ changeSelection }) => {
     }
 
     return (
-        <ManageCard>
+        <Card title={
             <div style={styles.header}>
-                <IoPerson size={20} color={theme.grey} />
-                <span style={{
-                    color: theme.grey
-                }}>Qarşı-Tərəf</span>
+                <IoPerson size={20} />
+                <span>Qarşı-Tərəf</span>
             </div>
+        }>
+            <Form layout='horizontal'>
+                <Form.Item label='Qarşı-Tərəf'>
+                    <Selection
+                        isRequired={true}
+                        apiBody={{}}
+                        apiName={'customers/getfast.php'}
+                        searchApi={'customers/getfast.php'}
+                        change={fetchingCustomerData}
+                        searchKey={'fast'}
+                        title={'Qarşı-Tərəf'}
+                        value={document.CustomerId}
+                        defaultValue={document.CustomerName}
+                        bottomText={document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0'}
+                        bottomTitle={'Qarşı-tərəf'}
+                    />
+                </Form.Item>
 
-            <div style={styles.container}>
-
-                <Selection
-                    isRequired={true}
-                    apiBody={{}}
-                    apiName={'customers/getfast.php'}
-                    searchApi={'customers/getfast.php'}
-                    change={fetchingCustomerData}
-                    searchKey={'fast'}
-                    title={'Qarşı-Tərəf'}
-                    value={document.CustomerId}
-                    defaultValue={document.CustomerName}
-                    bottomText={document.CustomerInfo != undefined ? formatPrice(document.CustomerInfo.Debt) : '0'}
-                    bottomTitle={'Qarşı-tərəf'}
-                />
-
-                <Selection
-                    isRequired={true}
-                    apiBody={{}}
-                    apiName={'stocks/get.php'}
-                    change={fetchingStockData}
-                    title={"Anbar"}
-                    value={document.StockId}
-                    defaultValue={document.StockName}
-                />
-
-            </div>
-        </ManageCard>
+                <Form.Item label='Anbar'>
+                    <Selection
+                        isRequired={true}
+                        apiBody={{}}
+                        apiName={'stocks/get.php'}
+                        change={fetchingStockData}
+                        title={"Anbar"}
+                        value={document.StockId}
+                        defaultValue={document.StockName}
+                    />
+                </Form.Item>
+            </Form>
+        </Card>
     )
 }
 

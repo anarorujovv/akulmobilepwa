@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import useTheme from '../../shared/theme/useTheme';
 import ManageHeader from './../../shared/ui/ManageHeader';
 import MainCard from './manageLayouts/MainCard';
@@ -12,25 +12,21 @@ import { formatPrice } from '../../services/formatPrice';
 import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import mergeProductQuantities from '../../services/mergeProductQuantities';
-import Button from '../../shared/ui/Button';
-// import prompt from '../../services/prompt'; // Web default confirm is fine or custom
+import { Button, SpinLoading } from 'antd-mobile';
 import DestinationCard from './../../shared/ui/DestinationCard';
 import moment from 'moment';
 import calculateUnit from './../../services/report/calculateUnit';
 import { CustomerOrderGlobalContext } from '../../shared/data/CustomerOrderGlobalState';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ModificationsCard from '../../shared/ui/ModificationsCard';
-// import playSound from '../../services/playSound';
 import ReleatedDocuments from '../../shared/ui/ReleatedDocuments';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const CustomerOrderManage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  let { id } = location.state || {}; // Get id from state
-
   const theme = useTheme();
 
   const styles = {
@@ -39,7 +35,7 @@ const CustomerOrderManage = () => {
       flexDirection: 'column',
       height: '100vh',
       backgroundColor: theme.whiteGrey,
-      overflowY: 'auto'
+      overflow: 'hidden'
     },
     loadingContainer: {
       flex: 1,
@@ -48,12 +44,24 @@ const CustomerOrderManage = () => {
       alignItems: 'center'
     },
     content: {
+      flex: 1,
+      overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
-      gap: 20,
-      padding: 10
+      gap: '20px',
+      padding: '10px'
     }
   };
+
+  let { id } = useParams();
+
+  // Handle case where id might be 'null' string from URL or undefined
+  if (id === 'null' || id === 'undefined') id = null;
+
+  // Fallback to location.state if navigated via state (legacy support or internal nav)
+  if (!id && location.state?.id) {
+    id = location.state.id;
+  }
 
   const permissions = useGlobalStore(state => state.permissions);
 
@@ -80,7 +88,8 @@ const CustomerOrderManage = () => {
         BasicAmount: 0,
         OwnerId: await AsyncStorageWrapper.getItem("ownerId") == null ? "" : await AsyncStorageWrapper.getItem('ownerId'),
         DepartmentId: await AsyncStorageWrapper.getItem("depId") == null ? "" : await AsyncStorageWrapper.getItem('depId'),
-        Description: ""
+        Description: "",
+        PaymentMethod: 'Nagd'
       }
 
       if (permission_ver(permissions, 'customerorderactivate', 'R')) {
@@ -117,6 +126,8 @@ const CustomerOrderManage = () => {
                 documentData.CustomerInfo = item;
                 documentData.CustomerInfo.CustomerData.Id = documentData.CustomerId
                 documentData.CustomerInfo.CustomerData.Discount = formatPrice(documentData.CustomerInfo.CustomerData.Discount)
+
+                if (!documentData.PaymentMethod) documentData.PaymentMethod = 'Nagd';
 
                 let result = await mergeProductQuantities(documentData, documentData.StockId);
                 let positions = calculateUnit(element.PositionUnits, result.Positions, "GET")
@@ -211,7 +222,7 @@ const CustomerOrderManage = () => {
       {
         document == null ?
           <div style={styles.loadingContainer}>
-            <div className="spinner"></div>
+            <SpinLoading />
           </div>
           :
           <>
@@ -254,11 +265,11 @@ const CustomerOrderManage = () => {
 
             {
               hasUnsavedChanges ?
-                <div style={{ padding: 10 }}>
+                <div style={{ padding: '10px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
                   <Button
-                    bg={theme.green}
-                    disabled={loading}
-                    isLoading={loading}
+                    block
+                    color='success'
+                    loading={loading}
                     onClick={handleSave}
                   >
                     Yadda Saxla

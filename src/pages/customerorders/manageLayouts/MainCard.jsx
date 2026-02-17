@@ -1,23 +1,22 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from './../../../shared/ui/ManageCard';
-import Input from '../../../shared/ui/Input';
+import { Card, Input, Form, DatePicker, Button, Picker } from 'antd-mobile';
 import useTheme from '../../../shared/theme/useTheme';
-import SelectionDate from '../../../shared/ui/SelectionDate';
 import { CustomerOrderGlobalContext } from '../../../shared/data/CustomerOrderGlobalState';
-import CustomSelection from '../../../shared/ui/CustomSelection';
 import paymethdemo from '../../../paymethdem';
-import Button from '../../../shared/ui/Button';
 import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
+import moment from 'moment';
 
 const MainCard = ({ changeInput, changeSelection }) => {
 
-  let theme = useTheme();
+  const theme = useTheme();
 
   const { document, setDocument } = useContext(CustomerOrderGlobalContext);
   const [momentModal, setMomentModal] = useState(false);
-
+  const [paymentPickerVisible, setPaymentPickerVisible] = useState(false);
   const [isImplementLoading, setIsImplementLoading] = useState(false);
+
+  const paymentOptions = paymethdemo.map(item => ({ label: item.value, value: item.key }));
 
   const handleImplement = async () => {
     setIsImplementLoading(true);
@@ -25,80 +24,80 @@ const MainCard = ({ changeInput, changeSelection }) => {
       documentid: document.Id,
       token: await AsyncStorageWrapper.getItem('token')
     })
-
     setIsImplementLoading(false);
   }
 
+  if (!document) return null;
+
+  const getPaymentLabel = (val) => {
+    const item = paymentOptions.find(i => i.value == val);
+    return item ? item.label : '';
+  }
+
   return (
-    <ManageCard>
-      <div style={{
-        width: '100%',
-        padding: 15,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        boxSizing: 'border-box'
-      }}>
-        <span style={{
-          fontSize: 20,
-          color: theme.primary,
-          fontWeight: 'bold'
-        }}>Sifariş</span>
-
-        {document && document.Id && (
-          <Button
-            onClick={handleImplement}
-            width={'40%'}
-            bg={theme.primary}
-            isLoading={isImplementLoading}
-          >
-            Təstiqlə
-          </Button>
-        )}
-      </div>
-      <div style={{
-        marginTop: 20,
-        gap: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingBottom: 20
-      }}>
-        <Input
-          placeholder={'Ad'}
-          type={'string'}
-          width={'70%'}
-          value={document.Name}
-          onChange={(e) => {
-            changeInput('Name', e);
-          }}
-        />
-
-        <SelectionDate
-          change={changeSelection}
-          document={document}
-          setDocument={setDocument}
-          modalVisible={momentModal}
-          setModalVisible={setMomentModal}
-        />
-
-        <div style={{
-          width: '70%'
-        }}>
-          <CustomSelection
-            value={document.PaymentMethod}
-            options={paymethdemo}
-            onChange={(e) => {
-              changeSelection('PaymentMethod', e);
-            }}
-            placeholder={'Sifariş novü'}
-            title={'Sifariş növü'}
-          />
+    <Card
+      title={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 16, fontWeight: 'bold', color: theme.primary }}>Sifariş</span>
+          {document && document.Id && (
+            <Button
+              onClick={handleImplement}
+              size='small'
+              color='primary'
+              loading={isImplementLoading}
+            >
+              Təstiqlə
+            </Button>
+          )}
         </div>
-      </div>
+      }
+    >
+      <Form layout='horizontal'>
+        <Form.Item label='Ad'>
+          <Input
+            placeholder='Ad'
+            value={document.Name}
+            onChange={(val) => {
+              changeInput('Name', val);
+            }}
+          />
+        </Form.Item>
 
-    </ManageCard>
+        <Form.Item label='Tarix' onClick={() => setMomentModal(true)}>
+          <div style={{ padding: '4px 0', fontSize: 15 }}>
+            {moment(document.Moment).format('YYYY-MM-DD HH:mm')}
+          </div>
+        </Form.Item>
+
+        <Form.Item label='Sifariş növü' onClick={() => setPaymentPickerVisible(true)}>
+          <div style={{ padding: '4px 0', fontSize: 15 }}>
+            {getPaymentLabel(document.PaymentMethod) || 'Seçin'}
+          </div>
+        </Form.Item>
+      </Form>
+
+      <DatePicker
+        visible={momentModal}
+        onClose={() => setMomentModal(false)}
+        defaultValue={new Date(document.Moment)}
+        onConfirm={(val) => {
+          changeSelection('Moment', moment(val).format('YYYY-MM-DD HH:mm:ss'))
+        }}
+      />
+
+      <Picker
+        columns={[paymentOptions]}
+        visible={paymentPickerVisible}
+        onClose={() => setPaymentPickerVisible(false)}
+        value={[document.PaymentMethod]}
+        onConfirm={(val) => {
+          if (val && val[0]) {
+            changeSelection('PaymentMethod', val[0]);
+          }
+        }}
+      />
+
+    </Card>
   )
 }
 
