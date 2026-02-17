@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { SpinLoading, FloatingBubble, ActionSheet, CapsuleTabs } from 'antd-mobile';
+import { SpinLoading, FloatingBubble, ActionSheet, CapsuleTabs, Modal } from 'antd-mobile';
 import { AddOutline } from 'antd-mobile-icons';
 import ListPagesHeader from '../../shared/ui/ListPagesHeader';
 import api from './../../services/api';
@@ -86,17 +86,7 @@ const PaymentList = () => {
 
     const handleDocumentCreate = (type, cost) => {
         setActionSheetVisible(false);
-        let obj = {
-            id: null,
-            direct: type,
-            type: "payment"
-        };
-
-        if (cost) {
-            obj.cost = true;
-        }
-
-        navigate('/payment/payment-manage', { state: obj });
+        navigate(`/page_payments/payment-manage?type=payment&direct=${type}${cost ? '&cost=true' : ''}`);
     };
 
     const actions = [
@@ -127,9 +117,13 @@ const PaymentList = () => {
                 deactiveStatus={item.Status == 0}
                 index={index + 1}
                 onLongPress={() => {
-                    if (window.confirm('Ödənişi silməyə əminsiniz?')) {
-                        handleDelete(item.Id, item);
-                    }
+                    Modal.confirm({
+                        title: 'Diqqət',
+                        content: 'Ödənişi silməyə əminsiniz?',
+                        onConfirm: () => {
+                            handleDelete(item.Id, item);
+                        }
+                    });
                 }}
                 markId={item.Mark}
                 centerText={item.CustomerName}
@@ -139,12 +133,9 @@ const PaymentList = () => {
                 priceText={formatPrice(item.Amount)}
                 onPress={() => {
                     if (permission_ver(permissions, 'page_payments', 'R')) {
-                        let obj = {
-                            id: item.Id,
-                            type: item.Type === "i" ? "invoice" : "payment",
-                            direct: item.Direct === "i" ? "ins" : "outs"
-                        };
-                        navigate('/payment/payment-manage', { state: obj });
+                        const type = item.Type === "i" ? "invoice" : "payment";
+                        const direct = item.Direct === "i" ? "ins" : "outs";
+                        navigate(`/page_payments/payment-manage/${item.Id}?type=${type}&direct=${direct}`);
                     } else {
                         ErrorMessage('İcazəniz yoxdur!');
                     }

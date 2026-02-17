@@ -1,56 +1,36 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
+import { Card, Form, Input, Space } from 'antd-mobile';
 import { FaUser } from 'react-icons/fa';
-import useTheme from '../../../shared/theme/useTheme';
-import Input from '../../../shared/ui/Input';
 import { PaymentGlobalContext } from '../../../shared/data/PaymentGlobalState';
 import CustomersModal from './../../../shared/ui/modals/CustomersModal';
 import CashesModal from '../../../shared/ui/modals/CashesModal';
 import SpendItemsModal from '../../../shared/ui/modals/SpendItems';
 import PaymentMethod from './../../../shared/ui/modals/PaymentMethod';
 import useGlobalStore from '../../../shared/data/zustand/useGlobalStore';
+import useTheme from '../../../shared/theme/useTheme';
 
 const OppositeCard = ({ cost, changeInput, changeSelection }) => {
-  const theme = useTheme();
   const { document, setDocument, types, setTypes } = useContext(PaymentGlobalContext);
-
+  const theme = useTheme();
   const [spendItemModal, setSpendItemModal] = useState(false);
   const [paymentMethodModal, setPaymentMethodModal] = useState(false);
   const local = useGlobalStore(state => state.local);
 
-  const styles = {
-    header: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      padding: 20,
-      alignItems: 'center',
-      gap: 10,
-    },
-    content: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 10
-    }
-  };
-
   return (
     <>
-      <ManageCard>
-        <div style={styles.header}>
-          <FaUser size={20} color={theme.grey} />
-          <span style={{ color: theme.grey }}>Qarşı-tərəf</span>
+      <Card title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FaUser size={18} color={theme.grey} />
+          <span>Qarşı-tərəf</span>
         </div>
-
-        <div style={styles.content}>
+      }>
+        <Space direction='vertical' block>
           <CustomersModal
             returnChanged={changeSelection}
             document={document}
             setDocument={setDocument}
             isDisable={cost}
-            width={'70%'}
+            width={'100%'}
             isDebtPermission={local.demands.demandToPayment.customerDebt}
           />
 
@@ -86,17 +66,20 @@ const OppositeCard = ({ cost, changeInput, changeSelection }) => {
             }}
           />
 
-          <Input
-            width={'70%'}
-            placeholder={'Məbləğ'}
-            value={document.Amount}
-            type={'number'}
-            onChange={e => {
-              changeInput('Amount', e);
-            }}
-          />
-        </div>
-      </ManageCard>
+          <Form layout='horizontal'>
+            <Form.Item label='Məbləğ'>
+              <Input
+                value={document.Amount}
+                onChange={(val) => {
+                  changeInput('Amount', val);
+                }}
+                type='number'
+                placeholder='0.00'
+              />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Card>
 
       <PaymentMethod
         modalVisible={paymentMethodModal}

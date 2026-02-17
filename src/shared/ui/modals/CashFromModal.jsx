@@ -4,18 +4,15 @@ import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
-import Line from '../Line';
-import Input from '../Input';
 import contains from '../../../services/contains';
 import { formatPrice } from '../../../services/formatPrice';
+import { List, Input, SpinLoading, AutoCenter } from 'antd-mobile';
 
 const CashFromModal = ({
     document,
     setDocument,
 }) => {
-
     const theme = useTheme();
-
     const [cashs, setCashs] = useState([]);
     const [cashModal, setCashModal] = useState(false);
 
@@ -35,36 +32,6 @@ const CashFromModal = ({
         })
     }
 
-    const renderItem = (item, index) => {
-        return (
-            <div key={item.Id || index} style={{ width: '100%' }}>
-                <div onClick={() => {
-                    setDocument(rel => ({ ...rel, ['CashFromName']: item.Name }))
-                    setDocument(rel => ({ ...rel, ['CashFromId']: item.Id }));
-                    setCashModal(false);
-                }}
-                    style={{
-                        width: '100%',
-                        height: 55,
-                        paddingLeft: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                    <span style={{
-                        color: theme.black,
-                        fontSize: 13
-                    }}>{item.Name}</span>
-                </div>
-                <Line width={'90%'} />
-            </div>
-        )
-    }
-
     useEffect(() => {
         if (cashModal && cashs != null && !cashs[0]) {
             fetchingCashes();
@@ -75,97 +42,83 @@ const CashFromModal = ({
         fetchingCashes();
     }, [])
 
-    const styles = {
-        trigger: {
-            width: "100%",
-            display: "flex",
-            flexDirection: 'column',
-            alignItems: "center",
-            cursor: 'pointer'
-        },
-        balanceRow: {
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            width: '70%'
-        },
-        center: {
-            width: '100%',
-            height: 55,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        loadingCenter: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }
-    }
+    const selectedCash = contains(cashs, document.CashFromId);
 
     return (
         <>
-            {
-                cashs[0] ?
-                    <div
-                        style={styles.trigger}
-                        onClick={() => {
-                            setCashModal(true);
-                        }}
-                    >
-                        <Input
-                            isRequired={true}
-                            width={'70%'}
-                            disabled={true}
-                            value={document.CashFromName}
-                            placeholder={'Hesabdan'}
-                        />
-                        {
-                            contains(cashs, document.CashFromId) == null ? "" :
-                                <div
-                                    style={styles.balanceRow}>
-                                    <span style={{ fontSize: 12, color: theme.red }}>Balans</span>
-                                    <span style={{ fontSize: 12, color: theme.red }}>{formatPrice(contains(cashs, document.CashFromId).Balance)} ₼</span>
-                                </div>
+            <div
+                onClick={() => setCashModal(true)}
+                style={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: 'column',
+                    alignItems: "center",
+                    cursor: 'pointer'
+                }}
+            >
+                {!cashs.length ? (
+                    <div style={{ padding: 10 }}>
+                        <SpinLoading style={{ '--size': '20px' }} />
+                    </div>
+                ) : (
+                    <>
+                        <div style={{
+                            width: '70%',
+                            border: '1px solid #e5e5e5',
+                            borderRadius: 4,
+                            padding: '6px 12px',
+                            backgroundColor: '#fff'
+                        }}>
+                            <Input
+                                readOnly
+                                value={document.CashFromName || ''}
+                                placeholder={'Hesabdan'}
+                                style={{ '--font-size': '14px' }}
+                            />
+                        </div>
+                        {selectedCash && (
+                            <div style={{ width: '70%', display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+                                <span style={{ fontSize: 12, color: theme.red }}>Balans</span>
+                                <span style={{ fontSize: 12, color: theme.red }}>{formatPrice(selectedCash.Balance)} ₼</span>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
 
-                        }
-                    </div>
-                    :
-                    <div style={styles.center}>
-                        <div className="spinner"></div>
-                    </div>
-            }
             <MyModal
                 modalVisible={cashModal}
                 setModalVisible={setCashModal}
                 width={'100%'}
                 height={"100%"}
             >
-                {
-                    cashs == null ?
-                        <div style={styles.loadingCenter}>
-                            <span style={{
-                                fontSize: 16,
-                                color: theme.primary
-                            }}>Məlumat tapılmadı...</span>
+                <div style={{ height: '300px', overflowY: 'auto' }}>
+                    {cashs === null ? (
+                        <AutoCenter style={{ padding: 20, color: theme.primary }}>
+                            Məlumat tapılmadı...
+                        </AutoCenter>
+                    ) : !cashs.length ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+                            <SpinLoading color='primary' />
                         </div>
-                        :
-                        <div style={{
-                            width: '100%',
-                            height: '100%',
-                            overflowY: 'auto'
-                        }}>
-                            {
-                                cashs[0] ?
-                                    cashs.map((item, index) => renderItem(item, index))
-                                    :
-                                    <div style={styles.loadingCenter}>
-                                        <div className="spinner"></div>
-                                    </div>
-                            }
-                        </div>
-                }
+                    ) : (
+                        <List header='Hesablar'>
+                            {cashs.map((item, index) => (
+                                <List.Item
+                                    key={item.Id || index}
+                                    onClick={() => {
+                                        setDocument(rel => ({ ...rel, ['CashFromName']: item.Name }))
+                                        setDocument(rel => ({ ...rel, ['CashFromId']: item.Id }));
+                                        setCashModal(false);
+                                    }}
+                                    arrow={false}
+                                >
+                                    {item.Name}
+                                </List.Item>
+                            ))}
+                        </List>
+                    )}
+                </div>
             </MyModal>
         </>
     )

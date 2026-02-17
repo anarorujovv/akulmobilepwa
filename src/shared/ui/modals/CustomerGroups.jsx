@@ -4,16 +4,14 @@ import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
-import Line from '../Line';
+import { List, SpinLoading, AutoCenter } from 'antd-mobile';
 
 const CustomerGroupsModal = ({
     modalVisible,
     setModalVisible,
     setProduct,
 }) => {
-
     const theme = useTheme();
-
     const [customerGroups, setCustomerGroups] = useState([]);
 
     const fetchingCustomerGroups = async () => {
@@ -32,40 +30,8 @@ const CustomerGroupsModal = ({
         })
     }
 
-
-    const renderItem = (item, index) => {
-        return (
-            <div key={item.Id || index} style={{ width: '100%' }}>
-                <div onClick={() => {
-                    setProduct(rel => ({ ...rel, ['GroupName']: item.Name }))
-                    setProduct(rel => ({ ...rel, ['GroupId']: item.Id }));
-                    setModalVisible(false);
-                }}
-                    style={{
-                        width: '100%',
-                        height: 55,
-                        paddingLeft: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                    <span style={{
-                        color: theme.black,
-                        fontSize: 13
-                    }}>{item.Name}</span>
-                </div>
-                <Line width={'90%'} />
-            </div>
-        )
-    }
-
     useEffect(() => {
-        if (modalVisible && customerGroups != null && !customerGroups
-        [0]) {
+        if (modalVisible && customerGroups != null && !customerGroups[0]) {
             fetchingCustomerGroups();
         }
 
@@ -78,49 +44,39 @@ const CustomerGroupsModal = ({
         fetchingCustomerGroups();
     }, [])
 
-    const styles = {
-        noDataContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        listContainer: {
-            width: '100%',
-            height: '100%',
-            overflowY: 'auto'
-        }
-    };
-
     return (
         <MyModal
             modalVisible={modalVisible}
             setModalVisible={setModalVisible}
             width={'100%'}
-            height={"100%"}
         >
-            {
-                customerGroups == null ?
-                    <div style={styles.noDataContainer}>
-                        <span style={{
-                            fontSize: 16,
-                            color: theme.primary
-                        }}>Məlumat tapılmadı...</span>
+            <div style={{ height: '300px', overflowY: 'auto' }}>
+                {customerGroups === null ? (
+                    <AutoCenter style={{ padding: 20, color: theme.primary }}>
+                        Məlumat tapılmadı...
+                    </AutoCenter>
+                ) : !customerGroups.length ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+                        <SpinLoading color='primary' />
                     </div>
-                    :
-                    <div style={styles.listContainer}>
-
-                        {
-                            customerGroups[0] ?
-                                customerGroups.map((item, index) => renderItem(item, index))
-                                :
-                                <div style={styles.noDataContainer}>
-                                    <div className="spinner"></div>
-                                </div>
-                        }
-
-                    </div>
-            }
+                ) : (
+                    <List header='Müştəri qrupları'>
+                        {customerGroups.map((item, index) => (
+                            <List.Item
+                                key={item.Id || index}
+                                onClick={() => {
+                                    setProduct(rel => ({ ...rel, ['GroupName']: item.Name }));
+                                    setProduct(rel => ({ ...rel, ['GroupId']: item.Id }));
+                                    setModalVisible(false);
+                                }}
+                                arrow={false}
+                            >
+                                {item.Name}
+                            </List.Item>
+                        ))}
+                    </List>
+                )}
+            </div>
         </MyModal>
     )
 }

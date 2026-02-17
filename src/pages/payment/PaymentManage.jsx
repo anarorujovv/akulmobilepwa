@@ -7,11 +7,9 @@ import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import OppositeCard from './manageLayouts/OppositeCard';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import DocumentCard from './manageLayouts/DocumentCard';
-import ManageHeader from '../../shared/ui/ManageHeader';
 import { formatObjectKey } from '../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
 import moment from 'moment';
-import Button from '../../shared/ui/Button';
 import { formatPrice } from '../../services/formatPrice';
 import buildModificationsPayload from '../../services/buildModificationsPayload';
 import ModificationsCard from '../../shared/ui/ModificationsCard';
@@ -19,20 +17,23 @@ import payByRange from './../../services/report/payByRange';
 import playSound from '../../services/playSound';
 import useGlobalStore from '../../shared/data/zustand/useGlobalStore';
 import permission_ver from '../../services/permissionVerification';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { NavBar, SpinLoading, Button, Space, AutoCenter } from 'antd-mobile';
 
 const PaymentManage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const params = useParams();
 
-    // Default params destructured with fallbacks
-    const {
-        id = null,
-        type = "payment",
-        direct = "ins",
-        cost = false,
-        routeByDocument = null
-    } = location.state || {};
+    // Parse query params or fallback to state
+    const searchParams = new URLSearchParams(location.search);
+    const id = params.id && params.id !== 'undefined' && params.id !== 'null' ? params.id : (location.state?.id || null);
+
+    // Prioritize query params, fallback to state, fallback to defaults
+    const type = searchParams.get('type') || location.state?.type || "payment";
+    const direct = searchParams.get('direct') || location.state?.direct || "ins";
+    const cost = searchParams.get('cost') === 'true' || location.state?.cost === true || false;
+    const routeByDocument = location.state?.routeByDocument || null;
 
     const [loading, setLoading] = useState(false);
     const theme = useTheme();
@@ -45,31 +46,6 @@ const PaymentManage = () => {
         types,
         setTypes
     } = useContext(PaymentGlobalContext);
-
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: '100vh',
-            backgroundColor: theme.whiteGrey,
-            overflow: 'hidden'
-        },
-        scrollView: {
-            flex: 1,
-            overflowY: 'auto'
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        footer: {
-            padding: 10,
-            backgroundColor: theme.whiteGrey
-        }
-    };
 
     const fetchDefaultSelectedValues = async (obj) => {
         let data = { ...obj };
@@ -132,6 +108,7 @@ const PaymentManage = () => {
                     obj.SpendItem = '2232d344-142b-44f3-b2b8-ea4c5add0b31';
                 }
 
+                // If id is null, we fetch a new name
                 await api(type + direct + '/newname.php', {
                     n: "", token: await AsyncStorageWrapper.getItem('token')
                 }).then(element => {
@@ -235,6 +212,8 @@ const PaymentManage = () => {
                 ErrorMessage("Ödənilmiş məbləğ müqavilənin ödənilmə məbləğindən çoxdur");
             }
 
+            // Fetch new name before save (seems redundant if we did it on load, but maybe ensures unique?)
+            // The original logic did this. 
             await api(types.type + types.direct + '/newname.php', {
                 n: "", token: await AsyncStorageWrapper.getItem('token')
             }).then(element => {
@@ -299,7 +278,7 @@ const PaymentManage = () => {
         setTypes(rel => ({ ...rel, ['type']: type }));
         setTypes(rel => ({ ...rel, ['direct']: direct }));
         fetchingPaymentData(type, direct, id);
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (types.type != "" && document !== null) {
@@ -310,40 +289,44 @@ const PaymentManage = () => {
         }
     }, [types.type]);
 
+    const getNavBarTitle = () => {
+        if (document && document.Name) return document.Name;
+        const op = direct === "ins" ? "Mədaxil" : "Məxaric";
+        const tp = type === "payment" ? "Nağd" : "Köçürmə";
+        return `${op} - ${tp}`;
+    }
+
     return (
-        <div style={styles.container}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: theme.whiteGrey, overflow: 'hidden' }}>
             {!routeByDocument && (
-                <ManageHeader
-                    navigation={navigate}
-                    type={type + direct}
-                    document={document}
-                    onSubmit={handleSave}
-                    hasUnsavedChanges={hasUnsavedChanges}
-                />
+                <NavBar onBack={() => navigate(-1)} style={{ background: '#fff' }}>
+                    {getNavBarTitle()}
+                </NavBar>
             )}
 
             {document !== null ? (
                 <>
-                    <div style={styles.scrollView}>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
                         <MainCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} type={type} direct={direct} navigation={navigate} id={id} />
-                        <div style={{ margin: 10 }} />
+                        <div style={{ height: 10 }} />
                         <OppositeCard changeInput={handleChangeInput} changeSelection={handleChangeSelection} cost={cost} />
-                        <div style={{ margin: 10 }} />
+                        <div style={{ height: 10 }} />
                         <DocumentCard changeInput={handleChangeInput} cost={cost} />
-                        <div style={{ margin: 10 }} />
+                        <div style={{ height: 10 }} />
                         <ModificationsCard
                             hasUnsavedChanged={setHasUnsavedChanges}
                             setState={setDocument}
                             state={document}
                             target={`${(types.type + types.direct).slice(0, -1)}`}
                         />
+                        <div style={{ height: 80 }} /> {/* Spacer for footer */}
                     </div>
                     {hasUnsavedChanges && (
-                        <div style={styles.footer}>
+                        <div style={{ padding: 10, backgroundColor: theme.whiteGrey, borderTop: '1px solid #eee' }}>
                             <Button
-                                bg={theme.green}
-                                disabled={loading}
-                                isLoading={loading}
+                                block
+                                color='primary'
+                                loading={loading}
                                 onClick={handleSave}
                             >
                                 Yadda Saxla
@@ -352,8 +335,8 @@ const PaymentManage = () => {
                     )}
                 </>
             ) : (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner"></div>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <SpinLoading color='primary' />
                 </div>
             )}
         </div>

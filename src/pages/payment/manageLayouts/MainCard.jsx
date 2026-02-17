@@ -1,63 +1,47 @@
 import React, { useContext, useState } from 'react';
-import ManageCard from '../../../shared/ui/ManageCard';
-import Input from '../../../shared/ui/Input';
+import { Card, Input, Form, DatePicker } from 'antd-mobile';
 import { PaymentGlobalContext } from '../../../shared/data/PaymentGlobalState';
-import useTheme from '../../../shared/theme/useTheme';
-import SelectionDate from '../../../shared/ui/SelectionDate';
+import moment from 'moment';
 
-const MainCard = ({ changeInput, changeSelection }) => {
-  const theme = useTheme();
+const MainCard = ({ changeInput, changeSelection, type, direct }) => {
   const { document, setDocument, types } = useContext(PaymentGlobalContext);
-  const [momentModal, setMomentModal] = useState(false);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
-  const styles = {
-    header: {
-      width: '100%',
-      padding: 15,
-      textAlign: 'center'
-    },
-    headerText: {
-      fontSize: 20,
-      color: theme.primary,
-      fontWeight: 'bold'
-    },
-    content: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 15
-    }
-  };
+  // Derive title from props or context (props passed from parent are reliable)
+  // types is from context, usually synced.
+  const title = `${types.direct == "ins" ? "Mədaxil" : "Məxaric"} - (${types.type == "payment" ? "nağd" : "köçürmə"})`;
 
   return (
-    <ManageCard>
-      <div style={styles.header}>
-        <span style={styles.headerText}>{`${types.direct == "ins" ? "Mədaxil" : "Məxaric"} - (${types.type == "payment" ? "nağd" : "köçürmə"})`}</span>
-      </div>
+    <Card title={title}>
+      <Form layout='horizontal' footer={null}>
+        <Form.Item label='Sənəd Adı'>
+          <Input
+            value={document.Name}
+            onChange={(val) => {
+              changeInput('Name', val);
+            }}
+            placeholder='Ad'
+          />
+        </Form.Item>
+        <Form.Item label='Tarix' onClick={() => setPickerVisible(true)} clickable>
+          {/* Display formatted date */}
+          {document.Moment ? moment(document.Moment).format('YYYY-MM-DD HH:mm') : 'Tarix seçin'}
+        </Form.Item>
+      </Form>
 
-      <div style={styles.content}>
-        <Input
-          width={'70%'}
-          placeholder={'Ad'}
-          value={document.Name}
-          type={'string'}
-          onChange={(e) => {
-            changeInput('Name', e);
-          }}
-        />
-
-        <SelectionDate
-          change={() => {
-            changeSelection();
-          }}
-          document={document}
-          setDocument={setDocument}
-          modalVisible={momentModal}
-          setModalVisible={setMomentModal}
-        />
-      </div>
-    </ManageCard>
+      <DatePicker
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        defaultValue={document.Moment ? new Date(document.Moment) : new Date()}
+        precision='minute'
+        onConfirm={(val) => {
+          setDocument(prev => ({ ...prev, Moment: moment(val).format('YYYY-MM-DD HH:mm:ss') }));
+          changeSelection();
+        }}
+        confirmText='Təsdiq'
+        cancelText='Ləğv'
+      />
+    </Card>
   );
 };
 

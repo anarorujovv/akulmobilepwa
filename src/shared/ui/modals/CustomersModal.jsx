@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import MyModal from './../MyModal';
-import SearchHeader from './../SearchHeader';
 import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
-import Line from '../Line';
-import Input from '../Input';
 import { formatPrice } from '../../../services/formatPrice';
+import { List, Input, SearchBar, SpinLoading, AutoCenter } from 'antd-mobile';
 
 const CustomersModal = ({
     document,
@@ -18,7 +16,6 @@ const CustomersModal = ({
     returnChanged,
     isDebtPermission = true
 }) => {
-
     const theme = useTheme();
     const [modalVisible, setModalVisible] = useState(false);
     const [customers, setCustomers] = useState([]);
@@ -85,40 +82,11 @@ const CustomersModal = ({
         setDocument(rel => ({ ...rel, ['CustomerName']: item.Name }))
         setDocument(rel => ({ ...rel, ['CustomerId']: item.Id }));
         setModalVisible(false);
+        if (returnChanged) {
+            returnChanged();
+        }
     }
 
-    const renderItem = (item, index) => {
-
-        return (
-            <div key={item.Id || index} style={{ width: '100%' }}>
-                <div onClick={() => {
-                    handleSelectCustomer(item);
-                    if (returnChanged) {
-                        returnChanged();
-                    }
-                }}
-                    style={{
-                        width: '100%',
-                        height: 55,
-                        paddingLeft: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s',
-                        backgroundColor: 'transparent'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                    <span style={{
-                        color: theme.black,
-                        fontSize: 13
-                    }}>{item.Name}</span>
-                </div>
-                <Line width={'90%'} />
-            </div>
-        )
-    }
     useEffect(() => {
         if (!modalVisible) {
             setSearch("");
@@ -127,121 +95,113 @@ const CustomersModal = ({
 
     useEffect(() => {
         let time;
-        if (search != null) { // search null initial state, but fetchingCustomers runs initially if search logic allows. Actually fetchingCustomers called in else block.
-            // Initial load logic seems a bit mixed in original code.
-            // Original: search is "" initially? No "const [search, setSearch] = useState("");"
-            // But logic: if (search != null) ...
-            // Let's keep it close to original.
+        if (search != null) {
             setCustomers([])
             if (search !== "") {
                 time = setTimeout(() => {
                     fetchingFastCustomers();
                 }, 400);
             } else {
-                fetchingCustomers();
+                fetchingCustomers(); // Also handles initial fetch when search is empty string (though initial state is "", so it runs)
             }
         }
         return () => clearTimeout(time);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search])
-
-    const styles = {
-        trigger: {
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            cursor: isDisable ? 'default' : 'pointer'
-        },
-        debtRow: {
-            display: 'flex',
-            flexDirection: 'row',
-            width: '100%', // width prop was passed but handled via style here
-            justifyContent: 'space-between'
-        },
-        noDataContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        listContainer: {
-            width: '100%',
-            height: '100%',
-            overflowY: 'auto'
-        }
-    }
 
     return (
         <>
             <div
-                style={styles.trigger}
                 onClick={() => {
                     if (!isDisable) {
                         setModalVisible(true);
                     }
                 }}
+                style={{
+                    width: width || '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    // alignItems: 'center', // If width is 100%, center might not be desired if it's full block. Let's rely on width.
+                    // But original had 'alignItems: center' and `width: '100%'` on trigger container.
+                    alignItems: 'center',
+                    cursor: isDisable ? 'default' : 'pointer'
+                }}
             >
-                <Input
-                    isRequired={true}
-                    width={width}
-                    disabled={true}
-                    value={document.CustomerName == null ? "" : document.CustomerName}
-                    placeholder={!isName ? 'Qarşı-tərəf' : "Təchizatçı"}
-                />
-                {
-                    isDebtPermission ?
-                        customerDebt != null ?
-                            <div
-                                style={{
-                                    ...styles.debtRow,
-                                    width: width // override or ensure width
-                                }}
-                            >
-                                <span style={{ fontSize: 12, color: theme.orange }}>Qalıq borc</span>
-                                <span style={{ fontSize: 12, color: customerDebt >= 0 ? theme.black : theme.orange }}>{customerDebt} ₼</span>
-                            </div>
-                            :
-                            ""
-                        :
-                        ""
-                }
+                <div style={{
+                    width: '100%', // Input takes full width of this container, which is constrained by parent 'width' prop effectively if passed to wrapper?
+                    // Wait, original wrapper had width='100%' in styles.trigger.
+                    // Input had width={width} passed.
+                    // So if Width="70%", Input was 70%.
+                    // I should apply width to this inner div.
+                    width: width || '100%',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: 4,
+                    padding: '6px 12px',
+                    backgroundColor: '#fff'
+                }}>
+                    <Input
+                        readOnly
+                        value={document.CustomerName == null ? "" : document.CustomerName}
+                        placeholder={!isName ? 'Qarşı-tərəf' : "Təchizatçı"}
+                        style={{ '--font-size': '14px' }}
+                    />
+                </div>
+
+                {isDebtPermission && customerDebt != null && (
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        width: width || '100%',
+                        justifyContent: 'space-between',
+                        marginTop: 5
+                    }}>
+                        <span style={{ fontSize: 12, color: theme.orange }}>Qalıq borc</span>
+                        <span style={{ fontSize: 12, color: customerDebt >= 0 ? theme.black : theme.black }}>{customerDebt} ₼</span>
+                    </div>
+                )}
             </div>
+
             <MyModal
                 modalVisible={modalVisible}
                 setModalVisible={setModalVisible}
                 width={'100%'}
+                height={'100%'}
             >
-                <SearchHeader
-                    placeholder={'Müştəri axtarışı...'}
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e)
-                    }}
-                    onPress={() => {
-                        setModalVisible(false)
-                    }}
-                />
+                <div style={{ padding: '10px' }}>
+                    <SearchBar
+                        placeholder='Müştəri axtarışı...'
+                        value={search}
+                        onChange={setSearch}
+                        onCancel={() => setModalVisible(false)}
+                        cancelText='Ləğv'
+                        showCancelButton
+                        style={{ '--background': '#f5f5f5' }}
+                    />
+                </div>
 
-                {
-                    customers == null ?
-                        <div style={styles.noDataContainer}>
-                            <span style={{
-                                fontSize: 16,
-                                color: theme.primary
-                            }}>Məlumat tapılmadı...</span>
+                <div style={{ height: 'calc(100% - 60px)', overflowY: 'auto' }}>
+                    {customers === null ? (
+                        <AutoCenter style={{ padding: 20, color: theme.primary }}>
+                            Məlumat tapılmadı...
+                        </AutoCenter>
+                    ) : !customers.length ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+                            <SpinLoading color='primary' />
                         </div>
-                        :
-                        <div style={styles.listContainer}>
-                            {
-                                customers[0] ?
-                                    customers.map((item, index) => renderItem(item, index))
-                                    :
-                                    <div style={styles.noDataContainer}>
-                                        <div className="spinner"></div>
-                                    </div>
-                            }
-                        </div>
-                }
+                    ) : (
+                        <List>
+                            {customers.map((item, index) => (
+                                <List.Item
+                                    key={item.Id || index}
+                                    onClick={() => handleSelectCustomer(item)}
+                                    arrow={false}
+                                >
+                                    {item.Name}
+                                </List.Item>
+                            ))}
+                        </List>
+                    )}
+                </div>
             </MyModal>
         </>
     )

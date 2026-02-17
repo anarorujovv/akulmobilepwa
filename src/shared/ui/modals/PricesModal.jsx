@@ -40,35 +40,7 @@ const PricesModal = ({
         })
     }
 
-    const renderItem = (item, index) => {
-        return (
-            <div key={item.Id || index} style={{ width: '100%' }}>
-                <div onClick={() => {
-                    pressable(item);
-                    setModalVisible(false);
-                }}
-                    style={{
-                        width: '100%',
-                        height: 55,
-                        paddingLeft: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s',
-                        backgroundColor: 'transparent'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                    <span style={{
-                        color: theme.black,
-                        fontSize: 13
-                    }}>{item.Name}</span>
-                </div>
-                <Line width={'90%'} />
-            </div>
-        )
-    }
+
 
 
     useEffect(() => {

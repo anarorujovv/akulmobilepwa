@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import MyModal from './../MyModal';
-import SearchHeader from './../SearchHeader';
 import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../RepllyMessage/ErrorMessage';
 import useTheme from '../../theme/useTheme';
-import Line from '../Line';
+import { List, SearchBar, SpinLoading, AutoCenter } from 'antd-mobile';
 
 const GroupsModal = ({
     modalVisible,
     setModalVisible,
     setProduct
 }) => {
-
     const theme = useTheme();
-
     const [groups, setGroups] = useState([]);
     const [search, setSearch] = useState(null)
 
@@ -35,7 +32,6 @@ const GroupsModal = ({
         })
     }
 
-
     const fetchingFastGroups = async () => {
         await api("productfolders/get.php", {
             nm: search,
@@ -53,36 +49,6 @@ const GroupsModal = ({
         })
     }
 
-    const renderItem = (item, index) => {
-        return (
-            <div key={item.Id || index} style={{ width: '100%' }}>
-                <div onClick={() => {
-                    setProduct(rel => ({ ...rel, ['GroupName']: item.Name }))
-                    setProduct(rel => ({ ...rel, ['GroupId']: item.Id }));
-                    setModalVisible(false);
-                }}
-                    style={{
-                        width: '100%',
-                        height: 55,
-                        paddingLeft: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = theme.input.grey}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                    <span style={{
-                        color: theme.black,
-                        fontSize: 13
-                    }}>{item.Name}</span>
-                </div>
-                <Line width={'90%'} />
-            </div>
-        )
-    }
-
     useEffect(() => {
         if (modalVisible && groups != null && !groups[0]) {
             fetchingGroups();
@@ -98,7 +64,7 @@ const GroupsModal = ({
         let time;
         if (search != null) {
             setGroups([])
-            if (search != "") {
+            if (search !== "") {
                 time = setTimeout(() => {
                     fetchingFastGroups();
                 }, 400);
@@ -110,57 +76,51 @@ const GroupsModal = ({
         return () => clearTimeout(time);
     }, [search])
 
-    const styles = {
-        noDataContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        listContainer: {
-            width: '100%',
-            height: '100%',
-            overflowY: 'auto'
-        }
-    }
-
     return (
         <MyModal
             modalVisible={modalVisible}
             setModalVisible={setModalVisible}
             width={'100%'}
         >
-            <SearchHeader
-                placeholder={'Qrup axtarışı...'}
-                value={search || ''}
-                onChange={(e) => {
-                    setSearch(e)
-                }}
-                onPress={() => {
-                    setModalVisible(false)
-                }}
-            />
+            <div style={{ padding: '10px' }}>
+                <SearchBar
+                    placeholder={'Qrup axtarışı...'}
+                    value={search || ''}
+                    onChange={setSearch}
+                    onCancel={() => setModalVisible(false)}
+                    cancelText='Ləğv'
+                    showCancelButton
+                    style={{ '--background': '#f5f5f5' }}
+                />
+            </div>
 
-            {
-                groups == null ?
-                    <div style={styles.noDataContainer}>
-                        <span style={{
-                            fontSize: 16,
-                            color: theme.primary
-                        }}>Məlumat tapılmadı...</span>
+            <div style={{ height: 'calc(100% - 60px)', overflowY: 'auto' }}>
+                {groups === null ? (
+                    <AutoCenter style={{ padding: 20, color: theme.primary }}>
+                        Məlumat tapılmadı...
+                    </AutoCenter>
+                ) : !groups.length ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+                        <SpinLoading color='primary' />
                     </div>
-                    :
-                    <div style={styles.listContainer}>
-                        {
-                            groups[0] ?
-                                groups.map((item, index) => renderItem(item, index))
-                                :
-                                <div style={styles.noDataContainer}>
-                                    <div className="spinner"></div>
-                                </div>
-                        }
-                    </div>
-            }
+                ) : (
+                    <List header='Qruplar'>
+                        {groups.map((item, index) => (
+                            <List.Item
+                                key={item.Id || index}
+                                onClick={() => {
+                                    setProduct(rel => ({ ...rel, ['GroupName']: item.Name }));
+                                    setProduct(rel => ({ ...rel, ['GroupId']: item.Id }));
+                                    setModalVisible(false);
+                                }}
+                                arrow={false}
+                            >
+                                {item.Name}
+                            </List.Item>
+                        ))}
+                    </List>
+                )}
+            </div>
         </MyModal>
     )
 }

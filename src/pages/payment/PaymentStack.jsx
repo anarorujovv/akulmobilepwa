@@ -8,6 +8,7 @@ const PaymentStack = () => {
         <Routes>
             <Route path="/" element={<PaymentList />} />
             <Route path="/payment-manage" element={<PaymentManageProvider />} />
+            <Route path="/payment-manage/:id" element={<PaymentManageProvider />} />
         </Routes>
     );
 };
