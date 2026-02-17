@@ -1,41 +1,18 @@
-import React, { useContext, useState } from 'react';
-import ManageCard from './../../../shared/ui/ManageCard';
+import React, { useContext } from 'react';
+import { Card, Form, Input } from 'antd-mobile';
 import useTheme from '../../../shared/theme/useTheme';
 import { CustomerGlobalContext } from '../../../shared/data/CustomerGlobalState';
-import Input from './../../../shared/ui/Input';
 import api from '../../../services/api';
 import AsyncStorageWrapper from '../../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../../shared/ui/RepllyMessage/ErrorMessage';
-import IconButton from '../../../shared/ui/IconButton';
 import { FaUser, FaSync } from 'react-icons/fa';
-import CustomerGroupsModal from '../../../shared/ui/modals/CustomerGroups';
-import PricesModal from './../../../shared/ui/modals/PricesModal';
 import Selection from '../../../shared/ui/Selection';
 
-const MainCard = ({ changeInput, changeSelection }) => {
+const MainCard = ({ changeInput }) => {
   let theme = useTheme();
-
   const { document, setDocument } = useContext(CustomerGlobalContext);
-  const [groupModal, setGrouoModal] = useState(false);
-  const [pricesModal, setPricesModal] = useState(false);
 
-  const styles = {
-    header: {
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 10,
-      padding: 15,
-      alignItems: 'center',
-      width: '100%'
-    },
-    content: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 10
-    }
-  };
+  if (!document) return null;
 
   const handleChange = (type, value) => {
     changeInput(type, value);
@@ -49,6 +26,7 @@ const MainCard = ({ changeInput, changeSelection }) => {
     await api('barcode/get.php', obj)
       .then(element => {
         if (element != null) {
+          // Update both input and document directly to be sure
           handleChange('Card', element);
         }
       })
@@ -58,110 +36,98 @@ const MainCard = ({ changeInput, changeSelection }) => {
   };
 
   return (
-    <>
-      <ManageCard>
-        <div style={styles.header}>
-          <FaUser color={theme.grey} size={20} />
-          <span style={{ color: theme.grey }}>Tərəf-müqabil</span>
-        </div>
-
-        <div style={styles.content}>
+    <Card title={
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <FaUser color={theme.grey} size={20} />
+        <span style={{ color: theme.grey, fontWeight: 'bold' }}>Tərəf-müqabil</span>
+      </div>
+    }>
+      <Form layout='horizontal'>
+        <Form.Item label='Ad'>
           <Input
-            isRequired={true}
-            placeholder={"Tərəf müqabilinin adı"}
-            width={'70%'}
-            type={'string'}
+            placeholder='Tərəf müqabilinin adı'
             value={document.Name}
-            onChange={(e) => {
-              handleChange('Name', e);
-            }}
+            onChange={(val) => handleChange('Name', val)}
           />
+        </Form.Item>
 
+        <Form.Item label='Qrup'>
           <Selection
             isRequired={true}
             apiBody={{}}
             apiName={'customergroups/get.php'}
             change={(item) => {
-              handleChange('GroupId', item.Id);
+              setDocument(prev => ({ ...prev, GroupId: item.Id, GroupName: item.Name }));
             }}
             title={'Qrup'}
             value={document.GroupId}
             defaultValue={document.GroupName}
           />
+        </Form.Item>
 
+        <Form.Item label='Qiymət'>
           <Selection
             apiBody={{}}
             apiName={'pricetypes/get.php'}
             value={document.PriceTypeId}
             defaultValue={document.PriceTypeName}
             change={(e) => {
-              handleChange('PriceTypeId', e.Id);
+              setDocument(prev => ({ ...prev, PriceTypeId: e.Id, PriceTypeName: e.Name }));
             }}
             title={'Qiymət'}
           />
+        </Form.Item>
 
+        <Form.Item label='Telefon'>
           <Input
-            placeholder={"Telefon"}
-            width={'70%'}
-            type={'number'}
+            placeholder='Telefon'
+            type='number'
             value={document.Phone}
-            onChange={(e) => {
-              handleChange('Phone', e);
-            }}
+            onChange={(val) => handleChange('Phone', val)}
           />
+        </Form.Item>
 
-          <div style={{ position: 'relative', width: '70%' }}>
-            <Input
-              placeholder={'Kart'}
-              width={'100%'}
-              type={'number'}
-              value={document.Card}
-              onChange={(e) => {
-                handleChange("Card", e);
-              }}
-            />
-            <div style={{ position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)' }}>
-              <IconButton size={25} onPress={fetchingBarCode}>
-                <FaSync size={15} color={theme.black} />
-              </IconButton>
-            </div>
-          </div>
-
+        <Form.Item
+          label='Kart'
+          extra={
+            <FaSync onClick={fetchingBarCode} size={20} color={theme.primary} style={{ cursor: 'pointer' }} />
+          }
+        >
           <Input
-            placeholder={'Endirim %'}
-            width={'70%'}
-            type={'number'}
+            placeholder='Kart'
+            type='number'
+            value={document.Card}
+            onChange={(val) => handleChange('Card', val)}
+          />
+        </Form.Item>
+
+        <Form.Item label='Endirim %'>
+          <Input
+            placeholder='Endirim %'
+            type='number'
             value={document.Discount}
-            onChange={(e) => {
-              handleChange('Discount', e);
-            }}
+            onChange={(val) => handleChange('Discount', val)}
           />
+        </Form.Item>
 
+        <Form.Item label='Bonus'>
           <Input
-            placeholder={'Bonus'}
-            width={'70%'}
-            type={'number'}
+            placeholder='Bonus'
+            type='number'
             value={document.Bonus}
-            onChange={(e) => {
-              handleChange('Bonus', e);
-            }}
+            onChange={(val) => handleChange('Bonus', val)}
           />
+        </Form.Item>
 
+        <Form.Item label='Email'>
           <Input
-            placeholder={'Email'}
-            width={'70%'}
-            type={'string'}
+            placeholder='Email'
             value={document.Mail}
-            onChange={(e) => {
-              handleChange('Mail', e);
-            }}
+            onChange={(val) => handleChange('Mail', val)}
           />
-        </div>
-      </ManageCard>
-
-      <CustomerGroupsModal modalVisible={groupModal} setModalVisible={setGrouoModal} setProduct={setDocument} />
-      <PricesModal modalVisible={pricesModal} setModalVisible={setPricesModal} setProduct={setDocument} />
-    </>
+        </Form.Item>
+      </Form>
+    </Card>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
@@ -9,17 +9,16 @@ import MainCard from './manageLayouts/MainCard';
 import { formatPrice } from './../../services/formatPrice';
 import { formatObjectKey } from './../../services/formatObjectKey';
 import SuccessMessage from './../../shared/ui/RepllyMessage/SuccessMessage';
-import Button from '../../shared/ui/Button';
+import { Button, SpinLoading } from 'antd-mobile';
 import DestinationCard from '../../shared/ui/DestinationCard';
-import playSound from '../../services/playSound';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const CustomerManage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = location.state || {}; // Get id from state
-
   let theme = useTheme();
+
+  let { id } = useParams();
+  if (id === 'null' || id === 'undefined') id = null;
 
   const styles = {
     container: {
@@ -43,7 +42,8 @@ const CustomerManage = () => {
     },
     footer: {
       padding: 10,
-      backgroundColor: theme.bg
+      backgroundColor: '#fff',
+      borderTop: '1px solid #eee'
     }
   };
 
@@ -55,8 +55,8 @@ const CustomerManage = () => {
     if (id == null) {
       let obj = {
         Name: "",
-        Card: 0,
-        Phone: 0,
+        Card: "",
+        Phone: "",
         Discount: 0,
         Bonus: 0,
         Mail: "",
@@ -66,7 +66,7 @@ const CustomerManage = () => {
         GroupId: "",
         PriceTypeName: "",
         PriceTypeId: "",
-        Description: "" // Duplicate key in original, kept for consistency
+        Description: ""
       };
       setDocument(obj);
     } else {
@@ -108,14 +108,12 @@ const CustomerManage = () => {
       .then(element => {
         if (element != null) {
           SuccessMessage("Yadda Saxlanıldı");
-          setDocument(null);
-          // navigate replaces the current entry or pushes a new one. 
-          // If we want to stay on page but update ID?
-          // navigating back is common behavior after save or just stay.
-          // Original code calls fetchingCustomer with new ID.
+          // Update the URL if it was a new creation
+          if (id == null) {
+            // Optional: navigate(`/customer/customer-manage/${element.ResponseService}`, { replace: true });
+          }
           fetchingCustomer(element.ResponseService);
           setHasUnsavedChanges(false);
-          playSound('success');
         }
       })
       .catch(err => {
@@ -144,18 +142,17 @@ const CustomerManage = () => {
     fetchingCustomer(id);
   }, [id]);
 
-  // BackHandler replacement for web could involve window.onbeforeunload or blocking navigation
-  // For now, simple logic in ManageHeader or just standard navigation.
-
   return (
     <div style={styles.container}>
       <ManageHeader
-        navigation={navigate}
+        // navigation={navigate}
+        document={document}
         hasUnsavedChanges={hasUnsavedChanges}
+        onSubmit={handleSave}
       />
       {document == null ? (
         <div style={styles.loadingContainer}>
-          <div className="spinner"></div>
+          <SpinLoading color='primary' />
         </div>
       ) : (
         <>
@@ -171,9 +168,9 @@ const CustomerManage = () => {
           {hasUnsavedChanges && (
             <div style={styles.footer}>
               <Button
-                bg={theme.green}
-                disabled={loading}
-                isLoading={loading}
+                block
+                color='success'
+                loading={loading}
                 onClick={handleSave}
               >
                 Yadda Saxla

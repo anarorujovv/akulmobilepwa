@@ -8,8 +8,10 @@ const CustomerStack = () => {
         <Routes>
             <Route path="/" element={<CustomerList />} />
             <Route path="/customer-manage" element={<CustomerManageProvider />} />
+            <Route path="/customer-manage/:id" element={<CustomerManageProvider />} />
         </Routes>
     );
 };
 
 export default CustomerStack;
+

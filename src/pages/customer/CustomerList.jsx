@@ -80,9 +80,7 @@ const CustomerList = () => {
             <ListItem
                 index={index + 1}
                 onPress={() => {
-                    navigate("/customer/customer-manage", {
-                        state: { id: item.Id }
-                    });
+                    navigate(`/customer/customer-manage/${item.Id}`);
                 }}
                 firstText={item.Phone}
                 centerText={item.Name}
@@ -154,9 +152,7 @@ const CustomerList = () => {
                     '--size': '56px'
                 }}
                 onClick={() => {
-                    navigate("/customer/customer-manage", {
-                        state: { id: null }
-                    });
+                    navigate("/customer/customer-manage");
                 }}
             >
                 <AddOutline fontSize={28} color='#fff' />
