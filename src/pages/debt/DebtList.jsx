@@ -161,9 +161,7 @@ const DebtList = () => {
                                         priceText={formatPrice(item.Amount)}
                                         onPress={() => {
                                             if (permission_ver(permissions, 'page_debts', 'R')) {
-                                                navigate('/debt/debt-manage', {
-                                                    state: { id: item.CustomerId }
-                                                });
+                                                navigate(`/settlements/debt-manage/${item.CustomerId}`);
                                             } else {
                                                 ErrorMessage('İcazəniz yoxdur!');
                                             }

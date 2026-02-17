@@ -8,6 +8,7 @@ const DebtStack = () => {
         <Routes>
             <Route path="/" element={<DebtList />} />
             <Route path="/debt-manage" element={<DebtManageProvider />} />
+            <Route path="/debt-manage/:id" element={<DebtManageProvider />} />
         </Routes>
     );
 };

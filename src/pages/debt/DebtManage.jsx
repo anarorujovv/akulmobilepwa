@@ -3,74 +3,34 @@ import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import useTheme from '../../shared/theme/useTheme';
-import Line from './../../shared/ui/Line';
 import translateDebtTerm from './../../services/report/debtType';
 import { formatPrice } from '../../services/formatPrice';
-import ListItem from '../../shared/ui/list/ListItem';
 import DateRangePicker from '../../shared/ui/DateRangePicker';
 import DocumentInfo from '../../shared/ui/DocumentInfo';
 import DocumentTimes from '../../shared/ui/DocumentTimes';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { NavBar, SpinLoading, List } from 'antd-mobile';
 
 const DebtManage = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-    const { id } = location.state || {}; // Get id from state
-    let theme = useTheme();
+    const theme = useTheme();
 
     const [document, setDocument] = useState(null);
     const [documentList, setDocumentList] = useState([]);
 
-    let [filter, setFilter] = useState({
-        cus: id,
-    });
+    const [filter, setFilter] = useState({});
 
     const [selectedTime, setSelectedTime] = useState(4);
 
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.bg,
-            overflow: 'hidden'
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        headerText: {
-            color: theme.black,
-            fontSize: 15,
-            textAlign: 'center',
-            marginTop: 30,
-            fontWeight: 'bold'
-        },
-        subHeaderText: {
-            textAlign: 'center',
-            color: theme.input.grey,
-        },
-        separator: {
-            height: 1,
-            backgroundColor: theme.whiteGrey,
-            width: '100%',
-            margin: '10px 0'
-        },
-        listContainer: {
-            flex: 1,
-            overflowY: 'auto'
-        }
-    };
-
-    const fethingInformation = async () => {
+    const fethingInformation = async (params = {}) => {
         await api('documents/get.php', {
             ...filter,
+            ...params,
+            cus: id,
             token: await AsyncStorageWrapper.getItem('token')
         }).then(async element => {
             let objData = { ...element };
-            // Note: element might be null if no data, logic below assumes element exists
             if (objData) {
                 let initalDebt = formatPrice((objData.AllSum) - formatPrice(objData.Credits)) + formatPrice(Math.abs(objData.Debits));
                 objData.initalDebt = String(initalDebt);
@@ -82,89 +42,83 @@ const DebtManage = () => {
         });
     };
 
-    useEffect(() => {
+    const reload = (params) => {
         setDocument(null);
-        fethingInformation();
-    }, [filter]);
+        fethingInformation(params);
+    }
 
     useEffect(() => {
-        if (id) {
-            setFilter(prev => ({ ...prev, cus: id }));
-        }
-    }, [id]);
+        fethingInformation();
+    }, []);
 
     return (
-        document == null ? (
-            <div style={styles.loadingContainer}>
-                <div className="spinner"></div> // Assuming global spinner
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: theme.bg, overflow: 'hidden' }}>
+            <NavBar onBack={() => navigate(-1)} style={{ background: '#fff' }}>
+                {document?.CustomerName}
+            </NavBar>
+
+            <div style={{ padding: '10px 0', textAlign: 'center', color: theme.input.grey }}>
+                Üzləşmə aktı
             </div>
-        ) : (
-            <div style={styles.container}>
-                <span style={styles.headerText}>{document.CustomerName}</span>
-                <span style={styles.subHeaderText}>Üzləşmə aktı</span>
 
-                <div style={styles.separator} />
+            <DocumentInfo
+                data={[
+                    { title: "İlkin borc", value: document?.initalDebt },
+                    { title: 'Alınıb', value: formatPrice(document?.Debits) },
+                    { title: 'Verilib', value: document?.Credits },
+                    { title: 'Yekun Borc', value: formatPrice(document?.AllSum) }
+                ]}
+            />
 
-                <DocumentInfo
-                    data={[
-                        { title: "İlkin borc", value: document.initalDebt },
-                        { title: 'Alınıb', value: formatPrice(document.Debits) },
-                        { title: 'Verilib', value: document.Credits },
-                        { title: 'Yekun Borc', value: formatPrice(document.AllSum) }
-                    ]}
-                />
+            <div style={{ margin: '10px 0', borderBottom: `1px solid ${theme.whiteGrey}` }} />
 
-                <div style={styles.separator} />
-                <Line width={'90%'} />
-
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                    <DateRangePicker
-                        submit={true}
-                        width={'100%'}
-                        filter={filter}
-                        setFilter={setFilter}
-                    />
-                </div>
-
-                <div style={{ margin: 10 }} />
-                <DocumentTimes
+            <div style={{ padding: '0 10px' }}>
+                <DateRangePicker
+                    submit={true}
+                    width={'100%'}
                     filter={filter}
-                    setFilter={setFilter}
-                    selected={selectedTime}
-                    setSelected={setSelectedTime}
+                    setFilter={(e) => {
+                        setFilter(e);
+                        reload(e);
+                    }}
                 />
-
-                <div style={styles.listContainer}>
-                    {documentList && documentList.length > 0 ? (
-                        documentList.map((item, index) => {
-                            return (
-                                <div key={index}>
-                                    <ListItem
-                                        onPress={() => {
-                                            // Converted route:
-                                            navigate('/demands/demand-return-manage', {
-                                                state: { id: item.LinkId }
-                                            });
-                                        }}
-                                        index={index + 1}
-                                        iconBasket={true}
-                                        firstText={translateDebtTerm(item.DocType).title}
-                                        centerText={item.Moment}
-                                        priceText={formatPrice(item.Amount)}
-                                    />
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div style={styles.loadingContainer}>
-                            {/* Or empty state */}
-                            {/* <div className="spinner"></div> */}
-                            <span>No document items found</span>
-                        </div>
-                    )}
-                </div>
             </div>
-        )
+
+            <div style={{ margin: 10 }} />
+            <DocumentTimes
+                filter={filter}
+                setFilter={(item) => {
+                    setFilter(item);
+                    reload(item)
+                }}
+                selected={selectedTime}
+                setSelected={setSelectedTime}
+            />
+
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+                {!documentList || documentList.length === 0 ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 20 }}>
+                        <span style={{ color: theme.input.grey }}>Məlumat yoxdur</span>
+                    </div>
+                ) : (
+                    <List>
+                        {documentList.map((item, index) => (
+                            <List.Item
+                                key={index}
+                                onClick={() => {
+                                    navigate(`/demands/demand-return-manage/${item.LinkId}`);
+                                }}
+                                description={item.Moment}
+                                extra={formatPrice(item.Amount)}
+                                clickable
+                            >
+                                {translateDebtTerm(item.DocType).title}
+                            </List.Item>
+                        ))}
+                    </List>
+                )}
+            </div>
+        </div>
     );
 };
 
