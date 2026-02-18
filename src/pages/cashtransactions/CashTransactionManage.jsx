@@ -1,70 +1,31 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useTheme from '../../shared/theme/useTheme';
-import ManageCard from '../../shared/ui/ManageCard';
 import api from '../../services/api';
 import AsyncStorageWrapper from '../../services/AsyncStorageWrapper';
 import ErrorMessage from '../../shared/ui/RepllyMessage/ErrorMessage';
 import moment from 'moment';
-import Input from '../../shared/ui/Input';
 import { formatPrice } from '../../services/formatPrice';
-import Button from '../../shared/ui/Button';
 import { formatObjectKey } from '../../services/formatObjectKey';
 import SuccessMessage from '../../shared/ui/RepllyMessage/SuccessMessage';
-import Selection from '../../shared/ui/Selection';
-import SelectionDate from '../../shared/ui/SelectionDate';
-import DestinationCard from '../../shared/ui/DestinationCard';
-// import playSound from '../../services/playSound'; // Sounds might not work same way on web, skip or mock
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { NavBar, Form, Input, Button, SpinLoading, DatePicker, TextArea } from 'antd-mobile';
+import CashFromModal from '../../shared/ui/modals/CashFromModal';
+import CashToModal from '../../shared/ui/modals/CashToModal';
+import OwnersModal from '../../shared/ui/modals/OwnersModal';
+import DepartmentModal from '../../shared/ui/modals/Departments';
 
 const CashTransactionManage = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-    let theme = useTheme();
-
-    let { id } = location.state || {}; // Get ID from state
+    const theme = useTheme();
 
     const [c_transaction, set_c_transaction] = useState(null);
     const [dateModal, setDateModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-    const styles = {
-        container: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: theme.whiteGrey,
-            overflowY: 'auto'
-        },
-        loadingContainer: {
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        content: {
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: 10
-        },
-        headerText: {
-            fontSize: 20,
-            color: theme.primary,
-            padding: 15
-        },
-        formGroup: {
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 20
-        }
-    };
-
     const fetchingData = async (id) => {
-        if (id != null) {
+        if (id) {
             await api('cashtransactions/get.php', {
                 id: id,
                 token: await AsyncStorageWrapper.getItem('token')
@@ -120,15 +81,9 @@ const CashTransactionManage = () => {
         await api('cashtransactions/put.php', info)
             .then(item => {
                 if (item != null) {
-                    // Update ID to continue editing if needed, or navigate back? 
-                    // Original code re-fetches with new ID if saved.
-                    // But usually on web we might want to stay or go back.
-                    // Assuming staying on page for now.
-                    // fetchingData(item.ResponseService); 
                     SuccessMessage('Yadda Saxlanıldı!');
                     setHasUnsavedChanges(false);
-                    // playSound('success')
-                    navigate(-1); // Navigate back on success
+                    navigate(-1);
                 }
             })
             .catch(err => {
@@ -138,122 +93,106 @@ const CashTransactionManage = () => {
         setIsLoading(false);
     }
 
-    const hasUnsavedChangesFunction = () => {
+    const handleStateChange = (action) => {
+        set_c_transaction(prev => {
+            const next = typeof action === 'function' ? action(prev) : action;
+            setHasUnsavedChanges(true);
+            return next;
+        });
+    }
+
+    const handleChangeInput = (key, value) => {
+        set_c_transaction(rel => ({ ...rel, [key]: value }))
         if (!hasUnsavedChanges) {
             setHasUnsavedChanges(true);
         }
     }
 
-    const handleChangeInput = (key, value) => {
-        set_c_transaction(rel => ({ ...rel, [key]: value }))
-        hasUnsavedChangesFunction();
-    }
-
-    const handleChangeSelection = (key, value) => {
-        set_c_transaction(rel => ({ ...rel, [key]: value }))
-        hasUnsavedChangesFunction();
-    }
-
-    // Web navigation blocking logic is complex (window.onbeforeunload), 
-    // for now we trust user or add simple check. React Router v6 unstable_useBlocker is experimental.
-
     useEffect(() => {
         fetchingData(id);
     }, [id])
 
+    if (!c_transaction) {
+        return (
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: theme.bg }}>
+                <SpinLoading color='primary' />
+            </div>
+        )
+    }
+
     return (
-        <div style={styles.container}>
-            {c_transaction == null ? (
-                <div style={styles.loadingContainer}>
-                    <div className="spinner"></div> // Global spinner
-                </div>
-            ) : (
-                <div style={styles.content}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <ManageCard>
-                            <div style={{
-                                width: '100%',
-                            }}>
-                                <span style={styles.headerText}>Transfer</span>
-                            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: theme.bg }}>
+            <NavBar onBack={() => navigate(-1)} style={{ background: '#fff' }}>
+                Transfer
+            </NavBar>
 
-                            <div style={styles.formGroup}>
-                                <Input
-                                    value={c_transaction.Name}
-                                    onChange={(e) => {
-                                        handleChangeInput('Name', e)
-                                    }}
-                                    placeholder={'Ad'}
-                                    type={'text'}
-                                    width={'90%'}
-                                />
-
-                                <SelectionDate
-                                    document={c_transaction}
-                                    setDocument={set_c_transaction}
-                                    change={handleChangeSelection}
-                                    modalVisible={dateModal}
-                                    setModalVisible={setDateModal}
-                                />
-
-                                <Input
-                                    value={c_transaction.Amount}
-                                    width={'90%'}
-                                    type={'number'}
-                                    placeholder={'Məbləğ'}
-                                    onChange={(e) => {
-                                        handleChangeInput('Amount', e)
-                                    }}
-                                />
-
-                                <Selection
-                                    isRequired={true}
-                                    apiBody={{}}
-                                    apiName={'cashes/get.php'}
-                                    change={(e) => {
-                                        handleChangeInput('CashFromId', e.Id);
-                                    }}
-                                    defaultValue={c_transaction.CashFromName}
-                                    title={'Hesabdan'}
-                                    value={c_transaction.CashFromId}
-                                />
-
-                                <Selection
-                                    isRequired={true}
-                                    apiBody={{}}
-                                    apiName={'cashes/get.php'}
-                                    change={(e) => {
-                                        handleChangeInput('CashToId', e.Id);
-                                    }}
-                                    defaultValue={c_transaction.CashToName}
-                                    title={'Hesaba'}
-                                    value={c_transaction.CashToId}
-                                />
-                            </div>
-                        </ManageCard>
-
-                        <DestinationCard
-                            changeInput={handleChangeInput}
-                            changeSelection={handleChangeSelection}
-                            document={c_transaction}
-                            setDocument={set_c_transaction}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+                <Form layout='horizontal' style={{ backgroundColor: '#fff', borderRadius: 8 }}>
+                    <Form.Item label="Ad">
+                        <Input
+                            value={c_transaction.Name}
+                            onChange={(val) => handleChangeInput('Name', val)}
+                            placeholder='Ad'
                         />
-                    </div>
+                    </Form.Item>
+                    <Form.Item label="Tarix" onClick={() => setDateModal(true)}>
+                        <Input
+                            readOnly
+                            value={c_transaction.Moment}
+                            placeholder='Tarix'
+                        />
+                    </Form.Item>
+                    <Form.Item label="Məbləğ">
+                        <Input
+                            type='number'
+                            value={c_transaction.Amount}
+                            onChange={(val) => handleChangeInput('Amount', val)}
+                            placeholder='Məbləğ'
+                        />
+                    </Form.Item>
+                    <Form.Item label="Hesabdan">
+                        <CashFromModal document={c_transaction} setDocument={handleStateChange} />
+                    </Form.Item>
+                    <Form.Item label="Hesaba">
+                        <CashToModal document={c_transaction} setDocument={handleStateChange} />
+                    </Form.Item>
+                    <Form.Item label="Cavabdeh">
+                        <OwnersModal state={c_transaction} setState={handleStateChange} />
+                    </Form.Item>
+                    <Form.Item label="Şöbə">
+                        <DepartmentModal state={c_transaction} setState={handleStateChange} />
+                    </Form.Item>
+                    <Form.Item label="Qeyd">
+                        <TextArea
+                            value={c_transaction.Description}
+                            onChange={(val) => handleChangeInput('Description', val)}
+                            placeholder='Qeyd'
+                            autoSize={{ minRows: 2, maxRows: 5 }}
+                        />
+                    </Form.Item>
+                </Form>
 
-                    {hasUnsavedChanges && (
-                        <div style={{ marginTop: 20 }}>
-                            <Button
-                                onClick={handleSave}
-                                isLoading={isLoading}
-                                bg={theme.green}
-                                disabled={isLoading}
-                            >
-                                Yadda Saxla
-                            </Button>
-                        </div>
-                    )}
+                <div style={{ marginTop: 20 }}>
+                    <Button
+                        block
+                        color='primary'
+                        onClick={handleSave}
+                        loading={isLoading}
+                        disabled={!hasUnsavedChanges || isLoading}
+                    >
+                        Yadda Saxla
+                    </Button>
                 </div>
-            )}
+            </div>
+
+            <DatePicker
+                visible={dateModal}
+                onClose={() => setDateModal(false)}
+                defaultValue={moment(c_transaction.Moment).toDate()}
+                onConfirm={(val) => {
+                    handleChangeInput('Moment', moment(val).format('YYYY-MM-DD HH:mm:ss'));
+                }}
+            />
         </div>
     )
 }

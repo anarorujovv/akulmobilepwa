@@ -173,9 +173,7 @@ const CashTransactionList = () => {
                                         index={index + 1}
                                         onPress={() => {
                                             if (permission_ver(permissions, 'cashtransactions', 'R')) {
-                                                navigate('/cashtransactions/cash-transaction-manage', {
-                                                    state: { id: item.Id }
-                                                });
+                                                navigate(`/cashtransactions/cash-transaction-manage/${item.Id}`);
                                             } else {
                                                 ErrorMessage('İcazəniz yoxdur!')
                                             }
@@ -211,9 +209,7 @@ const CashTransactionList = () => {
                 }}
                 onClick={() => {
                     if (permission_ver(permissions, 'cashtransactions', 'C')) {
-                        navigate('/cashtransactions/cash-transaction-manage', {
-                            state: { id: null }
-                        });
+                        navigate('/cashtransactions/cash-transaction-manage');
                     }
                 }}
             >

@@ -8,6 +8,7 @@ const CashTransactionStack = () => {
         <Routes>
             <Route path="/" element={<CashTransactionList />} />
             <Route path="/cash-transaction-manage" element={<CashTransactionManage />} />
+            <Route path="/cash-transaction-manage/:id" element={<CashTransactionManage />} />
         </Routes>
     );
 };
